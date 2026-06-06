@@ -34,8 +34,14 @@ If logged in but no active family → show empty state with prompt to create or 
   │     └── → opens Parents bottom sheet
   │
   ├── RANDOM PETS section
-  │     ├── Section header: "RANDOM PETS"  [+]
-  │     └── 2-column media grid (thumbnails of breed-tagged media)
+  │     ├── "RANDOM PETS"  [+]
+  │     ├── 2×2 grid preview (4 cells max)
+  │     │     Each cell: thumbnail + breed name + 📍 location · time
+  │     └── [View All →]  (shown if more than 4 items exist)
+  │
+  ├── MY PET POSTS section
+  │     ├── "MY PET POSTS"  [Grid icon]  [List icon]
+  │     └── Post list — 10 posts, infinite scroll (same as Explore)
   │
   └── (bottom padding)
 ```
@@ -89,9 +95,9 @@ Each row:
 | Status | Badge | Color | Meaning |
 |--------|-------|-------|---------|
 | `normal` | `NORMAL` | Green | No issues |
-| `check` | `CHECK` | Amber/Orange | Needs attention — TBD (health detail to be specced later) |
+| `check` | `CHECK` | Amber/Orange | Needs attention |
 
-> Full health status logic will be defined in a separate spec. For now, display only `NORMAL` and `CHECK`.
+> Full health status logic will be defined in a separate Pet Detail / Health spec.
 
 **Story button:** disabled (greyed out, no action) — same as Screen 3.
 
@@ -150,14 +156,36 @@ Parents                                    [× close]
 
 ### 4. Random Pets Section
 
-Displays media where `media_tag.type = "breed"` — AI detected a breed but no named pet was matched.
+Displays posts where at least one media has `media_tag.type = "breed"` — AI detected a breed but no named pet was matched.
 
-- Section header: **"RANDOM PETS"** + `[+]` button (top-right)
-- **`[+]` button:** tap → navigate to **Create Post screen** (same as Post button)
-- **Grid:** 2-column thumbnail grid, newest first
-- Each cell: thumbnail of the media item
-- Tap cell → navigate to **Post Detail screen** for the post containing that media
-- Paginated: load 20 thumbnails at a time, load more on scroll
+**Preview grid (2×2, max 4 cells):**
+
+Each cell shows:
+- Media thumbnail (top)
+- `breed` name in bold (below thumbnail)
+- `📍 city_code, country_code · relative_time` (e.g. `"HCMC, VN · 1 mo"`)
+
+- Tap any cell → **Post Detail screen** for that post
+- If total breed-tagged posts > 4: show **"View All →"** link below grid
+- **"View All →"** → **Random Pet Posts screen** (same pattern as Pet Posts screen in Screen 3, but filtered to `media_tag.type = breed` posts of this family; header title: "Random Pets")
+- If 0 breed-tagged posts → hide section entirely
+
+**`[+]` button:**
+- Tap → **Create Post screen** (Screen 7)
+- In this context, AI scan **skips the family pet matching step** — result can only be `breed` or `random`, never `pet`. This means the scan API is called without `family_id` (or with a flag `skip_pet_match: true`)
+
+---
+
+### 5. My Pet Posts Section
+
+All posts belonging to the active family, same as Family Posts screen (Screen 3).
+
+- Section header: **"MY PET POSTS"** + list/grid view toggle
+- Default: list view — canonical post card (Screen 1)
+- Grid view: same 3-column thumbnail grid as Screen 3
+- Sorted `created_at` desc (newest first)
+- 10 posts per page, infinite scroll
+- API: `GET /families/{family_id}/posts?cursor=&limit=10` (endpoint R from Screen 3)
 
 ---
 
@@ -224,7 +252,7 @@ Fetch the active family with full detail for the My Pets screen.
 
 ### AZ. `GET /families/{family_id}/random-media`
 
-Fetch paginated random pet media (breed-tagged) for the Random Pets section.  
+Fetch breed-tagged media for the Random Pets section preview (2×2 grid + View All list).  
 **Auth:** Required
 
 **Query Parameters:** `cursor`, `limit=20`
@@ -235,21 +263,25 @@ Fetch paginated random pet media (breed-tagged) for the Random Pets section.
   "media": [
     {
       "id": "media_003",
-      "url": "https://cdn.petapp.com/media/003.jpg",
-      "thumbnail_url": null,
+      "thumbnail_url": "https://cdn.petapp.com/media/003_thumb.jpg",
       "post_id": "post_abc",
-      "media_tag": {
-        "type": "breed",
-        "breed": "British Shorthair",
-        "color": "grey",
-        "pet": null
-      }
+      "breed": "British Shorthair",
+      "city_code": "HCM",
+      "country_code": "VN",
+      "created_at": "2026-05-01T10:00:00Z"
     }
   ],
+  "total_count": 12,
   "next_cursor": "...",
   "has_more": true
 }
 ```
+
+**Notes:**
+- `thumbnail_url` used directly in the 2×2 grid cells
+- `breed`, `city_code`, `country_code`, `created_at` used for cell subtitle display: `breed name · 📍 HCM, VN · 1 mo`
+- Screen fetches only the first 4 items for the preview; "View All" passes cursor for full list
+- "View All" navigates to Random Pet Posts screen — uses endpoint `GET /families/{id}/posts?type=random` (Screen 3)
 
 ---
 
@@ -288,7 +320,7 @@ User taps Manage Parents
 | No active family | Empty state: family card area shows "No active family" + "Go to Settings" button |
 | `random_count = 0` | Hide "randoms" from stats line; RANDOM PETS section shows empty state |
 | `viewer_role = parent` (not owner) | Edit button hidden; Parents popup is read-only (no Remove/Cancel/Invite actions) |
-| `health_status = check` | Amber badge on pet row + 🔒 lock icon on pet avatar |
+| `health_status = check` | Amber `CHECK` badge on pet row |
 | Story button | Disabled (greyed out, no action) |
 | No pets in family | Pet rows section shows empty state: "No pets yet — create a post to add pets" |
 | Random Pets grid — tap cell | Navigate to Post Detail for the parent post |
@@ -304,4 +336,6 @@ User taps Manage Parents
 | 2 | Edit button visibility | Owner only; hidden for parent members |
 | 3 | Parents popup actions | Owner can Remove/Cancel/Invite; parents see read-only list |
 | 4 | Health status detail | To be specced in a separate Pet Detail / Health screen |
-| 5 | `[+]` in Random Pets | Navigate to Create Post screen |
+| 5 | `[+]` in Random Pets | Navigate to Create Post screen; AI scan in this context = breed-detect only (skip family pet matching — result is `breed` or `random`, never `pet`) |
+| 6 | Lock icon on pet avatar | Not used — health status shown via badge only (no lock icon) |
+| 7 | MY PET POSTS section | Reuses endpoint R (`GET /families/{id}/posts`) from Screen 3; no new endpoint needed |
