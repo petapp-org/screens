@@ -20,16 +20,17 @@ Accessible without login — unauthenticated users can view everything. Actions 
   │     ├── Avatar (stacked pet photos or default)
   │     ├── Family name
   │     ├── @handle  ·  City, Country
-  │     ├── N pets · N randoms · N followers
+  │     ├── N pets  [· N randoms — only if > 0]  · N followers
   │     └── [Follow button]  [Message button]
   │
   ├── Pets List
   │     ├── Pet row 1: avatar · name · breed · gender · age · N posts  [Story — disabled]  [>]
   │     ├── Pet row 2: ...
-  │     └── (all pets, no pagination)
+  │     └── [Random Pets row — only if random_count > 0]
+  │           "Random Pets"  ·  N posts  [>]
   │
   ├── Parents row
-  │     └── "Parents"  [count badge]  [>]
+  │     └── "Parents"  [count badge]  [>]  → opens bottom sheet popup
   │
   ├── About section
   │     └── Description text
@@ -54,7 +55,8 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `avatar_url` | Used as fallback / single avatar |
 | `pet_avatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
 | `pet_count` | Number of actual pets in the family |
-| `random_count` | Number of "randoms" — pets tagged to a breed but not a named pet of this family |
+| `random_count` | Number of "randoms" — pets tagged to a breed but not a named pet of this family. Hidden from stats line when `0`. |
+| `random_post_count` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `follower_count` | Total followers |
 | `type` | `standard` \| `charity` |
 | `is_following` | Boolean (false when unauthenticated) |
@@ -95,16 +97,42 @@ Each pet row:
 - Tap anywhere on the row (except Story button) → navigates to **Pet Posts screen** for that pet
 - **Story button** → disabled for now (render as disabled state, no action)
 
+**Random Pets row** (shown only when `random_count > 0`):
+
+| Field | Description |
+|-------|-------------|
+| Label | "Random Pets" |
+| `random_post_count` | Total posts linked to random pets in this family |
+
+- Tap → navigates to **Random Pet Posts screen** for this family (all posts tagged to random pets)
+- No avatar, no breed, no Story button
+
 ---
 
-### 3. Parents Row
+### 3. Parents Row & Bottom Sheet
 
 ```
 Parents    [2]  >
 ```
 
-- Shows label "Parents" + count of users linked to this family
-- Tap → navigates to **Parents List screen** (list of user profiles linked to this family)
+- Shows label "Parents" + `parent_count` badge
+- Tap → opens **Parents bottom sheet** (slides up from bottom, overlays the screen)
+- No login required to view
+
+**Parents bottom sheet:**
+```
+[drag handle]
+Parents                          [× close]
+─────────────────────────────────────────
+[avatar]  Minh Dang
+          @minhdang
+─────────────────────────────────────────
+[avatar]  Cecilia Tran
+          @ceciliatran
+```
+
+- Each parent row shows: avatar + display name + handle (`@nickname`)
+- Tap a parent row → close bottom sheet → navigate to **User Posts screen** for that user
 - No login required to view
 
 ---
@@ -177,6 +205,7 @@ Fetch family profile data for the info card, pets list, and about section.
   ],
   "pet_count": 2,
   "random_count": 10,
+  "random_post_count": 23,
   "follower_count": 287,
   "type": "standard",
   "is_following": false,
@@ -237,7 +266,7 @@ Fetch paginated posts for the family feed (used by both list view and grid view)
 
 ### S. `GET /families/{family_id}/parents`
 
-Fetch the list of users linked to this family (used by the Parents List screen).
+Fetch the list of users linked to this family (loaded when user taps the Parents row to open the bottom sheet).
 
 **Response `200 OK`:**
 ```json
@@ -245,8 +274,15 @@ Fetch the list of users linked to this family (used by the Parents List screen).
   "parents": [
     {
       "id": "user_001",
-      "display_name": "Minh",
+      "display_name": "Minh Dang",
+      "handle": "minhdang",
       "avatar_url": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+    },
+    {
+      "id": "user_002",
+      "display_name": "Cecilia Tran",
+      "handle": "ceciliatran",
+      "avatar_url": "https://cdn.petapp.com/users/user_002/avatar.jpg"
     }
   ],
   "total_count": 2
@@ -283,12 +319,21 @@ User taps a pet row
   └─> Navigate to Pet Posts screen for that pet (pet_id from row data)
 ```
 
-### Tap Parents row
+### Tap Random Pets row
+
+```
+User taps Random Pets row  (only visible when random_count > 0)
+  └─> Navigate to Random Pet Posts screen for this family (family_id)
+```
+
+### Tap Parents row → bottom sheet
 
 ```
 User taps Parents row
-  └─> Navigate to Parents List screen
-        └─> GET /families/{family_id}/parents (if not already loaded)
+  └─> GET /families/{family_id}/parents
+        └─> Open Parents bottom sheet with list of parents
+              └─> User taps a parent row
+                    └─> Close bottom sheet → Navigate to User Posts screen (user_id)
 ```
 
 ---
@@ -301,7 +346,8 @@ User taps Parents row
 | `pet_count = 1` | Show single pet avatar (no stacking animation) |
 | `pet_count ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
 | `about` is null or empty | Hide About section entirely |
-| `random_count = 0` | Hide "randoms" from the stats line, or show `0 randoms` — TBD |
+| `random_count = 0` | Hide "randoms" from stats line; hide Random Pets row from pets list |
+| `random_count > 0` | Show "N randoms" in stats line; show Random Pets row at bottom of pets list |
 | Story button | Render as disabled (greyed out); no tap action |
 | Follow button — not logged in | Tap → redirect to Login |
 | Message button — not logged in | Tap → redirect to Login |
@@ -309,6 +355,19 @@ User taps Parents row
 | Grid view — post has multiple media | Show thumbnail of `media[0]`; overlay small multi-media icon top-right of cell |
 | Grid view — tap cell | Navigate to Post Detail screen |
 | Privacy rules | Same as Explore — unauthenticated sees `public` posts only |
+
+---
+
+## Linked Screens (to be specced separately)
+
+| Screen | Triggered from |
+|--------|---------------|
+| Pet Posts screen | Tap a named pet row |
+| Random Pet Posts screen | Tap the Random Pets row |
+| User Posts screen | Tap a parent in the bottom sheet |
+
+**User Posts screen — preview:**  
+Shows a user's profile header (display name, `@handle`, which family/families they belong to) followed by all posts that user has created, same card format as Explore, 10 per page.
 
 ---
 
@@ -320,4 +379,6 @@ User taps Parents row
 | 2 | Pet list pagination | None — all pets shown at once |
 | 3 | Default post view | List view |
 | 4 | Story button | Disabled (coming later) |
-| 5 | `random_count = 0` display | Open — confirm whether to hide or show "0 randoms" |
+| 5 | `random_count = 0` display | Hide from stats line and hide Random Pets row |
+| 6 | Parents navigation | Bottom sheet popup (not a separate screen) |
+| 7 | Random pets navigation | Separate Random Pet Posts screen |
