@@ -27,6 +27,10 @@ Default active filter tab: **Latest**.
 
 [Bottom Navigation]
   My Pets | Explore (active) | Shops | Services | More
+
+  Auth rules:
+  - Explore: accessible without login (default landing screen)
+  - My Pets, Shops, Services, More: redirect to Login if not authenticated
 ```
 
 ---
@@ -638,6 +642,7 @@ User taps "..." on a post
 | Comment count = 0 | Comment button still tappable; inline panel opens showing empty state |
 | Comment count ≤ 10 | Show all comments inline; no "View all" link needed |
 | Comment count > 10 | Show latest 10 inline + "View all N comments" link → Post Detail screen |
+| Tapping My Pets / Shops / Services / More while not logged in | Redirect to Login screen |
 | Network error on feed load | Show error state with retry button |
 | Cursor expired (e.g. after long background) | Reset to first page silently |
 
