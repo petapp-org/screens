@@ -19,7 +19,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
   ├── Family Info Card
   │     ├── Avatar (stacked pet photos or default)
   │     ├── Family name
-  │     ├── @handle  ·  City, Country
+  │     ├── @tag  ·  City, Country
   │     ├── N pets  [· N randoms — only if > 0]  · N followers
   │     └── [Follow button]  [Message button]
   │
@@ -49,7 +49,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | Field | Description |
 |-------|-------------|
 | `name` | Display name of the family |
-| `handle` | Unique identifier, prefixed with `@` (e.g. `@minhfamily`) |
+| `tag` | Unique identifier, prefixed with `@` (e.g. `@minhfamily`) |
 | `city` | City name |
 | `country` | Country code or name (e.g. `VN`) |
 | `avatar_url` | Used as fallback / single avatar |
@@ -131,7 +131,7 @@ Parents                          [× close]
           @ceciliatran
 ```
 
-- Each parent row shows: avatar + display name + handle (`@nickname`)
+- Each parent row shows: avatar + display name + tag (`@nickname`)
 - Tap a parent row → close bottom sheet → navigate to **User Posts screen** for that user
 - No login required to view
 
@@ -195,7 +195,7 @@ Fetch family profile data for the info card, pets list, and about section.
 {
   "id": "fam_xyz",
   "name": "Minh's Family",
-  "handle": "minhfamily",
+  "tag": "minhfamily",
   "city": "HCMC",
   "country": "VN",
   "avatar_url": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
@@ -275,13 +275,13 @@ Fetch the list of users linked to this family (loaded when user taps the Parents
     {
       "id": "user_001",
       "display_name": "Minh Dang",
-      "handle": "minhdang",
+      "tag": "minhdang",
       "avatar_url": "https://cdn.petapp.com/users/user_001/avatar.jpg"
     },
     {
       "id": "user_002",
       "display_name": "Cecilia Tran",
-      "handle": "ceciliatran",
+      "tag": "ceciliatran",
       "avatar_url": "https://cdn.petapp.com/users/user_002/avatar.jpg"
     }
   ],
@@ -411,7 +411,7 @@ Triggered from: tapping a parent in the Parents bottom sheet.
 |-------|---------|
 | `avatar_url` | User avatar |
 | `display_name` | User's display name |
-| `handle` | `@handle` |
+| `tag` | `@tag` |
 | `families` | List of family names the user belongs to, e.g. `"Minh's Family"` |
 
 **Posts:** all posts created by this user, sorted `created_at` desc.  
