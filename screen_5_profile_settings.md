@@ -2,8 +2,8 @@
 
 ## Overview
 
-The user's personal hub — accessible from the Profile avatar in the bottom nav (tab "More" area) or top-right header avatar.  
-Requires login.
+The user's personal hub — accessible from the **top-right header avatar** (visible on the Explore screen and other screens).  
+Requires login. Not related to the "More" tab in the bottom navigation.
 
 ---
 
