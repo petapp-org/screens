@@ -86,7 +86,21 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 
 ---
 
-### 4. About Field
+### 4. Location Fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `city` | No | City name, e.g. `"Hồ Chí Minh"` |
+| `city_code` | No | Short code, e.g. `"HCM"` |
+| `country` | No | Country name, e.g. `"Việt Nam"` |
+| `country_code` | No | Country code, e.g. `"VN"` |
+
+- Input via searchable city/country picker (same component as Create Post location)
+- Displayed on family profile as `"HCM - VN"`
+
+---
+
+### 5. About Field
 
 - Multiline, free-text
 - Optional
@@ -99,7 +113,7 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 
 **Owner row** (always first, non-removable):
 ```
-[Avatar]  [User name]  [YOU]              Creator
+[Avatar]  [User name]  [YOU]  [OWNER]     (no action)
 ```
 
 **Accepted parent row** (`status = joined`):
@@ -186,7 +200,11 @@ Create a new family.
   "tag": "thaofam",
   "about": "Just me and a future pet or two. 🌱",
   "avatar_url": "https://cdn.petapp.com/media/upload_xyz.jpg",
-  "default_privacy": "public"
+  "default_privacy": "public",
+  "city": "Hồ Chí Minh",
+  "city_code": "HCM",
+  "country": "Việt Nam",
+  "country_code": "VN"
 }
 ```
 
