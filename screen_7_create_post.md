@@ -90,20 +90,20 @@ After publish → navigate to **My Pets** tab.
 
 ### 3. AI Scan Flow (per uploaded media)
 
-**Purpose:** detect if a pet is present in the media, identify its breed and color, then attempt to match with named pets in the current family.
+**Purpose:** detect if a pet is present in the media, identify its breed, then attempt to match with named pets in the current family.
 
 ```
 User taps [AI Scan] on a media item
   └─> POST /ai/scan-media  { media_url, family_id }
         └─> (loading state on thumbnail)
-              ├─ Pet detected: breed + color found
-              │     └─> Try matching against family's pets (server-side)
-              │           ├─ Match found → tag set to type=pet, pet={...}
-              │           │     Badge shows: [pet avatar]  pet name  ✓
-              │           └─ No match → tag set to type=breed, breed=..., color=...
-              │                 Badge shows: breed name  (with edit pencil icon)
+              ├─ Pet detected + match found in family
+              │     └─> tag: { type=pet, id=pet_xxx, breed=pet's_breed }
+              │           Badge shows: [pet avatar]  pet name  ✓
+              ├─ Pet detected + no match in family
+              │     └─> tag: { type=random, id=null, breed="British Shorthair" }
+              │           Badge shows: breed name  (with edit pencil icon)
               └─ No pet detected
-                    └─> tag set to type=random
+                    └─> tag: { type=random, id=null, breed=null }
                           Badge shows: "Random"  (with edit pencil icon)
 ```
 
@@ -132,26 +132,34 @@ Opens a bottom sheet:
   [Mark as Random]
 ```
 
-**Select existing pet:**
-- Tap → tag set to `type=pet`, closes sheet, badge updates
+Actions available depend on the current tag state:
 
-**Create new pet:**
-- Opens inline form (or new screen):
+**When `type=pet` (matched pet):**
+- Keep as-is (close sheet)
+- Select a different existing pet → tag updated to new `id`
+- Unlink → tag set to `{ type=random, id=null, breed=<AI-detected breed if any> }`
+
+**When `type=random, breed != null` (AI detected breed, no match):**
+- Keep as random (close sheet)
+- Select existing pet → tag set to `{ type=pet, id=pet_xxx, breed=pet's_breed }`
+- Create new pet (breed pre-filled from scan):
 
 | Field | Required | Notes |
 |-------|----------|-------|
 | Name | Yes | Pet's display name |
-| Breed | Yes | Text input (can pre-fill from AI scan result) |
-| Color | Yes | Text input (can pre-fill from AI scan result) |
+| Breed | Yes | Pre-filled from `breed` |
+| Color | No | Text input (can pre-fill from AI scan `color` if returned) |
 | Gender | Yes | `male` / `female` / `unknown` |
 | Birthday | No | Date picker |
 | Weight | No | Number + unit (kg) |
 | Avatar | No | Upload photo or use a frame from this media |
 
-- Submit → `POST /families/{family_id}/pets` → pet created → tag set to `type=pet` with new pet
+  Submit → `POST /families/{family_id}/pets` → tag set to `{ type=pet, id=new_pet_id, breed=... }`
 
-**Mark as Random:**
-- Tag set to `type=random`, closes sheet
+**When `type=random, breed=null` (no animal detected):**
+- Keep as random (close sheet)
+- Select existing pet manually → tag set to `{ type=pet, id=pet_xxx, breed=pet's_breed }`
+- *(Cannot create new pet — no breed info available)*
 
 ---
 
@@ -197,7 +205,7 @@ Opens a bottom sheet:
 - Located in header (right) and as fixed full-width button at bottom
 - **Disabled** until:
   - At least 1 media added
-  - All media items have a tag (any type: `pet`, `breed`, `random`)
+  - All media items have a tag (any `type`: `pet` or `random`, with or without `breed`)
 - On tap → validate → `POST /posts` → on success, delete draft → navigate to My Pets tab
 
 ---
@@ -217,6 +225,8 @@ Scan an uploaded media item for pet detection.
 ```
 
 **Response `200 OK`:**
+
+Pet detected + matched to family pet:
 ```json
 {
   "detected": true,
@@ -230,6 +240,7 @@ Scan an uploaded media item for pet detection.
 }
 ```
 
+Pet detected + no family match:
 ```json
 {
   "detected": true,
@@ -239,6 +250,7 @@ Scan an uploaded media item for pet detection.
 }
 ```
 
+No pet detected:
 ```json
 {
   "detected": false,
@@ -247,6 +259,11 @@ Scan an uploaded media item for pet detection.
   "matched_pet": null
 }
 ```
+
+**Notes:**
+- `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `media_tag`.
+- Resulting `media_tag` written to the post uses only `{ type, id, breed }` (Screen 1 canonical structure).
+- In Random Pets context (`[+]` from Screen 8), call with `family_id` omitted or `skip_pet_match: true` — `matched_pet` is always `null`.
 
 ---
 
@@ -311,9 +328,8 @@ Publish the post.
       "order": 1,
       "media_tag": {
         "type": "pet",
-        "pet_id": "pet_111",
-        "breed": "Orange Tabby Cat",
-        "color": "orange"
+        "id": "pet_111",
+        "breed": "Orange Tabby Cat"
       }
     },
     {
@@ -322,9 +338,8 @@ Publish the post.
       "order": 2,
       "media_tag": {
         "type": "random",
-        "pet_id": null,
-        "breed": null,
-        "color": null
+        "id": null,
+        "breed": null
       }
     }
   ]
@@ -390,9 +405,9 @@ User taps "Switch" on family row
 | Embedded URL added | Auto-tagged as `random`; no AI Scan button shown; only 1 allowed per post |
 | 2nd embedded URL attempt | "Add Embed" button hidden once 1 embedded exists |
 | Media limit reached (10) | "Add Media" button disabled; counter shows "10 / 10" |
-| AI scan — no pet detected | Tag set to `random`; user can override via edit |
-| AI scan — breed detected, no family pet match | Tag set to `breed`; user can accept, link to existing pet, or create new pet |
-| AI scan — match found | Tag auto-set to matched pet; user can still override |
+| AI scan — no pet detected | Tag: `{ type=random, breed=null }`; user can manually link to existing pet |
+| AI scan — breed detected, no family pet match | Tag: `{ type=random, breed="..." }`; user can keep, link to existing pet, or create new pet |
+| AI scan — match found | Tag: `{ type=pet, id=pet_xxx, breed="..." }`; user can keep, change pet, or unlink |
 | User switches family | Clear all pet-type tags; prompt user to re-tag or re-scan |
 | Cancel with filled form | Confirmation dialog; draft preserved on "Keep editing" |
 | App crash / close mid-create | Draft auto-saved; restored on next open |

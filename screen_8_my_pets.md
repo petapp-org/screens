@@ -156,7 +156,7 @@ Parents                                    [× close]
 
 ### 4. Random Pets Section
 
-Displays posts where at least one media has `media_tag.type = "breed"` — AI detected a breed but no named pet was matched.
+Displays posts where at least one media has `media_tag.type = "random" AND breed IS NOT NULL` — AI detected a breed but no named pet was matched.
 
 **Preview grid (2×2, max 4 cells):**
 
@@ -167,7 +167,7 @@ Each cell shows:
 
 - Tap any cell → **Post Detail screen** for that post
 - If total breed-tagged posts > 4: show **"View All →"** link below grid
-- **"View All →"** → **Random Pet Posts screen** (same pattern as Pet Posts screen in Screen 3, but filtered to `media_tag.type = breed` posts of this family; header title: "Random Pets")
+- **"View All →"** → **Random Pet Posts screen** (same pattern as Pet Posts screen in Screen 3, but filtered to posts with `media_tag.type = "random" AND breed IS NOT NULL`; header title: "Random Pets")
 - If 0 breed-tagged posts → hide section entirely
 
 **`[+]` button:**

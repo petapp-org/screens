@@ -101,24 +101,18 @@ Each post card displays:
   "duration_seconds": "float | null",
   "provider": "youtube | vimeo | null",
   "media_tag": {
-    "type": "pet" | "breed" | "random",
-    "pet": {
-      "id": "string",
-      "name": "string",
-      "avatar_url": "string"
-    } | null,
-    "breed": "string | null",
-    "color": "string | null"
+    "type": "pet" | "random",
+    "id": "string | null",
+    "breed": "string | null"
   }
 }
 ```
 
 **`media_tag` types:**
-| Type | Meaning | `pet` | `breed` | `color` |
-|------|---------|-------|---------|---------|
-| `pet` | AI matched to a named pet in the family | populated | populated | populated |
-| `breed` | AI detected breed/color but no named pet match | null | populated | populated |
-| `random` | AI found no pet, or media is `embedded` | null | null | null |
+| Type | Meaning | `id` | `breed` |
+|------|---------|------|---------|
+| `pet` | AI matched to a named pet in the family | `pet_id` — matches an entry in `post.pets` | breed of the matched pet |
+| `random` | AI detected no pet, or media is `embedded`; `breed` is populated if AI identified a breed but found no named pet match | `null` | breed string, or `null` if no detection |
 
 **Rendering rules:**
 - `uploaded` → display the file stored on platform (image or video player)
@@ -126,8 +120,8 @@ Each post card displays:
 - Multiple media items → swipeable carousel with `N/Total` indicator (e.g. `1/3`) in the top-right corner of the media area
 
 **Pet badge (bottom-left of media):**
-- `media_tag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; tappable → Pet Posts screen
-- `media_tag.type = "breed"` or `"random"` → **no badge shown**
+- `media_tag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; look up display info using `media_tag.id` against `post.pets` (where `pets[].id = media_tag.id`); tappable → Pet Posts screen
+- `media_tag.type = "random"` → **no badge shown** (regardless of whether `breed` is populated)
 - Each media item in the carousel evaluates independently
 
 **Post Card Footer:**
@@ -289,13 +283,8 @@ Fetches the paginated post feed for the Explore screen.
           "provider": null,
           "media_tag": {
             "type": "pet",
-            "pet": {
-              "id": "pet_111",
-              "name": "Pudding",
-              "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
-            },
-            "breed": "Orange Tabby Cat",
-            "color": "orange"
+            "id": "pet_111",
+            "breed": "Orange Tabby Cat"
           }
         },
         {
@@ -310,9 +299,8 @@ Fetches the paginated post feed for the Explore screen.
           "provider": "youtube",
           "media_tag": {
             "type": "random",
-            "pet": null,
-            "breed": null,
-            "color": null
+            "id": null,
+            "breed": null
           }
         },
         {
@@ -326,10 +314,9 @@ Fetches the paginated post feed for the Explore screen.
           "duration_seconds": null,
           "provider": null,
           "media_tag": {
-            "type": "breed",
-            "pet": null,
-            "breed": "British Shorthair",
-            "color": "grey"
+            "type": "random",
+            "id": null,
+            "breed": "British Shorthair"
           }
         }
       ],
@@ -350,7 +337,7 @@ Fetches the paginated post feed for the Explore screen.
 **Notes:**
 - `media` list has minimum 1, maximum 10 items
 - `pets` contains only named pets (`media_tag.type = "pet"`), deduplicated; can be empty `[]`
-- `breed`-tagged and `random`-tagged media do NOT contribute to `pets` list and are NOT shown in subtitle
+- Only `media_tag.type = "pet"` items contribute to `post.pets` list; `type=random` media (with or without `breed`) are NOT shown in subtitle
 - Post header layout:
   ```
   [family avatar]  Family Name          author_name · 3h
@@ -665,8 +652,8 @@ User taps "..." on a post
 | Post `pets` list is empty | Use `family.avatar_url` for post avatar; no subtitle shown |
 | Post `pets` list has 1+ items | Still use `family.avatar_url` for post avatar; subtitle = pet names joined by ` · ` |
 | Post has multiple media (>1) | Show carousel with `N/Total` badge in top-right corner; swipeable |
-| Media has `pet` linked | Show floating badge bottom-left: pet avatar + pet name; tap → Pet Posts screen |
-| Media has no `pet` linked (`pet: null`) | No badge shown on that media frame |
+| `media_tag.type = "pet"` | Show floating badge bottom-left: look up pet name + avatar in `post.pets` by `media_tag.id`; tap → Pet Posts screen |
+| `media_tag.type = "random"` | No badge shown on that media frame, regardless of whether `breed` is populated |
 | Different media frames link to different pets | Each frame shows its own pet badge independently |
 | Post media type is `embedded` | Show video embed player (YouTube iframe / native player); `thumbnail_url` as poster |
 | Suggested widget — 0 families returned | Widget is hidden entirely; not shown at all |

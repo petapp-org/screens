@@ -63,7 +63,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `avatar_url` | Used as fallback / single avatar |
 | `pet_avatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
 | `pet_count` | Number of actual pets in the family |
-| `random_count` | Number of media items where AI detected a **breed** but could not match to any named pet in this family (`media_tag.type = "breed"`). Does NOT count `type = "random"` (no detection). Hidden from stats line when `0`. |
+| `random_count` | Number of media items where `media_tag.type = "random" AND breed IS NOT NULL` — AI detected a breed but could not match to a named pet. Does NOT count media with no breed detected. Hidden from stats line when `0`. |
 | `random_post_count` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `follower_count` | Total followers |
 | `type` | `standard` \| `charity` |
@@ -433,7 +433,7 @@ Triggered from: tapping the Random Pets row (only when `random_count > 0`).
 | Label | "Random Pets" |
 | `random_count` | e.g. `"10 randoms"` |
 
-**Posts:** all posts from this family linked to a random pet (i.e. tagged to a breed but no named pet).  
+**Posts:** all posts from this family where at least one media has `media_tag.type = "random" AND breed IS NOT NULL`.  
 API: `GET /families/{family_id}/posts?type=random&cursor=&limit=10`
 
 ---
