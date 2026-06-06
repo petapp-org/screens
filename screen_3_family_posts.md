@@ -17,17 +17,25 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 [Scrollable area]
   ├── Family Info Card
-  │     ├── Avatar (stacked pet photos or default)
+  │     ├── Avatar (stacked pet photos or default) + "CHARITY" ribbon badge if type=charity
   │     ├── Family name
   │     ├── @tag  ·  City, Country
   │     ├── N pets  [· N randoms — only if > 0]  · N followers
   │     └── [Follow button]  [Message button]
   │
-  ├── Pets List
-  │     ├── Pet row 1: avatar · name · breed · gender · age · N posts  [Story — disabled]  [>]
-  │     ├── Pet row 2: ...
-  │     └── [Random Pets row — only if random_count > 0]
-  │           "Random Pets"  ·  N posts  [>]
+  ├── Charity Section  ← only shown when type = charity
+  │     ├── [♡ icon]  short_description
+  │     ├── [♡ icon]  "N people have helped"
+  │     └── [Donate button — full width]
+  │
+  ├── Pets List  ← horizontal scroll when pet_count > 5
+  │     Column 1 (pets 1–5)    Column 2 (pets 6–10)    ...
+  │     ├── Pet row 1           ├── Pet row 6
+  │     ├── Pet row 2           ├── Pet row 7
+  │     ├── Pet row 3           ├── Pet row 8
+  │     ├── Pet row 4           ├── Pet row 9
+  │     └── Pet row 5           └── Pet row 10
+  │     [Random Pets row — only if random_count > 0, always in last column]
   │
   ├── Parents row
   │     └── "Parents"  [count badge]  [>]  → opens bottom sheet popup
@@ -61,11 +69,14 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `type` | `standard` \| `charity` |
 | `is_following` | Boolean (false when unauthenticated) |
 | `about` | Free-text description |
+| `short_description` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
+| `donor_count` | Number of people who have donated. Only meaningful when `type = charity`; `null` for standard families. |
 
 **Avatar display rules:**
 - `pet_count = 0` → show single default family avatar
 - `pet_count = 1` → show that pet's avatar
 - `pet_count ≥ 2` → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
+- `type = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**
 - Not following → button label "Follow"; tap → `POST /families/{id}/follow` (requires login → redirect to Login)
@@ -77,9 +88,29 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 ---
 
-### 2. Pets List
+### 2. Charity Section *(only rendered when `type = charity`)*
 
-All pets belonging to this family, shown in a vertical list (no pagination).
+Displayed between the Family Info Card and the Pets List.
+
+| Element | Description |
+|---------|-------------|
+| `short_description` | Displayed with a ♡ icon prefix, e.g. `"♡ Home-based cat rescue"` |
+| `donor_count` | Displayed as `"♡ 184 people have helped"` |
+| Donate button | Full-width button; tap → in-app Donate screen (currently "Coming Soon") |
+
+- The entire section is hidden for `standard` families.
+- `donor_count` label updates after a successful donation (handled by Donate screen, not this screen).
+
+---
+
+### 3. Pets List
+
+**Layout rules:**
+- `pet_count ≤ 5` → single vertical column (current behaviour)
+- `pet_count > 5` → **horizontal scroll**, 5 rows per column; swipe left to reveal more columns
+  - Column 1: pets 1–5, Column 2: pets 6–10, etc.
+  - Next column's avatars peek slightly on the right edge to indicate scrollability
+  - Random Pets row (if applicable) always appears as the last item in the final column
 
 Each pet row:
 
@@ -207,10 +238,12 @@ Fetch family profile data for the info card, pets list, and about section.
   "random_count": 10,
   "random_post_count": 23,
   "follower_count": 287,
-  "type": "standard",
+  "type": "charity",
   "is_following": false,
-  "about": "A family of three — a cat, a dog, and a pony. Sharing the small everyday moments. 🐾",
-  "parent_count": 2,
+  "short_description": "Home-based cat rescue",
+  "donor_count": 184,
+  "about": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
+  "parent_count": 1,
   "pets": [
     {
       "id": "pet_111",
@@ -345,6 +378,10 @@ User taps Parents row
 | `pet_count = 0` | Show default family avatar; no pets list section |
 | `pet_count = 1` | Show single pet avatar (no stacking animation) |
 | `pet_count ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
+| `type = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (short_description, donor_count, Donate button) |
+| `type = standard` | No ribbon; no Charity Section |
+| `pet_count ≤ 5` | Pets list: single vertical column |
+| `pet_count > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
 | `about` is null or empty | Hide About section entirely |
 | `random_count = 0` | Hide "randoms" from stats line; hide Random Pets row from pets list |
 | `random_count > 0` | Show "N randoms" in stats line; show Random Pets row at bottom of pets list |
@@ -430,3 +467,5 @@ API: `GET /users/{user_id}/posts?cursor=&limit=10`
 | 5 | `random_count = 0` display | Hide from stats line and hide Random Pets row |
 | 6 | Parents navigation | Bottom sheet popup (not a separate screen) |
 | 7 | Random pets navigation | Separate Random Pet Posts screen |
+| 8 | Donate button destination | In-app Donate screen (currently "Coming Soon") |
+| 9 | Pets list layout threshold | ≤ 5 pets: vertical list; > 5 pets: horizontal scroll, 5 per column |
