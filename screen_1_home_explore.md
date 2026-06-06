@@ -73,7 +73,7 @@ Each post card displays:
 | `author_name` | Display name of the user who created the post |
 | `pets` | List of pets linked across all media in this post (can be empty). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatar_url }` |
 | `caption` | Post text / description |
-| `media` | List of media items (see Media Object below). Each media item may link to one pet. |
+| `media` | List of media items (see Media Object below). Each media item may link to one pet. **Minimum 1 item required** — a post cannot be created without at least one media. |
 | `love_count` | Total number of loves |
 | `comment_count` | Total number of comments |
 | `created_at` | ISO 8601 timestamp |
@@ -119,9 +119,20 @@ Each post card displays:
 287 loves · 34 comments    [Love icon]  Love    [Comment icon]  Comment
 ```
 
-- Tapping **Love** toggles love state (requires login)
-- Tapping **Comment** → opens Post Detail screen
-- Tapping anywhere on the post card body → opens Post Detail screen
+- **Love button:**
+  - Tapping toggles love state (requires login — redirect to Login if not authenticated)
+  - **Optimistic update**: `love_count` and `is_loved` are updated immediately in the UI before the API response returns
+  - On API error: revert `love_count` and `is_loved` back to previous values and show error toast
+  - `287 loves` text is tappable → same behaviour as Love button
+
+- **Comment button / count:**
+  - `34 comments` text and Comment button are both tappable
+  - Tapping opens an **inline comment panel** (expands below the post card, does not navigate away)
+  - Inline panel shows the **latest 10 comments**, sorted by `created_at` desc
+  - If `comment_count > 10`: show a "View all N comments" link → navigates to Post Detail screen
+  - User can submit a new comment directly from the inline panel (requires login)
+
+- Tapping the **post media or caption area** → opens Post Detail screen (full-screen view with all comments)
 
 **Post Visibility Rules (enforced server-side — client never receives posts it shouldn't see):**
 
@@ -300,6 +311,7 @@ Fetches the paginated post feed for the Explore screen.
 > Example above: post has 3 media. Media 1 (uploaded image) → linked to Pudding. Media 2 (embedded YouTube) → linked to Mochi. Media 3 (uploaded image) → no pet linked, no badge shown.
 
 **Notes:**
+- `media` list must have at least 1 item — enforced at post creation; the feed API will never return a post with empty `media`
 - `pets` is the deduplicated list of pets linked across all media items in the post; can be empty `[]`
 - Post header avatar: always use `family.avatar_url`
 - Post header subtitle: render pet names from `pets` list joined by ` · ` (e.g. `"Pudding · Mochi"`); omit if `pets` is empty
@@ -477,6 +489,68 @@ Delete post (author/family member only).
 
 ---
 
+### K. `GET /posts/{post_id}/comments`
+
+Fetch comments for the inline comment panel.
+
+**Query Parameters:**
+
+| Param | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `limit` | int | No | `10` | Number of comments to return |
+| `cursor` | string | No | — | Pagination cursor (for "View all" flow in Post Detail) |
+
+**Response `200 OK`:**
+
+```json
+{
+  "comments": [
+    {
+      "id": "comment_001",
+      "author": {
+        "id": "user_002",
+        "display_name": "Bella",
+        "avatar_url": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+      },
+      "body": "Cute quá trời 😍",
+      "created_at": "2026-06-06T07:00:00Z"
+    }
+  ],
+  "total_count": 34,
+  "next_cursor": "eyJpZCI6ImNvbW1lbnRfMDAxIn0=",
+  "has_more": true
+}
+```
+
+---
+
+### L. `POST /posts/{post_id}/comments`
+
+Submit a new comment from the inline panel.
+
+**Auth:** Required → `401` if not logged in
+
+**Body:**
+```json
+{ "body": "Cute quá trời 😍" }
+```
+
+**Response `201 Created`:**
+```json
+{
+  "id": "comment_002",
+  "author": {
+    "id": "user_001",
+    "display_name": "Mochi",
+    "avatar_url": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+  },
+  "body": "Cute quá trời 😍",
+  "created_at": "2026-06-06T08:00:00Z"
+}
+```
+
+---
+
 ## User Flow Diagrams
 
 ### Feed Load
@@ -560,6 +634,10 @@ User taps "..." on a post
 | Post with `privacy=private` | Only visible to family members of the authoring family |
 | Messages button — not logged in | No red dot; tapping redirects to Login |
 | Profile button — not logged in | Default placeholder avatar shown; tapping redirects to Login |
+| Love — optimistic update fails (API error) | Revert `love_count` and `is_loved` to previous state; show error toast |
+| Comment count = 0 | Comment button still tappable; inline panel opens showing empty state |
+| Comment count ≤ 10 | Show all comments inline; no "View all" link needed |
+| Comment count > 10 | Show latest 10 inline + "View all N comments" link → Post Detail screen |
 | Network error on feed load | Show error state with retry button |
 | Cursor expired (e.g. after long background) | Reset to first page silently |
 
