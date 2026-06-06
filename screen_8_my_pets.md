@@ -191,95 +191,174 @@ All posts belonging to the active family, same as Family Posts screen (Screen 3)
 
 ## API Endpoints Required
 
-> Most data for this screen reuses existing endpoints. New endpoints listed below.
+> Most data for this screen reuses existing endpoints. New endpoints listed below. All calls go to `POST /graphql`.
 
-### AY. `GET /users/me/active-family`
+### AY. Query: `ActiveFamily`
 
 Fetch the active family with full detail for the My Pets screen.  
 **Auth:** Required
 
+**Operation:**
+```graphql
+query ActiveFamily {
+  activeFamily {
+    id
+    name
+    tag
+    city
+    cityCode
+    country
+    countryCode
+    avatarUrl
+    petAvatars
+    petCount
+    randomCount
+    followerCount
+    viewerRole
+    pets {
+      id
+      name
+      avatarUrl
+      breed
+      gender
+      ageDisplay
+      postCount
+      healthStatus
+    }
+    parents {
+      id
+      name
+      tag
+      avatarUrl
+      role
+      status
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{}
+```
+
 **Response `200 OK`:**
 ```json
 {
-  "id": "fam_xyz",
-  "name": "Minh's Family",
-  "tag": "minhfamily",
-  "city": "Hồ Chí Minh",
-  "city_code": "HCM",
-  "country": "Việt Nam",
-  "country_code": "VN",
-  "avatar_url": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-  "pet_avatars": ["..."],
-  "pet_count": 3,
-  "random_count": 10,
-  "follower_count": 287,
-  "viewer_role": "owner",
-  "pets": [
-    {
-      "id": "pet_111",
-      "name": "Bụi",
-      "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-      "breed": "Orange Tabby Cat",
-      "gender": "male",
-      "age_display": "3 years",
-      "post_count": 47,
-      "health_status": "normal"
-    },
-    {
-      "id": "pet_222",
-      "name": "Măng",
-      "avatar_url": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
-      "breed": "Buckskin Pony",
-      "gender": "female",
-      "age_display": "5 years",
-      "post_count": 24,
-      "health_status": "check"
+  "data": {
+    "activeFamily": {
+      "id": "fam_xyz",
+      "name": "Minh's Family",
+      "tag": "minhfamily",
+      "city": "Hồ Chí Minh",
+      "cityCode": "HCM",
+      "country": "Việt Nam",
+      "countryCode": "VN",
+      "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+      "petAvatars": ["..."],
+      "petCount": 3,
+      "randomCount": 10,
+      "followerCount": 287,
+      "viewerRole": "OWNER",
+      "pets": [
+        {
+          "id": "pet_111",
+          "name": "Bụi",
+          "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
+          "breed": "Orange Tabby Cat",
+          "gender": "MALE",
+          "ageDisplay": "3 years",
+          "postCount": 47,
+          "healthStatus": "NORMAL"
+        },
+        {
+          "id": "pet_222",
+          "name": "Măng",
+          "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
+          "breed": "Buckskin Pony",
+          "gender": "FEMALE",
+          "ageDisplay": "5 years",
+          "postCount": 24,
+          "healthStatus": "CONCERN"
+        }
+      ],
+      "parents": [
+        { "id": "user_001", "name": "Minh Dang", "tag": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
+        { "id": "user_002", "name": "Cecilia Tran", "tag": "ceciliatran", "avatarUrl": "...", "role": "PARENT", "status": "JOINED" },
+        { "id": "user_003", "name": "Thao Nguyen", "tag": "thaonguyen", "avatarUrl": "...", "role": "PARENT", "status": "INVITED" }
+      ]
     }
-  ],
-  "parents": [
-    { "id": "user_001", "name": "Minh Dang", "tag": "minhdang", "avatar_url": "...", "role": "owner", "status": "joined" },
-    { "id": "user_002", "name": "Cecilia Tran", "tag": "ceciliatran", "avatar_url": "...", "role": "parent", "status": "joined" },
-    { "id": "user_003", "name": "Thao Nguyen", "tag": "thaonguyen", "avatar_url": "...", "role": "parent", "status": "invited" }
-  ]
+  }
 }
 ```
 
 **Notes:**
-- `viewer_role`: `"owner"` | `"parent"` — controls visibility of Edit button and management actions in Parents popup
+- `viewerRole`: `OWNER` | `PARENT` — controls visibility of Edit button and management actions in Parents popup
 - `parents` included here to avoid a separate API call when opening the bottom sheet
 
 ---
 
-### AZ. `GET /families/{family_id}/random-media`
+### AZ. Query: `FamilyRandomMedia`
 
 Fetch breed-tagged media for the Random Pets section preview (2×2 grid + View All list).  
 **Auth:** Required
 
-**Query Parameters:** `cursor`, `limit=20`
+**Operation:**
+```graphql
+query FamilyRandomMedia($familyId: ID!, $cursor: String, $limit: Int) {
+  familyRandomMedia(familyId: $familyId, cursor: $cursor, limit: $limit) {
+    media {
+      id
+      thumbnailUrl
+      postId
+      breed
+      cityCode
+      countryCode
+      createdAt
+    }
+    totalCount
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "familyId": "fam_xyz",
+  "cursor": null,
+  "limit": 20
+}
+```
 
 **Response `200 OK`:**
 ```json
 {
-  "media": [
-    {
-      "id": "media_003",
-      "thumbnail_url": "https://cdn.petapp.com/media/003_thumb.jpg",
-      "post_id": "post_abc",
-      "breed": "British Shorthair",
-      "city_code": "HCM",
-      "country_code": "VN",
-      "created_at": "2026-05-01T10:00:00Z"
+  "data": {
+    "familyRandomMedia": {
+      "media": [
+        {
+          "id": "media_003",
+          "thumbnailUrl": "https://cdn.petapp.com/media/003_thumb.jpg",
+          "postId": "post_abc",
+          "breed": "British Shorthair",
+          "cityCode": "HCM",
+          "countryCode": "VN",
+          "createdAt": "2026-05-01T10:00:00Z"
+        }
+      ],
+      "totalCount": 12,
+      "nextCursor": "...",
+      "hasMore": true
     }
-  ],
-  "total_count": 12,
-  "next_cursor": "...",
-  "has_more": true
+  }
 }
 ```
 
 **Notes:**
-- `thumbnail_url` used directly in the 2×2 grid cells
-- `breed`, `city_code`, `country_code`, `created_at` used for cell subtitle display: `breed name · 📍 HCM, VN · 1 mo`
+- `thumbnailUrl` used directly in the 2×2 grid cells
+- `breed`, `cityCode`, `countryCode`, `createdAt` used for cell subtitle display: `breed name · 📍 HCM, VN · 1 mo`
 - Screen fetches only the first 4 items for the preview; "View All" passes cursor for full list
 - "View All" navigates to Random Pet Posts screen — uses endpoint `GET /families/{id}/posts?type=random` (Screen 3)
 

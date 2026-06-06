@@ -212,15 +212,33 @@ Actions available depend on the current tag state:
 
 ## API Endpoints Required
 
-### AT. `POST /ai/scan-media`
+### AT. Mutation: `ScanMedia`
 Scan an uploaded media item for pet detection.  
 **Auth:** Required
 
-**Body:**
+**Operation:**
+```graphql
+mutation ScanMedia($input: ScanMediaInput!) {
+  scanMedia(input: $input) {
+    detected
+    breed
+    color
+    matchedPet {
+      id
+      name
+      avatarUrl
+    }
+  }
+}
+```
+
+**Variables:**
 ```json
 {
-  "media_url": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
-  "family_id": "fam_xyz"
+  "input": {
+    "mediaUrl": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
+    "familyId": "fam_xyz"
+  }
 }
 ```
 
@@ -229,13 +247,17 @@ Scan an uploaded media item for pet detection.
 Pet detected + matched to family pet:
 ```json
 {
-  "detected": true,
-  "breed": "Orange Tabby Cat",
-  "color": "orange",
-  "matched_pet": {
-    "id": "pet_111",
-    "name": "Pudding",
-    "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
+  "data": {
+    "scanMedia": {
+      "detected": true,
+      "breed": "Orange Tabby Cat",
+      "color": "orange",
+      "matchedPet": {
+        "id": "pet_111",
+        "name": "Pudding",
+        "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
+      }
+    }
   }
 }
 ```
@@ -243,110 +265,245 @@ Pet detected + matched to family pet:
 Pet detected + no family match:
 ```json
 {
-  "detected": true,
-  "breed": "British Shorthair",
-  "color": "grey",
-  "matched_pet": null
+  "data": {
+    "scanMedia": {
+      "detected": true,
+      "breed": "British Shorthair",
+      "color": "grey",
+      "matchedPet": null
+    }
+  }
 }
 ```
 
 No pet detected:
 ```json
 {
-  "detected": false,
-  "breed": null,
-  "color": null,
-  "matched_pet": null
+  "data": {
+    "scanMedia": {
+      "detected": false,
+      "breed": null,
+      "color": null,
+      "matchedPet": null
+    }
+  }
 }
 ```
 
 **Notes:**
 - `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `media_tag`.
 - Resulting `media_tag` written to the post uses only `{ type, id, breed }` (Screen 1 canonical structure).
-- In Random Pets context (`[+]` from Screen 8), call with `family_id` omitted or `skip_pet_match: true` — `matched_pet` is always `null`.
+- In Random Pets context (`[+]` from Screen 8), call with `familyId` omitted or `skipPetMatch: true` — `matchedPet` is always `null`.
 
 ---
 
-### AU. `POST /families/{family_id}/pets`
+### AU. Mutation: `CreatePet`
 Create a new pet under a family.  
 **Auth:** Required (owner or parent of the family)
 
-**Body:**
-```json
-{
-  "name": "Snowball",
-  "breed": "British Shorthair",
-  "color": "grey",
-  "gender": "female",
-  "birthday": "2024-01-15",
-  "weight_kg": 3.2,
-  "avatar_url": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
+**Operation:**
+```graphql
+mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
+  createPet(familyId: $familyId, input: $input) {
+    id
+    name
+    breed
+    gender
+    ageDisplay
+    avatarUrl
+  }
 }
 ```
 
-**Response `201 Created`:** Pet object with `id`, `name`, `breed`, `color`, `gender`, `age_display`, `avatar_url`.
+**Variables:**
+```json
+{
+  "familyId": "fam_xyz",
+  "input": {
+    "name": "Snowball",
+    "breed": "British Shorthair",
+    "gender": "FEMALE",
+    "birthday": "2024-01-15",
+    "weightKg": 3.2,
+    "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
+  }
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "data": {
+    "createPet": {
+      "id": "pet_222",
+      "name": "Snowball",
+      "breed": "British Shorthair",
+      "gender": "FEMALE",
+      "ageDisplay": "1 year old",
+      "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
+    }
+  }
+}
+```
 
 ---
 
-### AV. `PUT /posts/draft`
+### AV. Mutation: `SaveDraft`
 Save or update the current post draft.  
 **Auth:** Required
 
-**Body:** Full post form state (same shape as `POST /posts` below, all fields optional).
-
-**Response `200 OK`:** `{ "draft_id": "draft_abc" }`
-
----
-
-### AW. `DELETE /posts/draft`
-Delete the current draft (on Cancel).  
-**Auth:** Required  
-**Response `204 No Content`**
-
----
-
-### AX. `POST /posts`
-Publish the post.  
-**Auth:** Required
-
-**Body:**
-```json
-{
-  "family_id": "fam_xyz",
-  "caption": "Pudding nằm chờ mama nấu cơm 🌕",
-  "privacy": "public",
-  "location": {
-    "city": "Hồ Chí Minh",
-    "city_code": "HCM",
-    "country": "Việt Nam",
-    "country_code": "VN"
-  },
-  "media": [
-    {
-      "url": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
-      "type": "uploaded",
-      "order": 1,
-      "media_tag": {
-        "type": "pet",
-        "id": "pet_111",
-        "breed": "Orange Tabby Cat"
-      }
-    },
-    {
-      "url": "https://www.youtube.com/watch?v=abc123",
-      "type": "embedded",
-      "order": 2,
-      "media_tag": {
-        "type": "random",
-        "id": null,
-        "breed": null
-      }
-    }
-  ]
+**Operation:**
+```graphql
+mutation SaveDraft($input: CreatePostInput!) {
+  saveDraft(input: $input) {
+    draftId
+  }
 }
 ```
 
-**Response `201 Created`:** Full post object (same shape as `GET /feed/explore` item).
+**Variables:**
+```json
+{
+  "input": {
+    "familyId": "fam_xyz",
+    "caption": "Pudding nằm chờ mama nấu cơm 🌕",
+    "privacy": "PUBLIC",
+    "location": {
+      "city": "Hồ Chí Minh",
+      "cityCode": "HCM",
+      "country": "Việt Nam",
+      "countryCode": "VN"
+    },
+    "media": [
+      {
+        "url": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
+        "type": "UPLOADED",
+        "order": 1,
+        "mediaTag": {
+          "type": "PET",
+          "id": "pet_111",
+          "breed": "Orange Tabby Cat"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "saveDraft": {
+      "draftId": "draft_abc"
+    }
+  }
+}
+```
+
+---
+
+### AW. Mutation: `DeleteDraft`
+Delete the current draft (on Cancel).  
+**Auth:** Required
+
+**Operation:**
+```graphql
+mutation DeleteDraft($draftId: ID!) {
+  deleteDraft(draftId: $draftId)
+}
+```
+
+**Variables:**
+```json
+{
+  "draftId": "draft_abc"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "deleteDraft": true
+  }
+}
+```
+
+---
+
+### AX. Mutation: `CreatePost`
+Publish the post.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+mutation CreatePost($input: CreatePostInput!) {
+  createPost(input: $input) {
+    id
+    caption
+    privacy
+    location {
+      city
+      cityCode
+      country
+      countryCode
+    }
+    media {
+      url
+      type
+      order
+      mediaTag {
+        type
+        id
+        breed
+      }
+    }
+    createdAt
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "input": {
+    "familyId": "fam_xyz",
+    "caption": "Pudding nằm chờ mama nấu cơm 🌕",
+    "privacy": "PUBLIC",
+    "location": {
+      "city": "Hồ Chí Minh",
+      "cityCode": "HCM",
+      "country": "Việt Nam",
+      "countryCode": "VN"
+    },
+    "media": [
+      {
+        "url": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
+        "type": "UPLOADED",
+        "order": 1,
+        "mediaTag": {
+          "type": "PET",
+          "id": "pet_111",
+          "breed": "Orange Tabby Cat"
+        }
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=abc123",
+        "type": "EMBEDDED",
+        "order": 2,
+        "mediaTag": {
+          "type": "RANDOM",
+          "id": null,
+          "breed": null
+        }
+      }
+    ]
+  }
+}
+```
+
+**Response `201 Created`:** Full `Post` object (canonical shape from Screen 1).
 
 **Errors:**
 

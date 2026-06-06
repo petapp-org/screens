@@ -93,65 +93,267 @@ Shown once after a new account is created via any method.
 
 ## API Endpoints Required
 
-### AA. `POST /auth/phone/request-otp`
-**Body:** `{ "phone": "+84901234567" }`  
-**Response `200 OK`:** `{ "expires_in": 60 }`
+All operations use `POST /graphql`. Auth where required via `Authorization: Bearer <token>` header.
 
-**Errors:**
+**Shared types:**
+```graphql
+type AuthResult {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+  isNewUser: Boolean!
+  requiresProfileSetup: Boolean!
+}
 
-| Status | Code | Scenario |
-|--------|------|----------|
-| `400` | `INVALID_PHONE` | Phone format invalid |
-| `429` | `RATE_LIMITED` | Too many OTP requests for this number |
+type User {
+  id: ID!
+  displayName: String
+  tag: String
+  avatarUrl: String
+}
+```
 
 ---
 
-### AB. `POST /auth/phone/verify-otp`
-**Body:** `{ "phone": "+84901234567", "otp": "123456" }`  
+### AA. Mutation: `RequestOtp`
+
+Request an OTP be sent to the given phone number.
+**Auth:** Not required
+
+**Operation:**
+```graphql
+mutation RequestOtp($input: RequestOtpInput!) {
+  requestOtp(input: $input) {
+    expiresIn
+  }
+}
+```
+
+**Variables:**
+```json
+{ "input": { "phone": "+84901234567" } }
+```
+
 **Response `200 OK`:**
 ```json
 {
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "is_new_user": true
+  "data": {
+    "requestOtp": {
+      "expiresIn": 60
+    }
+  }
 }
 ```
 
 **Errors:**
 
-| Status | Code | Scenario |
-|--------|------|----------|
-| `400` | `INVALID_OTP` | OTP incorrect |
-| `400` | `OTP_EXPIRED` | OTP has expired |
-| `429` | `TOO_MANY_ATTEMPTS` | Too many wrong attempts |
+| Code | Scenario |
+|------|----------|
+| `INVALID_PHONE` | Phone format invalid |
+| `RATE_LIMITED` | Too many OTP requests for this number |
 
 ---
 
-### AC. `POST /auth/oauth`
-**Body:** `{ "provider": "google", "id_token": "..." }`  
-**Response `200 OK`:** Same shape as `verify-otp` response.
+### AB. Mutation: `VerifyOtp`
 
----
+Verify the OTP and authenticate the user. Returns tokens and new-user flag.
+**Auth:** Not required
 
-### AD. `GET /users/check-tag`
-**Query:** `?tag=minhdang`  
-**Auth:** Not required  
-**Response `200 OK`:** `{ "available": true }`
+**Operation:**
+```graphql
+mutation VerifyOtp($input: VerifyOtpInput!) {
+  verifyOtp(input: $input) {
+    accessToken
+    refreshToken
+    isNewUser
+    requiresProfileSetup
+    user {
+      id
+      displayName
+      tag
+      avatarUrl
+    }
+  }
+}
+```
 
----
+**Variables:**
+```json
+{ "input": { "phone": "+84901234567", "otp": "123456" } }
+```
 
-### AE. `PATCH /users/me`
-Update user profile (used for profile setup and future edits).  
-**Auth:** Required  
-**Body:** `{ "name": "Minh Dang", "tag": "minhdang", "avatar_url": "https://..." }`  
-**Response `200 OK`:** Updated user object.
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "verifyOtp": {
+      "accessToken": "eyJ...",
+      "refreshToken": "eyJ...",
+      "isNewUser": true,
+      "requiresProfileSetup": true,
+      "user": {
+        "id": "u_abc123",
+        "displayName": null,
+        "tag": null,
+        "avatarUrl": null
+      }
+    }
+  }
+}
+```
 
 **Errors:**
 
-| Status | Code | Scenario |
-|--------|------|----------|
-| `409` | `TAG_TAKEN` | Tag already in use by another user |
-| `400` | `TAG_ALREADY_SET` | User attempts to change tag after it was already set |
+| Code | Scenario |
+|------|----------|
+| `INVALID_OTP` | OTP incorrect |
+| `OTP_EXPIRED` | OTP has expired |
+| `TOO_MANY_ATTEMPTS` | Too many wrong attempts |
+
+---
+
+### AC. Mutation: `AuthWithGoogle`
+
+Authenticate via Google OAuth id_token. Returns same `AuthResult` shape.
+**Auth:** Not required
+
+**Operation:**
+```graphql
+mutation AuthWithGoogle($input: OAuthInput!) {
+  authWithGoogle(input: $input) {
+    accessToken
+    refreshToken
+    isNewUser
+    requiresProfileSetup
+    user {
+      id
+      displayName
+      tag
+      avatarUrl
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{ "input": { "idToken": "eyJ..." } }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "authWithGoogle": {
+      "accessToken": "eyJ...",
+      "refreshToken": "eyJ...",
+      "isNewUser": false,
+      "requiresProfileSetup": false,
+      "user": {
+        "id": "u_abc123",
+        "displayName": "Minh Dang",
+        "tag": "minhdang",
+        "avatarUrl": "https://..."
+      }
+    }
+  }
+}
+```
+
+---
+
+### AD. Mutation: `AuthWithApple`
+
+Authenticate via Apple OAuth id_token. Returns same `AuthResult` shape.
+**Auth:** Not required
+
+**Operation:**
+```graphql
+mutation AuthWithApple($input: OAuthInput!) {
+  authWithApple(input: $input) {
+    accessToken
+    refreshToken
+    isNewUser
+    requiresProfileSetup
+    user {
+      id
+      displayName
+      tag
+      avatarUrl
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{ "input": { "idToken": "eyJ..." } }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "authWithApple": {
+      "accessToken": "eyJ...",
+      "refreshToken": "eyJ...",
+      "isNewUser": true,
+      "requiresProfileSetup": true,
+      "user": {
+        "id": "u_abc123",
+        "displayName": null,
+        "tag": null,
+        "avatarUrl": null
+      }
+    }
+  }
+}
+```
+
+---
+
+### AE. Mutation: `SetupProfile`
+
+Update user profile (used for profile setup and future edits).
+**Auth:** Required
+
+**Operation:**
+```graphql
+mutation SetupProfile($input: SetupProfileInput!) {
+  setupProfile(input: $input) {
+    id
+    displayName
+    tag
+    avatarUrl
+  }
+}
+```
+
+**Variables:**
+```json
+{ "input": { "displayName": "Minh Dang", "tag": "minhdang", "avatarUrl": "https://..." } }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "setupProfile": {
+      "id": "u_abc123",
+      "displayName": "Minh Dang",
+      "tag": "minhdang",
+      "avatarUrl": "https://..."
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `TAG_TAKEN` | Tag already in use by another user |
+| `TAG_ALREADY_SET` | User attempts to change tag after it was already set |
 
 ---
 

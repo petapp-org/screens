@@ -209,118 +209,224 @@ The selected view persists for the session (client-side state).
 
 ## API Endpoints Required
 
-> Follow/unfollow endpoints (D, E) are shared from Screen 1.
+> FollowFamily and UnfollowFamily mutations are shared from Screen 1.
 
 ---
 
-### Q. `GET /families/{family_id}`
+### Q. Query: `Family`
 
 Fetch family profile data for the info card, pets list, and about section.
 
-**Headers:**
-- `Authorization: Bearer <token>` — optional. Populates `is_following`.
+**Auth:** Optional — bearer token populates `isFollowing`.
 
-**Response `200 OK`:**
-
-```json
-{
-  "id": "fam_xyz",
-  "name": "Minh's Family",
-  "tag": "minhfamily",
-  "city": "HCMC",
-  "country": "VN",
-  "avatar_url": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-  "pet_avatars": [
-    "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-    "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
-  ],
-  "pet_count": 2,
-  "random_count": 10,
-  "random_post_count": 23,
-  "follower_count": 287,
-  "type": "charity",
-  "is_following": false,
-  "short_description": "Home-based cat rescue",
-  "donor_count": 184,
-  "about": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
-  "parent_count": 1,
-  "pets": [
-    {
-      "id": "pet_111",
-      "name": "Bụi",
-      "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-      "breed": "Orange Tabby Cat",
-      "gender": "male",
-      "age_display": "3 years",
-      "post_count": 47
-    },
-    {
-      "id": "pet_222",
-      "name": "Chao",
-      "avatar_url": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
-      "breed": "Vietnamese Native",
-      "gender": "female",
-      "age_display": "2 years",
-      "post_count": 38
+**Operation:**
+```graphql
+query Family($id: ID!) {
+  family(id: $id) {
+    id
+    name
+    tag
+    location {
+      city
+      cityCode
+      country
+      countryCode
     }
-  ]
+    avatarUrl
+    petAvatars
+    petCount
+    randomCount
+    randomPostCount
+    followerCount
+    type
+    isFollowing
+    shortDescription
+    donorCount
+    about
+    parentCount
+    pets {
+      id
+      name
+      avatarUrl
+      breed
+      gender
+      ageDisplay
+      postCount
+    }
+  }
 }
 ```
 
-**Error Responses:**
+**Variables:**
+```json
+{ "id": "fam_xyz" }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "family": {
+      "id": "fam_xyz",
+      "name": "Minh's Family",
+      "tag": "minhfamily",
+      "location": {
+        "city": "HCMC",
+        "cityCode": "SGN",
+        "country": "Vietnam",
+        "countryCode": "VN"
+      },
+      "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+      "petAvatars": [
+        "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
+        "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
+      ],
+      "petCount": 2,
+      "randomCount": 10,
+      "randomPostCount": 23,
+      "followerCount": 287,
+      "type": "CHARITY",
+      "isFollowing": false,
+      "shortDescription": "Home-based cat rescue",
+      "donorCount": 184,
+      "about": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
+      "parentCount": 1,
+      "pets": [
+        {
+          "id": "pet_111",
+          "name": "Bụi",
+          "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
+          "breed": "Orange Tabby Cat",
+          "gender": "MALE",
+          "ageDisplay": "3 years",
+          "postCount": 47
+        },
+        {
+          "id": "pet_222",
+          "name": "Chao",
+          "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
+          "breed": "Vietnamese Native",
+          "gender": "FEMALE",
+          "ageDisplay": "2 years",
+          "postCount": 38
+        }
+      ]
+    }
+  }
+}
+```
+
+**Errors:**
 
 | Status | Code | Scenario |
 |--------|------|----------|
-| `404` | `FAMILY_NOT_FOUND` | Family does not exist |
+| `200` | `FAMILY_NOT_FOUND` | Family does not exist (returned in `errors[]`) |
 
 ---
 
-### R. `GET /families/{family_id}/posts`
+### R. Query: `FamilyPosts`
 
 Fetch paginated posts for the family feed (used by both list view and grid view).
 
-**Query Parameters:**
+**Auth:** Optional — bearer token populates `isLoved` on each post.
 
-| Param | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `cursor` | string | No | — | Pagination cursor |
-| `limit` | int | No | `10` | Posts per page |
+**Operation:**
+```graphql
+query FamilyPosts($familyId: ID!, $cursor: String, $limit: Int) {
+  familyPosts(familyId: $familyId, cursor: $cursor, limit: $limit) {
+    posts {
+      ...Post
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
 
-**Headers:**
-- `Authorization: Bearer <token>` — optional. Populates `is_loved` on each post.
-
-**Response `200 OK`:** Same shape as `GET /feed/explore` — `posts` array + `next_cursor` + `has_more`.
-
-**Notes:**
-- Returns only posts the caller is allowed to see (privacy rules from Screen 1 apply)
-- Sorted by `created_at` desc
-
----
-
-### S. `GET /families/{family_id}/parents`
-
-Fetch the list of users linked to this family (loaded when user taps the Parents row to open the bottom sheet).
+**Variables:**
+```json
+{ "familyId": "fam_xyz", "cursor": null, "limit": 10 }
+```
 
 **Response `200 OK`:**
 ```json
 {
-  "parents": [
-    {
-      "id": "user_001",
-      "display_name": "Minh Dang",
-      "tag": "minhdang",
-      "avatar_url": "https://cdn.petapp.com/users/user_001/avatar.jpg"
-    },
-    {
-      "id": "user_002",
-      "display_name": "Cecilia Tran",
-      "tag": "ceciliatran",
-      "avatar_url": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+  "data": {
+    "familyPosts": {
+      "posts": [],
+      "nextCursor": "cursor_abc123",
+      "hasMore": true
     }
-  ],
-  "total_count": 2
+  }
 }
 ```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `200` | `FAMILY_NOT_FOUND` | Family does not exist (returned in `errors[]`) |
+
+> Same `Post` shape as Screen 1. Returns only posts the caller is allowed to see (privacy rules from Screen 1 apply). Sorted by `createdAt` desc.
+
+---
+
+### S. Query: `FamilyParents`
+
+Fetch the list of users linked to this family (loaded when user taps the Parents row to open the bottom sheet).
+
+**Auth:** Not required.
+
+**Operation:**
+```graphql
+query FamilyParents($familyId: ID!) {
+  familyParents(familyId: $familyId) {
+    parents {
+      id
+      displayName
+      tag
+      avatarUrl
+    }
+    totalCount
+  }
+}
+```
+
+**Variables:**
+```json
+{ "familyId": "fam_xyz" }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "familyParents": {
+      "parents": [
+        {
+          "id": "user_001",
+          "displayName": "Minh Dang",
+          "tag": "minhdang",
+          "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+        },
+        {
+          "id": "user_002",
+          "displayName": "Cecilia Tran",
+          "tag": "ceciliatran",
+          "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+        }
+      ],
+      "totalCount": 2
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `200` | `FAMILY_NOT_FOUND` | Family does not exist (returned in `errors[]`) |
 
 ---
 

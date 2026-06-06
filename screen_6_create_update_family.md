@@ -189,34 +189,56 @@ Dropdown with 3 options. Determines the **default privacy** applied to new posts
 
 ## API Endpoints Required
 
-### AM. `POST /families`
-Create a new family.  
-**Auth:** Required. Returns `403 FAMILY_ALREADY_OWNED` if user already owns a family.
+All calls go to `POST /graphql`.
 
-**Body:**
-```json
-{
-  "name": "Thao's Family",
-  "tag": "thaofam",
-  "about": "Just me and a future pet or two. 🌱",
-  "avatar_url": "https://cdn.petapp.com/media/upload_xyz.jpg",
-  "default_privacy": "public",
-  "city": "Hồ Chí Minh",
-  "city_code": "HCM",
-  "country": "Việt Nam",
-  "country_code": "VN"
+### AM. Mutation: `CreateFamily`
+Create a new family.
+**Auth:** Required. Returns `FAMILY_ALREADY_OWNED` error if user already owns a family.
+
+**Operation:**
+```graphql
+mutation CreateFamily($input: CreateFamilyInput!) {
+  createFamily(input: $input) {
+    id
+    name
+    tag
+    avatarUrl
+    defaultPrivacy
+    isActive
+  }
 }
 ```
 
-**Response `201 Created`:**
+**Variables:**
 ```json
 {
-  "id": "fam_new",
-  "name": "Thao's Family",
-  "tag": "thaofam",
-  "avatar_url": "https://cdn.petapp.com/families/fam_new/avatar.jpg",
-  "default_privacy": "public",
-  "is_active": true
+  "input": {
+    "name": "Thao's Family",
+    "tag": "thaofam",
+    "about": "Just me and a future pet or two. 🌱",
+    "avatarUrl": "https://cdn.petapp.com/media/upload_xyz.jpg",
+    "defaultPrivacy": "PUBLIC",
+    "city": "Hồ Chí Minh",
+    "cityCode": "HCM",
+    "country": "Việt Nam",
+    "countryCode": "VN"
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "createFamily": {
+      "id": "fam_new",
+      "name": "Thao's Family",
+      "tag": "thaofam",
+      "avatarUrl": "https://cdn.petapp.com/families/fam_new/avatar.jpg",
+      "defaultPrivacy": "PUBLIC",
+      "isActive": true
+    }
+  }
 }
 ```
 
@@ -232,71 +254,285 @@ Note: new family is automatically set as the user's active family.
 
 ---
 
-### AN. `PATCH /families/{family_id}`
-Update an existing family.  
+### AN. Mutation: `UpdateFamily`
+Update an existing family.
 **Auth:** Required. Returns `403` if caller is not the owner.
 
-**Body (partial update):**
-```json
-{
-  "name": "Updated Name",
-  "about": "Updated description",
-  "avatar_url": "https://cdn.petapp.com/...",
-  "default_privacy": "followers"
+**Operation:**
+```graphql
+mutation UpdateFamily($id: ID!, $input: UpdateFamilyInput!) {
+  updateFamily(id: $id, input: $input) {
+    id
+    name
+    about
+    avatarUrl
+    defaultPrivacy
+    cityCode
+    countryCode
+  }
 }
 ```
 
-**Response `200 OK`:** Updated family object.
+**Variables:**
+```json
+{
+  "id": "fam_001",
+  "input": {
+    "name": "Updated Name",
+    "about": "Updated description",
+    "avatarUrl": "https://cdn.petapp.com/...",
+    "defaultPrivacy": "FOLLOWERS"
+  }
+}
+```
 
----
-
-### AO. `GET /families/check-tag`
-Check tag availability during Create form.  
-**Auth:** Not required  
-**Query:** `?tag=thaofam`  
-**Response `200 OK`:** `{ "available": true }`
-
----
-
-### AP. `GET /users/search`
-Search users to invite as parents.  
-**Auth:** Required  
-**Query:** `?q=minhdang&limit=10`  
 **Response `200 OK`:**
 ```json
 {
-  "users": [
-    {
-      "id": "user_002",
-      "name": "Minh Dang",
-      "tag": "minhdang",
-      "avatar_url": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+  "data": {
+    "updateFamily": {
+      "id": "fam_001",
+      "name": "Updated Name",
+      "about": "Updated description",
+      "avatarUrl": "https://cdn.petapp.com/...",
+      "defaultPrivacy": "FOLLOWERS",
+      "cityCode": "HCM",
+      "countryCode": "VN"
     }
-  ]
+  }
 }
 ```
 
----
+**Errors:**
 
-### AQ. `POST /families/{family_id}/invites`
-Send a parent invite to a user.  
-**Auth:** Required (owner only)  
-**Body:** `{ "user_id": "user_002" }`  
-**Response `201 Created`:** `{ "status": "invited", "user_id": "user_002" }`
-
----
-
-### AR. `DELETE /families/{family_id}/invites/{user_id}`
-Cancel a pending invite.  
-**Auth:** Required (owner only)  
-**Response `204 No Content`**
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `FORBIDDEN` | Caller is not the family owner |
+| `404` | `FAMILY_NOT_FOUND` | Family ID does not exist |
 
 ---
 
-### AS. `DELETE /families/{family_id}/parents/{user_id}`
-Remove an accepted parent from the family.  
-**Auth:** Required (owner only). Cannot remove self (owner).  
-**Response `204 No Content`**
+### AO. Query: `CheckFamilyTag`
+Check tag availability during Create form.
+**Auth:** Not required
+
+**Operation:**
+```graphql
+query CheckFamilyTag($tag: String!) {
+  checkFamilyTag(tag: $tag) {
+    available
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "tag": "thaofam"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "checkFamilyTag": {
+      "available": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `400` | `INVALID_TAG_FORMAT` | Tag contains invalid characters |
+
+---
+
+### AP. Query: `SearchUsers`
+Search users to invite as parents.
+**Auth:** Required
+
+**Operation:**
+```graphql
+query SearchUsers($q: String!, $limit: Int) {
+  searchUsers(q: $q, limit: $limit) {
+    id
+    displayName
+    tag
+    avatarUrl
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "q": "minhdang",
+  "limit": 10
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "searchUsers": [
+      {
+        "id": "user_002",
+        "displayName": "Minh Dang",
+        "tag": "minhdang",
+        "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+      }
+    ]
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `400` | `QUERY_TOO_SHORT` | Search query is fewer than 2 characters |
+
+---
+
+### AQ. Mutation: `InviteParent`
+Send a parent invite to a user.
+**Auth:** Required (owner only)
+
+**Operation:**
+```graphql
+mutation InviteParent($familyId: ID!, $userId: ID!) {
+  inviteParent(familyId: $familyId, userId: $userId) {
+    status
+    user {
+      id
+      displayName
+      tag
+      avatarUrl
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "familyId": "fam_001",
+  "userId": "user_002"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "inviteParent": {
+      "status": "INVITED",
+      "user": {
+        "id": "user_002",
+        "displayName": "Minh Dang",
+        "tag": "minhdang",
+        "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+      }
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `FORBIDDEN` | Caller is not the family owner |
+| `409` | `ALREADY_MEMBER` | User is already a parent or has a pending invite |
+| `404` | `USER_NOT_FOUND` | Target user does not exist |
+
+---
+
+### AR. Mutation: `CancelParentInvite`
+Cancel a pending parent invite.
+**Auth:** Required (owner only)
+
+**Operation:**
+```graphql
+mutation CancelParentInvite($familyId: ID!, $userId: ID!) {
+  cancelParentInvite(familyId: $familyId, userId: $userId) {
+    success
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "familyId": "fam_001",
+  "userId": "user_002"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "cancelParentInvite": {
+      "success": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `FORBIDDEN` | Caller is not the family owner |
+| `404` | `INVITE_NOT_FOUND` | No pending invite exists for this user |
+
+---
+
+### AS. Mutation: `RemoveParent`
+Remove an accepted parent from the family.
+**Auth:** Required (owner only). Cannot remove self (owner).
+
+**Operation:**
+```graphql
+mutation RemoveParent($familyId: ID!, $userId: ID!) {
+  removeParent(familyId: $familyId, userId: $userId) {
+    success
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "familyId": "fam_001",
+  "userId": "user_003"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "removeParent": {
+      "success": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `FORBIDDEN` | Caller is not the family owner |
+| `403` | `CANNOT_REMOVE_OWNER` | Attempt to remove the owner themselves |
+| `404` | `MEMBER_NOT_FOUND` | User is not a member of this family |
 
 ---
 

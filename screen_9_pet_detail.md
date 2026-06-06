@@ -284,58 +284,132 @@ Post published → media_tag.type = pet → pet identified/created
 
 ## API Endpoints Required
 
-### BA. `GET /pets/{pet_id}`
+All calls go to `POST /graphql`.
 
-Fetch full pet detail including all tab content.  
+### BA. Query: `Pet`
+
+Fetch full pet detail including all tab content.
 **Auth:** Required (family member only)
 
-**Response `200 OK`:**
-```json
-{
-  "id": "pet_111",
-  "name": "Bụi",
-  "breed": "Orange Tabby Cat",
-  "breed_id": "breed_orange_tabby_cat",
-  "gender": "male",
-  "age_display": "3 years",
-  "birthday": "2023-01-15",
-  "weight_kg": 4.2,
-  "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-  "post_count": 47,
-  "health_status": "normal",
-  "missing_status": null,
-  "is_deleted": false,
-  "family_id": "fam_xyz",
-  "viewer_role": "owner",
-  "tabs": {
-    "health": {
-      "status": "normal",
-      "html": "<div>...</div>",
-      "source_post_id": "post_abc",
-      "analyzed_at": "2026-06-01T10:00:00Z"
-    },
-    "food": {
-      "status": "normal",
-      "html": "<div>...</div>"
-    },
-    "behavior": {
-      "status": "normal",
-      "html": "<div>...</div>"
-    },
-    "med_vax": {
-      "status": "normal",
-      "html": "<div>...</div>"
+**Operation:**
+```graphql
+query Pet($id: ID!) {
+  pet(id: $id) {
+    id
+    name
+    breed
+    breedId
+    gender
+    ageDisplay
+    birthday
+    weightKg
+    avatarUrl
+    postCount
+    healthStatus
+    missingStatus {
+      reportedAt
+      lastSeenLocation {
+        city
+        cityCode
+        country
+        countryCode
+      }
+    }
+    isDeleted
+    familyId
+    viewerRole
+    tabs {
+      health {
+        status
+        html
+        sourcePostId
+        analyzedAt
+      }
+      food {
+        status
+        html
+        sourcePostId
+        analyzedAt
+      }
+      behavior {
+        status
+        html
+        sourcePostId
+        analyzedAt
+      }
+      medVax {
+        status
+        html
+        sourcePostId
+        analyzedAt
+      }
     }
   }
 }
 ```
 
-**Tab status values:** `"checking"` | `"no_data"` | `"good"` | `"normal"` | `"concern"` | `"bad"` | `"critical"`
+**Variables:**
+```json
+{ "id": "pet_111" }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "pet": {
+      "id": "pet_111",
+      "name": "Bụi",
+      "breed": "Orange Tabby Cat",
+      "breedId": "breed_orange_tabby_cat",
+      "gender": "MALE",
+      "ageDisplay": "3 years",
+      "birthday": "2023-01-15",
+      "weightKg": 4.2,
+      "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
+      "postCount": 47,
+      "healthStatus": "NORMAL",
+      "missingStatus": null,
+      "isDeleted": false,
+      "familyId": "fam_xyz",
+      "viewerRole": "owner",
+      "tabs": {
+        "health": {
+          "status": "NORMAL",
+          "html": "<div>...</div>",
+          "sourcePostId": "post_abc",
+          "analyzedAt": "2026-06-01T10:00:00Z"
+        },
+        "food": {
+          "status": "NORMAL",
+          "html": "<div>...</div>",
+          "sourcePostId": null,
+          "analyzedAt": null
+        },
+        "behavior": {
+          "status": "NORMAL",
+          "html": "<div>...</div>",
+          "sourcePostId": null,
+          "analyzedAt": null
+        },
+        "medVax": {
+          "status": "NORMAL",
+          "html": "<div>...</div>",
+          "sourcePostId": null,
+          "analyzedAt": null
+        }
+      }
+    }
+  }
+}
+```
+
+**Tab status values:** `CHECKING` | `NO_DATA` | `GOOD` | `NORMAL` | `CONCERN` | `BAD` | `CRITICAL`
 
 **Notes:**
-- When `tabs.health.status = "checking"` or `"no_data"`: `html` is `null`
+- When `tabs.health.status = CHECKING` or `NO_DATA`: `html` is `null`
 - Same for Food/Behavior/Med/Vac tabs
-- `viewer_role`: `"owner"` | `"parent"` — controls visibility of Edit / Delete / Mark as Found actions
+- `viewerRole`: `"owner"` | `"parent"` — controls visibility of Edit / Delete / Mark as Found actions
 
 **Errors:**
 
@@ -346,65 +420,172 @@ Fetch full pet detail including all tab content.
 
 ---
 
-### BB. `GET /families/{family_id}/pets`
+### BB. Query: `FamilyPets`
 
-Fetch all active (non-deleted) pets for the family — used to populate the pet switcher.  
+Fetch all active (non-deleted) pets for the family — used to populate the pet switcher.
 **Auth:** Required (family member)
+
+**Operation:**
+```graphql
+query FamilyPets($familyId: ID!) {
+  familyPets(familyId: $familyId) {
+    id
+    name
+    avatarUrl
+    healthStatus
+    missingStatus {
+      reportedAt
+      lastSeenLocation {
+        city
+        cityCode
+        country
+        countryCode
+      }
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{ "familyId": "fam_xyz" }
+```
 
 **Response `200 OK`:**
 ```json
 {
-  "pets": [
-    {
-      "id": "pet_111",
-      "name": "Bụi",
-      "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-      "health_status": "normal",
-      "missing_status": null
-    }
-  ]
+  "data": {
+    "familyPets": [
+      {
+        "id": "pet_111",
+        "name": "Bụi",
+        "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
+        "healthStatus": "NORMAL",
+        "missingStatus": null
+      }
+    ]
+  }
 }
 ```
 
 ---
 
-### BC. `PATCH /pets/{pet_id}`
+### BC. Mutation: `UpdatePet`
 
-Edit pet info.  
+Edit pet info.
 **Auth:** Required (owner only)
 
-**Body (partial update):**
-```json
-{
-  "name": "Bụi Bụi",
-  "gender": "male",
-  "birthday": "2023-01-15",
-  "weight_kg": 4.5,
-  "avatar_url": "https://cdn.petapp.com/media/new_avatar.jpg",
-  "breed": "Orange Tabby Cat"
+**Operation:**
+```graphql
+mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
+  updatePet(id: $id, input: $input) {
+    id
+    name
+    breed
+    breedId
+    gender
+    ageDisplay
+    birthday
+    weightKg
+    avatarUrl
+    postCount
+    healthStatus
+    missingStatus {
+      reportedAt
+      lastSeenLocation {
+        city
+        cityCode
+        country
+        countryCode
+      }
+    }
+    isDeleted
+    familyId
+  }
 }
 ```
 
-**Response `200 OK`:** Updated pet object.
+**Variables:**
+```json
+{
+  "id": "pet_111",
+  "input": {
+    "name": "Bụi Bụi",
+    "gender": "MALE",
+    "birthday": "2023-01-15",
+    "weightKg": 4.5,
+    "avatarUrl": "https://cdn.petapp.com/media/new_avatar.jpg",
+    "breed": "Orange Tabby Cat",
+    "forceBreedUpdate": false
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "updatePet": {
+      "id": "pet_111",
+      "name": "Bụi Bụi",
+      "breed": "Orange Tabby Cat",
+      "breedId": "breed_orange_tabby_cat",
+      "gender": "MALE",
+      "ageDisplay": "3 years",
+      "birthday": "2023-01-15",
+      "weightKg": 4.5,
+      "avatarUrl": "https://cdn.petapp.com/media/new_avatar.jpg",
+      "postCount": 47,
+      "healthStatus": "NORMAL",
+      "missingStatus": null,
+      "isDeleted": false,
+      "familyId": "fam_xyz"
+    }
+  }
+}
+```
 
 **Notes:**
-- `breed` field: if was set by AI scan (`breed_source = "ai"`), override requires explicit `force_breed_update: true` flag in body
+- `breed` field: if was set by AI scan (`breedSource = "AI"`), override requires explicit `forceBreedUpdate: true` in input
 - Changing `breed` triggers re-generation of Food/Behavior/Med/Vax tabs (queued)
 
 ---
 
-### BD. `DELETE /pets/{pet_id}`
+### BD. Mutation: `DeletePet`
 
-Soft-delete a pet.  
+Soft-delete a pet.
 **Auth:** Required (owner only)
 
-**Behaviour:**
-- Sets `is_deleted = true` on the pet record
-- Pet excluded from all active listings and pickers
-- Posts and `media_tag` references are not modified
-- Pet record remains in DB (restorable)
+**Operation:**
+```graphql
+mutation DeletePet($id: ID!) {
+  deletePet(id: $id) {
+    success
+  }
+}
+```
 
-**Response `204 No Content`**
+**Variables:**
+```json
+{ "id": "pet_111" }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "deletePet": {
+      "success": true
+    }
+  }
+}
+```
+
+**Behaviour:**
+- Sets `isDeleted = true` on the pet record
+- Pet excluded from all active listings and pickers
+- Posts and `mediaTag` references are not modified
+- Pet record remains in DB (restorable)
 
 **Errors:**
 
@@ -414,55 +595,105 @@ Soft-delete a pet.
 
 ---
 
-### BE. `POST /pets/{pet_id}/missing-report`
+### BE. Mutation: `ReportMissing`
 
-Report a pet as missing.  
+Report a pet as missing.
 **Auth:** Required (family member)
 
-**Body:**
-```json
-{
-  "last_seen_location": {
-    "city": "Hồ Chí Minh",
-    "city_code": "HCM",
-    "country": "Việt Nam",
-    "country_code": "VN"
-  },
-  "media_urls": [
-    "https://cdn.petapp.com/media/tmp_missing_001.jpg"
-  ]
+**Operation:**
+```graphql
+mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
+  reportMissing(petId: $petId, input: $input) {
+    id
+    petId
+    reportedAt
+    lastSeenLocation {
+      city
+      cityCode
+      country
+      countryCode
+    }
+    mediaUrls
+  }
 }
 ```
 
-**Response `201 Created`:**
+**Variables:**
 ```json
 {
-  "id": "missing_report_001",
-  "pet_id": "pet_111",
-  "reported_at": "2026-06-06T10:00:00Z",
-  "last_seen_location": { "city": "Hồ Chí Minh", "city_code": "HCM", "country": "Việt Nam", "country_code": "VN" },
-  "media_urls": ["..."]
+  "petId": "pet_111",
+  "input": {
+    "lastSeenLocation": {
+      "city": "Hồ Chí Minh",
+      "cityCode": "HCM",
+      "country": "Việt Nam",
+      "countryCode": "VN"
+    },
+    "mediaUrls": [
+      "https://cdn.petapp.com/media/tmp_missing_001.jpg"
+    ]
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "reportMissing": {
+      "id": "missing_report_001",
+      "petId": "pet_111",
+      "reportedAt": "2026-06-06T10:00:00Z",
+      "lastSeenLocation": {
+        "city": "Hồ Chí Minh",
+        "cityCode": "HCM",
+        "country": "Việt Nam",
+        "countryCode": "VN"
+      },
+      "mediaUrls": ["https://cdn.petapp.com/media/tmp_missing_001.jpg"]
+    }
+  }
 }
 ```
 
 **Side effects:**
-- `pet.missing_status` set
+- `pet.missingStatus` set
 - Push notification dispatched to family followers
 
 ---
 
-### BF. `PATCH /pets/{pet_id}/found`
+### BF. Mutation: `MarkPetFound`
 
-Mark a missing pet as found.  
+Mark a missing pet as found.
 **Auth:** Required (owner only)
+
+**Operation:**
+```graphql
+mutation MarkPetFound($petId: ID!) {
+  markPetFound(petId: $petId) {
+    missingStatus
+  }
+}
+```
+
+**Variables:**
+```json
+{ "petId": "pet_111" }
+```
 
 **Response `200 OK`:**
 ```json
-{ "missing_status": null }
+{
+  "data": {
+    "markPetFound": {
+      "missingStatus": null
+    }
+  }
+}
 ```
 
 **Side effects:**
-- `pet.missing_status` cleared
+- `pet.missingStatus` cleared
 - Optional push notification: *"Good news! Bụi from Minh's Family has been found 🎉"*
 
 ---

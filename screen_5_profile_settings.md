@@ -148,100 +148,315 @@ PREFERENCES
 
 ## API Endpoints Required
 
-### AF. `GET /users/me`
-Fetch current user profile (for the Me screen header).  
-**Auth:** Required  
-**Response `200 OK`:**
-```json
-{
-  "id": "user_001",
-  "name": "Minh Dang",
-  "tag": "minhdang",
-  "avatar_url": "https://cdn.petapp.com/users/user_001/avatar.jpg",
-  "families": [
-    {
-      "id": "fam_xyz",
-      "name": "Minh's Family",
-      "tag": "minhfamily",
-      "avatar_url": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-      "role": "owner",
-      "is_active": true
-    },
-    {
-      "id": "fam_abc",
-      "name": "Cecilia's Family",
-      "tag": "ceciliafam",
-      "avatar_url": "https://cdn.petapp.com/families/fam_abc/avatar.jpg",
-      "role": "parent",
-      "is_active": false
+All calls go to `POST /graphql`.
+
+---
+
+### AF. Query: `Me`
+Fetch current user profile (for the Me screen header), including all family memberships.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+query Me {
+  me {
+    id
+    displayName
+    tag
+    avatarUrl
+    families {
+      id
+      name
+      tag
+      avatarUrl
+      type
+      isActive
+      role
     }
-  ]
+  }
 }
 ```
 
----
+**Variables:**
+```json
+{}
+```
 
-### AG. `PATCH /users/me/active-family`
-Set the active family.  
-**Auth:** Required  
-**Body:** `{ "family_id": "fam_xyz" }`  
-**Response `200 OK`:** `{ "active_family_id": "fam_xyz" }`
-
----
-
-### AH. `GET /users/me/loved-posts`
-**Auth:** Required  
-**Query:** `cursor`, `limit=10`  
-**Response:** Same shape as `GET /feed/explore` — `posts` array + `next_cursor` + `has_more`.
-
----
-
-### AI. `GET /users/me/following`
-**Auth:** Required  
-**Query:** `cursor`, `limit=20`  
 **Response `200 OK`:**
 ```json
 {
-  "families": [
-    {
-      "id": "fam_xyz",
-      "name": "Daily Cats",
-      "tag": "dailycats",
-      "avatar_url": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-      "city": "Internet",
-      "country": ""
+  "data": {
+    "me": {
+      "id": "user_001",
+      "displayName": "Minh Dang",
+      "tag": "minhdang",
+      "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
+      "families": [
+        {
+          "id": "fam_xyz",
+          "name": "Minh's Family",
+          "tag": "minhfamily",
+          "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+          "type": "STANDARD",
+          "isActive": true,
+          "role": "OWNER"
+        },
+        {
+          "id": "fam_abc",
+          "name": "Cecilia's Family",
+          "tag": "ceciliafam",
+          "avatarUrl": "https://cdn.petapp.com/families/fam_abc/avatar.jpg",
+          "type": "STANDARD",
+          "isActive": false,
+          "role": "PARENT"
+        }
+      ]
     }
-  ],
-  "next_cursor": "...",
-  "has_more": false
+  }
 }
 ```
 
 ---
 
-### AJ. `GET /users/me/contact-info`
-**Auth:** Required  
+### AG. Mutation: `SetActiveFamily`
+Set the active family for the current user. All other families are deactivated automatically.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+mutation SetActiveFamily($input: SetActiveFamilyInput!) {
+  setActiveFamily(input: $input) {
+    activeFamilyId
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "input": {
+    "familyId": "fam_xyz"
+  }
+}
+```
+
 **Response `200 OK`:**
 ```json
 {
-  "phone": "+84901234567",
-  "email": "minh@example.com"
+  "data": {
+    "setActiveFamily": {
+      "activeFamilyId": "fam_xyz"
+    }
+  }
 }
 ```
 
 ---
 
-### AK. `PATCH /users/me/preferences`
-**Auth:** Required  
-**Body:** `{ "push_notifications_enabled": true }`  
-**Response `200 OK`:** `{ "push_notifications_enabled": true }`
+### AH. Query: `MyLovedPosts`
+Paginated list of posts the current user has loved, sorted by love date descending.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+query MyLovedPosts($cursor: String, $limit: Int) {
+  myLovedPosts(cursor: $cursor, limit: $limit) {
+    posts {
+      ...Post
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "cursor": null,
+  "limit": 10
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "myLovedPosts": {
+      "posts": [ "...same Post shape as Screen 1..." ],
+      "nextCursor": "cursor_token_here",
+      "hasMore": true
+    }
+  }
+}
+```
 
 ---
 
-### AL. `POST /auth/logout`
-**Auth:** Required  
-**Body:** `{ "refresh_token": "eyJ..." }`  
-**Response `204 No Content`**
+### AI. Query: `MyFollowing`
+Paginated list of families the current user follows.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+query MyFollowing($cursor: String, $limit: Int) {
+  myFollowing(cursor: $cursor, limit: $limit) {
+    families {
+      id
+      name
+      tag
+      avatarUrl
+      city
+      country
+      followerCount
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "cursor": null,
+  "limit": 20
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "myFollowing": {
+      "families": [
+        {
+          "id": "fam_xyz",
+          "name": "Daily Cats",
+          "tag": "dailycats",
+          "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+          "city": "Internet",
+          "country": "",
+          "followerCount": 3840
+        }
+      ],
+      "nextCursor": null,
+      "hasMore": false
+    }
+  }
+}
+```
+
+---
+
+### AJ. Query: `MyContactInfo`
+Fetch the current user's phone number and linked email address.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+query MyContactInfo {
+  myContactInfo {
+    phone
+    email
+  }
+}
+```
+
+**Variables:**
+```json
+{}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "myContactInfo": {
+      "phone": "+84901234567",
+      "email": "minh@example.com"
+    }
+  }
+}
+```
+
+---
+
+### AK. Mutation: `UpdateMe`
+Update the current user's editable profile fields and/or preferences. All fields are optional; only provided fields are updated.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+mutation UpdateMe($input: UpdateMeInput!) {
+  updateMe(input: $input) {
+    id
+    displayName
+    avatarUrl
+    pushNotificationsEnabled
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "input": {
+    "displayName": "Minh Dang",
+    "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
+    "pushNotificationsEnabled": true
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "updateMe": {
+      "id": "user_001",
+      "displayName": "Minh Dang",
+      "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
+      "pushNotificationsEnabled": true
+    }
+  }
+}
+```
+
+---
+
+### AL. Mutation: `Logout`
+Invalidate the current user's refresh token server-side and end the session.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+mutation Logout($input: LogoutInput!) {
+  logout(input: $input) {
+    success
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "input": {
+    "refreshToken": "eyJ..."
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "logout": {
+      "success": true
+    }
+  }
+}
+```
 
 ---
 

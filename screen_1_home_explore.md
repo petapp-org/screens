@@ -218,366 +218,691 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 
 ## API Endpoints Required
 
-### A. `GET /feed/explore`
+All API calls go to a single `POST /graphql` endpoint.
+**Auth header:** `Authorization: Bearer <token>` (optional unless stated otherwise).
+
+---
+
+### A. Query: `Feed`
 
 Fetches the paginated post feed for the Explore screen.
 
-**Query Parameters:**
+**Auth:** Optional. When present, `isLoved` and viewer-specific fields are populated.
 
-| Param | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `filter` | string | No | `latest` | `latest` \| `following` \| `rescue` |
-| `cursor` | string | No | — | Pagination cursor from previous response |
-| `limit` | int | No | `10` | Number of posts per page |
-
-**Headers:**
-- `Authorization: Bearer <token>` — optional. When present, `is_loved` and viewer-specific fields are populated.
-
-**Response `200 OK`:**
-
-```json
-{
-  "posts": [
-    {
-      "id": "post_abc123",
-      "family": {
-        "id": "fam_xyz",
-        "name": "Pudding's Family",
-        "avatar_url": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-        "type": "standard"
-      },
-      "author": {
-        "id": "user_001",
-        "display_name": "Mochi",
-        "avatar_url": "https://cdn.petapp.com/users/user_001/avatar.jpg"
-      },
-      "pets": [
-        {
-          "id": "pet_111",
-          "name": "Pudding",
-          "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
-        },
-        {
-          "id": "pet_222",
-          "name": "Mochi",
-          "avatar_url": "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
+**Operation:**
+```graphql
+query Feed($filter: FeedFilter, $cursor: String, $limit: Int) {
+  feed(filter: $filter, cursor: $cursor, limit: $limit) {
+    posts {
+      id
+      family {
+        id
+        name
+        avatarUrl
+        type
+      }
+      author {
+        id
+        displayName
+        avatarUrl
+      }
+      pets {
+        id
+        name
+        avatarUrl
+      }
+      caption
+      location {
+        city
+        cityCode
+        country
+        countryCode
+      }
+      media {
+        id
+        type
+        url
+        thumbnailUrl
+        mimeType
+        width
+        height
+        durationSeconds
+        provider
+        mediaTag {
+          type
+          id
+          breed
         }
-      ],
-      "caption": "Pudding nằm chờ mama nấu cơm 🌕 Q7 cat life",
-      "location": {
-        "city": "Hồ Chí Minh",
-        "city_code": "HCM",
-        "country": "Việt Nam",
-        "country_code": "VN"
-      },
-      "media": [
-        {
-          "id": "media_001",
-          "type": "uploaded",
-          "url": "https://cdn.petapp.com/media/001.jpg",
-          "thumbnail_url": null,
-          "mime_type": "image/jpeg",
-          "width": 1080,
-          "height": 1080,
-          "duration_seconds": null,
-          "provider": null,
-          "media_tag": {
-            "type": "pet",
-            "id": "pet_111",
-            "breed": "Orange Tabby Cat"
-          }
-        },
-        {
-          "id": "media_002",
-          "type": "embedded",
-          "url": "https://www.youtube.com/watch?v=abc123",
-          "thumbnail_url": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
-          "mime_type": null,
-          "width": null,
-          "height": null,
-          "duration_seconds": 62.0,
-          "provider": "youtube",
-          "media_tag": {
-            "type": "random",
-            "id": null,
-            "breed": null
-          }
-        },
-        {
-          "id": "media_003",
-          "type": "uploaded",
-          "url": "https://cdn.petapp.com/media/003.jpg",
-          "thumbnail_url": null,
-          "mime_type": "image/jpeg",
-          "width": 1080,
-          "height": 1080,
-          "duration_seconds": null,
-          "provider": null,
-          "media_tag": {
-            "type": "random",
-            "id": null,
-            "breed": "British Shorthair"
-          }
-        }
-      ],
-      "love_count": 287,
-      "comment_count": 34,
-      "is_loved": false,
-      "privacy": "public",
-      "created_at": "2026-06-06T06:00:00Z"
+      }
+      loveCount
+      commentCount
+      isLoved
+      privacy
+      createdAt
     }
-  ],
-  "next_cursor": "eyJpZCI6InBvc3RfYWJjMTIzIn0=",
-  "has_more": true
+    nextCursor
+    hasMore
+  }
 }
 ```
 
-> Example above: post has 3 media. Media 1 (uploaded image) → linked to Pudding. Media 2 (embedded YouTube) → linked to Mochi. Media 3 (uploaded image) → no pet linked, no badge shown.
+**Variables:**
+```json
+{ "filter": "LATEST", "cursor": null, "limit": 10 }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "feed": {
+      "posts": [
+        {
+          "id": "post_abc123",
+          "family": {
+            "id": "fam_xyz",
+            "name": "Pudding's Family",
+            "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+            "type": "STANDARD"
+          },
+          "author": {
+            "id": "user_001",
+            "displayName": "Mochi",
+            "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+          },
+          "pets": [
+            {
+              "id": "pet_111",
+              "name": "Pudding",
+              "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
+            },
+            {
+              "id": "pet_222",
+              "name": "Mochi",
+              "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
+            }
+          ],
+          "caption": "Pudding nằm chờ mama nấu cơm 🌕 Q7 cat life",
+          "location": {
+            "city": "Hồ Chí Minh",
+            "cityCode": "HCM",
+            "country": "Việt Nam",
+            "countryCode": "VN"
+          },
+          "media": [
+            {
+              "id": "media_001",
+              "type": "UPLOADED",
+              "url": "https://cdn.petapp.com/media/001.jpg",
+              "thumbnailUrl": null,
+              "mimeType": "image/jpeg",
+              "width": 1080,
+              "height": 1080,
+              "durationSeconds": null,
+              "provider": null,
+              "mediaTag": {
+                "type": "PET",
+                "id": "pet_111",
+                "breed": "Orange Tabby Cat"
+              }
+            },
+            {
+              "id": "media_002",
+              "type": "EMBEDDED",
+              "url": "https://www.youtube.com/watch?v=abc123",
+              "thumbnailUrl": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
+              "mimeType": null,
+              "width": null,
+              "height": null,
+              "durationSeconds": 62.0,
+              "provider": "YOUTUBE",
+              "mediaTag": {
+                "type": "RANDOM",
+                "id": null,
+                "breed": null
+              }
+            },
+            {
+              "id": "media_003",
+              "type": "UPLOADED",
+              "url": "https://cdn.petapp.com/media/003.jpg",
+              "thumbnailUrl": null,
+              "mimeType": "image/jpeg",
+              "width": 1080,
+              "height": 1080,
+              "durationSeconds": null,
+              "provider": null,
+              "mediaTag": {
+                "type": "RANDOM",
+                "id": null,
+                "breed": "British Shorthair"
+              }
+            }
+          ],
+          "loveCount": 287,
+          "commentCount": 34,
+          "isLoved": false,
+          "privacy": "PUBLIC",
+          "createdAt": "2026-06-06T06:00:00Z"
+        }
+      ],
+      "nextCursor": "eyJpZCI6InBvc3RfYWJjMTIzIn0=",
+      "hasMore": true
+    }
+  }
+}
+```
+
+> Example above: post has 3 media. Media 1 (uploaded image) → linked to Pudding. Media 2 (embedded YouTube) → random. Media 3 (uploaded image) → no pet linked, no badge shown.
 
 **Notes:**
 - `media` list has minimum 1, maximum 10 items
-- `pets` contains only named pets (`media_tag.type = "pet"`), deduplicated; can be empty `[]`
-- Only `media_tag.type = "pet"` items contribute to `post.pets` list; `type=random` media (with or without `breed`) are NOT shown in subtitle
+- `pets` contains only named pets (`mediaTag.type = PET`), deduplicated; can be empty `[]`
+- Only `mediaTag.type = PET` items contribute to `post.pets` list; `RANDOM` media are NOT shown in subtitle
 - Post header layout:
   ```
-  [family avatar]  Family Name          author_name · 3h
+  [family avatar]  Family Name          displayName · 3h
                    Pet1 · Pet2          HCM - VN
   ```
   - Top-left: family name
   - Bottom-left: pet names joined by ` · ` (omit row if `pets` is empty)
-  - Top-right: `author_name · relative_time` (e.g. `"Mochi · 3h"`)
-  - Bottom-right: location as `city_code - country_code` (omit if `location` is null)
-- `filter=following` requires authentication → return `401` if no valid token
-- `filter=rescue` returns posts from families where `family.type = charity`
-- `is_loved` is always `false` when unauthenticated
-- Server enforces privacy rules before returning results — unauthenticated callers only receive `public` posts; `followers` posts are filtered based on the caller's follow list
+  - Top-right: `displayName · relative_time` (e.g. `"Mochi · 3h"`)
+  - Bottom-right: location as `cityCode - countryCode` (omit if `location` is null)
+- `filter: FOLLOWING` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
+- `filter: RESCUE` returns posts from families where `family.type = CHARITY`
+- `isLoved` is always `false` when unauthenticated
+- Server enforces privacy rules before returning results — unauthenticated callers only receive `PUBLIC` posts; `FOLLOWERS` posts are filtered based on the caller's follow list
 
-**Error Responses:**
+**Errors:**
 
-| Status | Code | Scenario |
-|--------|------|----------|
-| `400` | `INVALID_FILTER` | Unknown filter value |
-| `401` | `UNAUTHORIZED` | `filter=following` without auth token |
-| `422` | `INVALID_CURSOR` | Cursor is malformed or expired |
+| Code | Scenario |
+|------|----------|
+| `INVALID_FILTER` | Unknown filter value |
+| `UNAUTHORIZED` | `filter: FOLLOWING` without auth token |
+| `INVALID_CURSOR` | Cursor is malformed or expired |
 
 ---
 
-### B. `GET /families/suggested`
+### B. Query: `SuggestedFamilies`
 
 Returns families to show in the Suggested Families widget.
 
-**Query Parameters:**
+**Auth:** Optional. When present, excludes already-followed families and server-side dismissed families.
 
-| Param | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `limit` | int | No | `5` | How many families to return |
-| `exclude_ids` | string (comma-separated) | No | — | Family IDs to exclude |
-| `seed` | string | No | — | Random seed for deterministic shuffle per session |
-
-**Headers:**
-- `Authorization: Bearer <token>` — optional. When present, excludes already-followed families and server-side dismissed families.
-
-**Response `200 OK`:**
-
-```json
-{
-  "families": [
-    {
-      "id": "fam_cat_house",
-      "name": "My's Cat House",
-      "avatar_url": "https://cdn.petapp.com/families/fam_cat_house/avatar.jpg",
-      "follower_count": 3600,
-      "follower_count_display": "3.6k",
-      "short_description": "Rescue & rehome cats in HCM City",
-      "type": "charity",
-      "is_following": false
-    },
-    {
-      "id": "fam_normal_001",
-      "name": "Mochi's Family",
-      "avatar_url": "https://cdn.petapp.com/families/fam_normal_001/avatar.jpg",
-      "follower_count": 420,
-      "follower_count_display": "420",
-      "short_description": null,
-      "type": "standard",
-      "is_following": false
-    }
-  ]
+**Operation:**
+```graphql
+query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
+  suggestedFamilies(limit: $limit, excludeIds: $excludeIds, seed: $seed) {
+    id
+    name
+    avatarUrl
+    followerCount
+    followerCountDisplay
+    shortDescription
+    type
+    isFollowing
+  }
 }
 ```
 
-**Note:** `short_description` is always present in the response but is `null` for `standard` families. The client should only render the description line when `type = charity` and `short_description` is non-null.
+**Variables:**
+```json
+{ "limit": 5, "excludeIds": [], "seed": "session_abc" }
+```
 
-`short_description` is a free-text field that the charity family admin fills in manually (via their family profile settings). It is not computed or auto-generated.
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "suggestedFamilies": [
+      {
+        "id": "fam_cat_house",
+        "name": "My's Cat House",
+        "avatarUrl": "https://cdn.petapp.com/families/fam_cat_house/avatar.jpg",
+        "followerCount": 3600,
+        "followerCountDisplay": "3.6k",
+        "shortDescription": "Rescue & rehome cats in HCM City",
+        "type": "CHARITY",
+        "isFollowing": false
+      },
+      {
+        "id": "fam_normal_001",
+        "name": "Mochi's Family",
+        "avatarUrl": "https://cdn.petapp.com/families/fam_normal_001/avatar.jpg",
+        "followerCount": 420,
+        "followerCountDisplay": "420",
+        "shortDescription": null,
+        "type": "STANDARD",
+        "isFollowing": false
+      }
+    ]
+  }
+}
+```
+
+**Note:** `shortDescription` is always present in the response but is `null` for `STANDARD` families. The client should only render the description line when `type = CHARITY` and `shortDescription` is non-null.
+
+`shortDescription` is a free-text field that the charity family admin fills in manually (via their family profile settings). It is not computed or auto-generated.
 
 ---
 
-### C. `POST /families/{family_id}/dismiss-suggestion`
+### C. Mutation: `DismissFamilySuggestion`
 
 Marks a family as dismissed from suggestions for the authenticated user.
 
 **Auth:** Required (for unauthenticated users, dismissal is handled client-side only)
 
-**Response `204 No Content`**
+**Operation:**
+```graphql
+mutation DismissFamilySuggestion($familyId: ID!) {
+  dismissFamilySuggestion(familyId: $familyId)
+}
+```
 
----
-
-### D. `POST /families/{family_id}/follow`
-
-Follow a family.
-
-**Auth:** Required → `401` if not logged in
+**Variables:**
+```json
+{ "familyId": "fam_cat_house" }
+```
 
 **Response `200 OK`:**
 ```json
-{ "is_following": true, "follower_count": 3601 }
+{
+  "data": {
+    "dismissFamilySuggestion": true
+  }
+}
 ```
 
 ---
 
-### E. `DELETE /families/{family_id}/follow`
+### D. Mutation: `FollowFamily`
+
+Follow a family.
+
+**Auth:** Required → returns GraphQL error with code `UNAUTHORIZED` if not logged in
+
+**Operation:**
+```graphql
+mutation FollowFamily($familyId: ID!) {
+  followFamily(familyId: $familyId) {
+    isFollowing
+    followerCount
+  }
+}
+```
+
+**Variables:**
+```json
+{ "familyId": "fam_cat_house" }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "followFamily": {
+      "isFollowing": true,
+      "followerCount": 3601
+    }
+  }
+}
+```
+
+---
+
+### E. Mutation: `UnfollowFamily`
 
 Unfollow a family.
 
 **Auth:** Required
 
+**Operation:**
+```graphql
+mutation UnfollowFamily($familyId: ID!) {
+  unfollowFamily(familyId: $familyId) {
+    isFollowing
+    followerCount
+  }
+}
+```
+
+**Variables:**
+```json
+{ "familyId": "fam_cat_house" }
+```
+
 **Response `200 OK`:**
 ```json
-{ "is_following": false, "follower_count": 3600 }
+{
+  "data": {
+    "unfollowFamily": {
+      "isFollowing": false,
+      "followerCount": 3600
+    }
+  }
+}
 ```
 
 ---
 
-### F. `POST /posts/{post_id}/love`
+### F. Mutation: `LovePost`
 
 Love a post.
 
 **Auth:** Required → redirect to login if not authenticated
 
+**Operation:**
+```graphql
+mutation LovePost($postId: ID!) {
+  lovePost(postId: $postId) {
+    isLoved
+    loveCount
+  }
+}
+```
+
+**Variables:**
+```json
+{ "postId": "post_abc123" }
+```
+
 **Response `200 OK`:**
 ```json
-{ "is_loved": true, "love_count": 288 }
+{
+  "data": {
+    "lovePost": {
+      "isLoved": true,
+      "loveCount": 288
+    }
+  }
+}
 ```
 
 ---
 
-### G. `DELETE /posts/{post_id}/love`
+### G. Mutation: `UnlovePost`
 
 Un-love a post.
 
 **Auth:** Required
 
+**Operation:**
+```graphql
+mutation UnlovePost($postId: ID!) {
+  unlovePost(postId: $postId) {
+    isLoved
+    loveCount
+  }
+}
+```
+
+**Variables:**
+```json
+{ "postId": "post_abc123" }
+```
+
 **Response `200 OK`:**
 ```json
-{ "is_loved": false, "love_count": 287 }
+{
+  "data": {
+    "unlovePost": {
+      "isLoved": false,
+      "loveCount": 287
+    }
+  }
+}
 ```
 
 ---
 
-### H. `POST /posts/{post_id}/hide`
+### H. Mutation: `HidePost`
 
 Hide a specific post from the user's feed.
 
 **Auth:** Required
 
-**Body:**
-```json
-{ "scope": "post" | "author" | "family" }
+- `POST` → hide this post only
+- `AUTHOR` → hide all posts from this user
+- `FAMILY` → hide all posts from this family
+
+**Operation:**
+```graphql
+mutation HidePost($postId: ID!, $scope: HideScope!) {
+  hidePost(postId: $postId, scope: $scope)
+}
 ```
 
-- `post` → hide this post only
-- `author` → hide all posts from this user
-- `family` → hide all posts from this family
+**Variables:**
+```json
+{ "postId": "post_abc123", "scope": "POST" }
+```
 
-**Response `204 No Content`**
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "hidePost": true
+  }
+}
+```
 
 ---
 
-### I. `PATCH /posts/{post_id}`
+### I. Mutation: `UpdatePost`
 
 Edit post (author/family member only).
 
-**Auth:** Required. Returns `403` if caller is not the author or a family member.
+**Auth:** Required. Returns GraphQL error with code `FORBIDDEN` if caller is not the author or a family member.
 
-**Body (partial update):**
+**Operation:**
+```graphql
+mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
+  updatePost(postId: $postId, input: $input) {
+    id
+    family {
+      id
+      name
+      avatarUrl
+      type
+    }
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+    pets {
+      id
+      name
+      avatarUrl
+    }
+    caption
+    location {
+      city
+      cityCode
+      country
+      countryCode
+    }
+    media {
+      id
+      type
+      url
+      thumbnailUrl
+      mimeType
+      width
+      height
+      durationSeconds
+      provider
+      mediaTag {
+        type
+        id
+        breed
+      }
+    }
+    loveCount
+    commentCount
+    isLoved
+    privacy
+    createdAt
+  }
+}
+```
+
+**Variables:**
 ```json
 {
-  "caption": "Updated caption",
-  "privacy": "public" | "followers" | "private"
+  "postId": "post_abc123",
+  "input": {
+    "caption": "Updated caption",
+    "privacy": "PUBLIC"
+  }
 }
 ```
 
 **Response `200 OK`:** Updated post object (same shape as feed post item)
-
----
-
-### J. `DELETE /posts/{post_id}`
-
-Delete post (author/family member only).
-
-**Auth:** Required. Returns `403` if not authorized.
-
-**Response `204 No Content`**
-
----
-
-### K. `GET /posts/{post_id}/comments`
-
-Fetch comments for the inline comment panel.
-
-**Query Parameters:**
-
-| Param | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `limit` | int | No | `10` | Number of comments to return |
-| `cursor` | string | No | — | Pagination cursor (for "View all" flow in Post Detail) |
-
-**Response `200 OK`:**
-
 ```json
 {
-  "comments": [
-    {
-      "id": "comment_001",
-      "author": {
-        "id": "user_002",
-        "display_name": "Bella",
-        "avatar_url": "https://cdn.petapp.com/users/user_002/avatar.jpg"
-      },
-      "body": "Cute quá trời 😍",
-      "created_at": "2026-06-06T07:00:00Z"
+  "data": {
+    "updatePost": {
+      "id": "post_abc123",
+      "caption": "Updated caption",
+      "privacy": "PUBLIC"
     }
-  ],
-  "total_count": 34,
-  "next_cursor": "eyJpZCI6ImNvbW1lbnRfMDAxIn0=",
-  "has_more": true
+  }
 }
 ```
 
 ---
 
-### L. `POST /posts/{post_id}/comments`
+### J. Mutation: `DeletePost`
+
+Delete post (author/family member only).
+
+**Auth:** Required. Returns GraphQL error with code `FORBIDDEN` if not authorized.
+
+**Operation:**
+```graphql
+mutation DeletePost($postId: ID!) {
+  deletePost(postId: $postId)
+}
+```
+
+**Variables:**
+```json
+{ "postId": "post_abc123" }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "deletePost": true
+  }
+}
+```
+
+---
+
+### K. Query: `PostComments`
+
+Fetch comments for the inline comment panel.
+
+**Auth:** Optional.
+
+**Operation:**
+```graphql
+query PostComments($postId: ID!, $limit: Int, $cursor: String) {
+  postComments(postId: $postId, limit: $limit, cursor: $cursor) {
+    comments {
+      id
+      author {
+        id
+        displayName
+        avatarUrl
+      }
+      body
+      createdAt
+    }
+    totalCount
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:**
+```json
+{ "postId": "post_abc123", "limit": 10, "cursor": null }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "postComments": {
+      "comments": [
+        {
+          "id": "comment_001",
+          "author": {
+            "id": "user_002",
+            "displayName": "Bella",
+            "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+          },
+          "body": "Cute quá trời 😍",
+          "createdAt": "2026-06-06T07:00:00Z"
+        }
+      ],
+      "totalCount": 34,
+      "nextCursor": "eyJpZCI6ImNvbW1lbnRfMDAxIn0=",
+      "hasMore": true
+    }
+  }
+}
+```
+
+---
+
+### L. Mutation: `CreateComment`
 
 Submit a new comment from the inline panel.
 
-**Auth:** Required → `401` if not logged in
+**Auth:** Required → returns GraphQL error with code `UNAUTHORIZED` if not logged in
 
-**Body:**
-```json
-{ "body": "Cute quá trời 😍" }
+**Operation:**
+```graphql
+mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
+  createComment(postId: $postId, input: $input) {
+    id
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+    body
+    createdAt
+  }
+}
 ```
 
-**Response `201 Created`:**
+**Variables:**
+```json
+{ "postId": "post_abc123", "input": { "body": "Cute quá trời 😍" } }
+```
+
+**Response `200 OK`:**
 ```json
 {
-  "id": "comment_002",
-  "author": {
-    "id": "user_001",
-    "display_name": "Mochi",
-    "avatar_url": "https://cdn.petapp.com/users/user_001/avatar.jpg"
-  },
-  "body": "Cute quá trời 😍",
-  "created_at": "2026-06-06T08:00:00Z"
+  "data": {
+    "createComment": {
+      "id": "comment_002",
+      "author": {
+        "id": "user_001",
+        "displayName": "Mochi",
+        "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+      },
+      "body": "Cute quá trời 😍",
+      "createdAt": "2026-06-06T08:00:00Z"
+    }
+  }
 }
 ```
 

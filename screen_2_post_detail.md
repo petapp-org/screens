@@ -125,124 +125,267 @@ Always pinned to the bottom of the screen, above the system navigation bar.
 
 ## API Endpoints Required
 
-> Endpoints F, G (love/unlove), H (hide), I (edit post), J (delete post) are shared with Screen 1.  
-> Endpoints K, L (list/create comments) are shared with Screen 1.  
-> New endpoints specific to this screen are listed below.
+> All calls go to `POST /graphql`.  
+> Shared mutations from Screen 1: `LovePost`, `UnlovePost`, `HidePost`, `UpdatePost`, `DeletePost`, `PostComments`, `CreateComment`.  
+> New operations specific to this screen are listed below.
 
 ---
 
-### M. `GET /posts/{post_id}`
+### M. Query: `Post`
 
 Fetch a single post for the detail view.
 
-**Headers:**
-- `Authorization: Bearer <token>` — optional. Populates `is_loved`, `is_own` on comments.
+**Auth:** Optional — when a valid Bearer token is provided, `isLoved` and `isOwn` fields are populated on the returned post.
 
-**Response `200 OK`:** Same post object shape as `GET /feed/explore` response item.
-
-**Error Responses:**
-
-| Status | Code | Scenario |
-|--------|------|----------|
-| `404` | `POST_NOT_FOUND` | Post does not exist or has been deleted |
-| `403` | `FORBIDDEN` | Post exists but viewer does not have permission (e.g. `privacy=private`, not a family member) |
-
----
-
-### N. `POST /comments/{comment_id}/replies`
-
-Reply to a comment (or to a reply — any depth).
-
-**Auth:** Required → `401` if not logged in
-
-**Path param:** `comment_id` — the comment being replied to (can be a top-level comment or an existing reply)
-
-**Body:**
-```json
-{ "body": "Đồng ý nè 😄" }
-```
-
-**Response `201 Created`:**
-```json
-{
-  "id": "reply_001",
-  "parent_id": "comment_001",
-  "author": {
-    "id": "user_003",
-    "display_name": "Luna",
-    "avatar_url": "https://cdn.petapp.com/users/user_003/avatar.jpg"
-  },
-  "body": "Đồng ý nè 😄",
-  "created_at": "2026-06-06T09:00:00Z",
-  "reply_count": 0,
-  "is_own": true
+**Operation:**
+```graphql
+query Post($id: ID!) {
+  post(id: $id) {
+    id
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+    body
+    createdAt
+    isLoved
+    isOwn
+    loveCount
+    commentCount
+  }
 }
 ```
 
----
-
-### O. `GET /comments/{comment_id}/replies`
-
-Fetch replies for a comment (triggered when user expands "View N replies").
-
-**Query Parameters:**
-
-| Param | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `limit` | int | No | `5` | Replies per page |
-| `cursor` | string | No | — | Pagination cursor for "Load more replies" |
+**Variables:**
+```json
+{ "id": "post_001" }
+```
 
 **Response `200 OK`:**
 ```json
 {
-  "replies": [
-    {
-      "id": "reply_001",
-      "parent_id": "comment_001",
+  "data": {
+    "post": {
+      "id": "post_001",
       "author": {
-        "id": "user_003",
-        "display_name": "Luna",
-        "avatar_url": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+        "id": "user_001",
+        "displayName": "Minh Tuan",
+        "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
       },
-      "body": "Đồng ý nè 😄",
-      "created_at": "2026-06-06T09:00:00Z",
-      "reply_count": 2,
-      "is_own": false
+      "body": "Post caption here",
+      "createdAt": "2026-06-06T08:00:00Z",
+      "isLoved": false,
+      "isOwn": false,
+      "loveCount": 12,
+      "commentCount": 4
     }
-  ],
-  "total_count": 8,
-  "next_cursor": "eyJpZCI6InJlcGx5XzAwMSJ9",
-  "has_more": true
+  }
 }
 ```
 
----
-
-### P. `DELETE /comments/{comment_id}`
-
-Delete a comment or reply.
-
-**Auth:** Required → `401` if not logged in
-
-**Server validates all three conditions before deleting:**
-1. Caller must be the comment author (`is_own`)
-2. Comment must have no replies (`reply_count = 0`)
-3. Comment must have been created within the last **10 minutes**
-
-If any condition fails → `403`.
-
-**Behaviour:** Hard delete only — comment is removed from the list entirely. No soft delete / "[deleted]" placeholder.
-
-**Response `204 No Content`**
-
-**Error Responses:**
+**Errors:**
 
 | Status | Code | Scenario |
 |--------|------|----------|
-| `403` | `NOT_COMMENT_AUTHOR` | Caller did not author this comment |
-| `403` | `COMMENT_HAS_REPLIES` | Comment already has one or more replies |
-| `403` | `DELETE_WINDOW_EXPIRED` | More than 10 minutes have passed since comment was created |
-| `404` | `COMMENT_NOT_FOUND` | Comment does not exist |
+| `200` | `POST_NOT_FOUND` | Post does not exist or has been deleted |
+| `200` | `FORBIDDEN` | Post exists but viewer does not have permission (e.g. `privacy=PRIVATE`, not a family member) |
+
+---
+
+### N. Mutation: `CreateReply`
+
+Reply to a comment (or to a reply — any depth).
+
+**Auth:** Required → `UNAUTHENTICATED` error if not logged in
+
+**Operation:**
+```graphql
+mutation CreateReply($input: CreateReplyInput!) {
+  createReply(input: $input) {
+    id
+    parentId
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+    body
+    createdAt
+    replyCount
+    isOwn
+    isDeletable
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "input": {
+    "commentId": "comment_001",
+    "body": "Đồng ý nè 😄"
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "createReply": {
+      "id": "reply_001",
+      "parentId": "comment_001",
+      "author": {
+        "id": "user_003",
+        "displayName": "Luna",
+        "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+      },
+      "body": "Đồng ý nè 😄",
+      "createdAt": "2026-06-06T09:00:00Z",
+      "replyCount": 0,
+      "isOwn": true,
+      "isDeletable": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `200` | `UNAUTHENTICATED` | Caller is not logged in |
+| `200` | `COMMENT_NOT_FOUND` | Target comment does not exist |
+
+---
+
+### O. Query: `CommentReplies`
+
+Fetch replies for a comment (triggered when user expands "View N replies").
+
+**Auth:** Optional
+
+**Operation:**
+```graphql
+query CommentReplies($commentId: ID!, $limit: Int, $cursor: String) {
+  commentReplies(commentId: $commentId, limit: $limit, cursor: $cursor) {
+    replies {
+      id
+      parentId
+      author {
+        id
+        displayName
+        avatarUrl
+      }
+      body
+      createdAt
+      replyCount
+      isOwn
+      isDeletable
+    }
+    totalCount
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "commentId": "comment_001",
+  "limit": 5,
+  "cursor": null
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "commentReplies": {
+      "replies": [
+        {
+          "id": "reply_001",
+          "parentId": "comment_001",
+          "author": {
+            "id": "user_003",
+            "displayName": "Luna",
+            "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+          },
+          "body": "Đồng ý nè 😄",
+          "createdAt": "2026-06-06T09:00:00Z",
+          "replyCount": 2,
+          "isOwn": false,
+          "isDeletable": false
+        }
+      ],
+      "totalCount": 8,
+      "nextCursor": "eyJpZCI6InJlcGx5XzAwMSJ9",
+      "hasMore": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `200` | `COMMENT_NOT_FOUND` | Parent comment does not exist |
+
+---
+
+### P. Mutation: `DeleteComment`
+
+Delete a comment or reply.
+
+**Auth:** Required → `UNAUTHENTICATED` error if not logged in
+
+**Server validates all three conditions before deleting:**
+1. Caller must be the comment author (`isOwn`)
+2. Comment must have no replies (`replyCount = 0`)
+3. Comment must have been created within the last **10 minutes**
+
+If any condition fails → `FORBIDDEN` error.
+
+**Behaviour:** Hard delete only — comment is removed from the list entirely. No soft delete / "[deleted]" placeholder.
+
+**Operation:**
+```graphql
+mutation DeleteComment($input: DeleteCommentInput!) {
+  deleteComment(input: $input) {
+    success
+  }
+}
+```
+
+**Variables:**
+```json
+{ "input": { "commentId": "comment_001" } }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "deleteComment": {
+      "success": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `200` | `UNAUTHENTICATED` | Caller is not logged in |
+| `200` | `NOT_COMMENT_AUTHOR` | Caller did not author this comment |
+| `200` | `COMMENT_HAS_REPLIES` | Comment already has one or more replies |
+| `200` | `DELETE_WINDOW_EXPIRED` | More than 10 minutes have passed since comment was created |
+| `200` | `COMMENT_NOT_FOUND` | Comment does not exist |
 
 ---
 
