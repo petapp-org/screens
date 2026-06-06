@@ -63,7 +63,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `avatar_url` | Used as fallback / single avatar |
 | `pet_avatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
 | `pet_count` | Number of actual pets in the family |
-| `random_count` | Number of "randoms" — pets tagged to a breed but not a named pet of this family. Hidden from stats line when `0`. |
+| `random_count` | Number of media items where AI detected a **breed** but could not match to any named pet in this family (`media_tag.type = "breed"`). Does NOT count `type = "random"` (no detection). Hidden from stats line when `0`. |
 | `random_post_count` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `follower_count` | Total followers |
 | `type` | `standard` \| `charity` |

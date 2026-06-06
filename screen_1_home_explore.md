@@ -75,9 +75,10 @@ Each post card displays:
 | `avatar_url` | Display avatar: always use family avatar |
 | `family_name` | Name of the family that created the post |
 | `author_name` | Display name of the user who created the post |
-| `pets` | List of pets linked across all media in this post (can be empty). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatar_url }` |
+| `pets` | List of **named pets** linked across all media in this post (only media with `media_tag.type = "pet"`). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatar_url }`. Can be empty. |
 | `caption` | Post text / description |
-| `media` | List of media items (see Media Object below). Each media item may link to one pet. **Minimum 1 item required** — a post cannot be created without at least one media. |
+| `location` | Optional. `{ "city": "Hồ Chí Minh", "city_code": "HCM", "country": "Việt Nam", "country_code": "VN" }`. Displayed as `"HCM - VN"`. `null` if no location set. |
+| `media` | List of media items (see Media Object below). **Minimum 1, maximum 10.** |
 | `love_count` | Total number of loves |
 | `comment_count` | Total number of comments |
 | `created_at` | ISO 8601 timestamp |
@@ -97,13 +98,25 @@ Each post card displays:
   "height": "int | null",
   "duration_seconds": "float | null",
   "provider": "youtube | vimeo | null",
-  "pet": {
-    "id": "string",
-    "name": "string",
-    "avatar_url": "string"
-  } | null
+  "media_tag": {
+    "type": "pet" | "breed" | "random",
+    "pet": {
+      "id": "string",
+      "name": "string",
+      "avatar_url": "string"
+    } | null,
+    "breed": "string | null",
+    "color": "string | null"
+  }
 }
 ```
+
+**`media_tag` types:**
+| Type | Meaning | `pet` | `breed` | `color` |
+|------|---------|-------|---------|---------|
+| `pet` | AI matched to a named pet in the family | populated | populated | populated |
+| `breed` | AI detected breed/color but no named pet match | null | populated | populated |
+| `random` | AI found no pet, or media is `embedded` | null | null | null |
 
 **Rendering rules:**
 - `uploaded` → display the file stored on platform (image or video player)
@@ -111,11 +124,9 @@ Each post card displays:
 - Multiple media items → swipeable carousel with `N/Total` indicator (e.g. `1/3`) in the top-right corner of the media area
 
 **Pet badge (bottom-left of media):**
-- If `media.pet` is non-null → show a floating badge: `[pet avatar] pet name`
-- If `media.pet` is null → no badge shown
-- Each media item in the carousel may show a different pet badge (or none)
-- Tapping the pet badge → navigate to **Pet Posts screen** (shows all posts linked to that pet)
-- Different media items in the same post can link to different pets
+- `media_tag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; tappable → Pet Posts screen
+- `media_tag.type = "breed"` or `"random"` → **no badge shown**
+- Each media item in the carousel evaluates independently
 
 **Post Card Footer:**
 
@@ -257,6 +268,12 @@ Fetches the paginated post feed for the Explore screen.
         }
       ],
       "caption": "Pudding nằm chờ mama nấu cơm 🌕 Q7 cat life",
+      "location": {
+        "city": "Hồ Chí Minh",
+        "city_code": "HCM",
+        "country": "Việt Nam",
+        "country_code": "VN"
+      },
       "media": [
         {
           "id": "media_001",
@@ -268,10 +285,15 @@ Fetches the paginated post feed for the Explore screen.
           "height": 1080,
           "duration_seconds": null,
           "provider": null,
-          "pet": {
-            "id": "pet_111",
-            "name": "Pudding",
-            "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
+          "media_tag": {
+            "type": "pet",
+            "pet": {
+              "id": "pet_111",
+              "name": "Pudding",
+              "avatar_url": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
+            },
+            "breed": "Orange Tabby Cat",
+            "color": "orange"
           }
         },
         {
@@ -284,10 +306,11 @@ Fetches the paginated post feed for the Explore screen.
           "height": null,
           "duration_seconds": 62.0,
           "provider": "youtube",
-          "pet": {
-            "id": "pet_222",
-            "name": "Mochi",
-            "avatar_url": "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
+          "media_tag": {
+            "type": "random",
+            "pet": null,
+            "breed": null,
+            "color": null
           }
         },
         {
@@ -300,7 +323,12 @@ Fetches the paginated post feed for the Explore screen.
           "height": 1080,
           "duration_seconds": null,
           "provider": null,
-          "pet": null
+          "media_tag": {
+            "type": "breed",
+            "pet": null,
+            "breed": "British Shorthair",
+            "color": "grey"
+          }
         }
       ],
       "love_count": 287,
@@ -318,10 +346,12 @@ Fetches the paginated post feed for the Explore screen.
 > Example above: post has 3 media. Media 1 (uploaded image) → linked to Pudding. Media 2 (embedded YouTube) → linked to Mochi. Media 3 (uploaded image) → no pet linked, no badge shown.
 
 **Notes:**
-- `media` list must have at least 1 item — enforced at post creation; the feed API will never return a post with empty `media`
-- `pets` is the deduplicated list of pets linked across all media items in the post; can be empty `[]`
+- `media` list has minimum 1, maximum 10 items
+- `pets` contains only named pets (`media_tag.type = "pet"`), deduplicated; can be empty `[]`
+- `breed`-tagged and `random`-tagged media do NOT contribute to `pets` list and are NOT shown in subtitle
 - Post header avatar: always use `family.avatar_url`
-- Post header subtitle: render pet names from `pets` list joined by ` · ` (e.g. `"Pudding · Mochi"`); omit if `pets` is empty
+- Post header subtitle: render names from `pets` list joined by ` · ` (e.g. `"Pudding · Mochi"`); omit if `pets` is empty
+- `location` is displayed as `"city_code - country_code"` (e.g. `"HCM - VN"`); omit if null
 - `filter=following` requires authentication → return `401` if no valid token
 - `filter=rescue` returns posts from families where `family.type = charity`
 - `is_loved` is always `false` when unauthenticated
