@@ -358,16 +358,64 @@ User taps Parents row
 
 ---
 
-## Linked Screens (to be specced separately)
+## Linked Screens
 
-| Screen | Triggered from |
-|--------|---------------|
-| Pet Posts screen | Tap a named pet row |
-| Random Pet Posts screen | Tap the Random Pets row |
-| User Posts screen | Tap a parent in the bottom sheet |
+All three linked screens follow the same pattern: **profile header + posts list**.  
+Posts list is identical to the Family Posts list view — same card format as Explore, 10 per page, infinite scroll, list/grid toggle.
 
-**User Posts screen — preview:**  
-Shows a user's profile header (display name, `@handle`, which family/families they belong to) followed by all posts that user has created, same card format as Explore, 10 per page.
+---
+
+### Pet Posts Screen
+
+Triggered from: tapping a named pet row.
+
+**Header:**
+
+| Field | Display |
+|-------|---------|
+| `avatar_url` | Pet avatar |
+| `name` | Pet name |
+| `breed` | Breed name |
+| `gender` | `male` / `female` / `unknown` |
+| `age_display` | e.g. `"3 years"` |
+
+**Posts:** all posts where `media[].pet.id = pet_id`, sorted `created_at` desc.  
+API: `GET /pets/{pet_id}/posts?cursor=&limit=10`
+
+---
+
+### Random Pet Posts Screen
+
+Triggered from: tapping the Random Pets row (only when `random_count > 0`).
+
+**Header:**
+
+| Field | Display |
+|-------|---------|
+| Family avatar | Family avatar |
+| Label | "Random Pets" |
+| `random_count` | e.g. `"10 randoms"` |
+
+**Posts:** all posts from this family linked to a random pet (i.e. tagged to a breed but no named pet).  
+API: `GET /families/{family_id}/posts?type=random&cursor=&limit=10`
+
+---
+
+### User Posts Screen
+
+Triggered from: tapping a parent in the Parents bottom sheet.
+
+**Header:**
+
+| Field | Display |
+|-------|---------|
+| `avatar_url` | User avatar |
+| `display_name` | User's display name |
+| `handle` | `@handle` |
+| `families` | List of family names the user belongs to, e.g. `"Minh's Family"` |
+
+**Posts:** all posts created by this user, sorted `created_at` desc.  
+API: `GET /users/{user_id}/posts?cursor=&limit=10`
 
 ---
 
