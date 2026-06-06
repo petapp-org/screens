@@ -74,10 +74,10 @@ Each post card displays:
 |-------|-------------|
 | `avatar_url` | Display avatar: always use family avatar |
 | `family_name` | Name of the family that created the post |
-| `author_name` | Display name of the user who created the post |
+| `author_name` | Display name of the user who created the post. Shown top-right: `"author_name · time"` |
 | `pets` | List of **named pets** linked across all media in this post (only media with `media_tag.type = "pet"`). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatar_url }`. Can be empty. |
 | `caption` | Post text / description |
-| `location` | Optional. `{ "city": "Hồ Chí Minh", "city_code": "HCM", "country": "Việt Nam", "country_code": "VN" }`. Displayed as `"HCM - VN"`. `null` if no location set. |
+| `location` | Optional. `{ "city": "Hồ Chí Minh", "city_code": "HCM", "country": "Việt Nam", "country_code": "VN" }`. Shown bottom-right below author/time line: `"HCM - VN"`. Omitted if `null`. |
 | `media` | List of media items (see Media Object below). **Minimum 1, maximum 10.** |
 | `love_count` | Total number of loves |
 | `comment_count` | Total number of comments |
@@ -349,9 +349,15 @@ Fetches the paginated post feed for the Explore screen.
 - `media` list has minimum 1, maximum 10 items
 - `pets` contains only named pets (`media_tag.type = "pet"`), deduplicated; can be empty `[]`
 - `breed`-tagged and `random`-tagged media do NOT contribute to `pets` list and are NOT shown in subtitle
-- Post header avatar: always use `family.avatar_url`
-- Post header subtitle: render names from `pets` list joined by ` · ` (e.g. `"Pudding · Mochi"`); omit if `pets` is empty
-- `location` is displayed as `"city_code - country_code"` (e.g. `"HCM - VN"`); omit if null
+- Post header layout:
+  ```
+  [family avatar]  Family Name          author_name · 3h
+                   Pet1 · Pet2          HCM - VN
+  ```
+  - Top-left: family name
+  - Bottom-left: pet names joined by ` · ` (omit row if `pets` is empty)
+  - Top-right: `author_name · relative_time` (e.g. `"Mochi · 3h"`)
+  - Bottom-right: location as `city_code - country_code` (omit if `location` is null)
 - `filter=following` requires authentication → return `401` if no valid token
 - `filter=rescue` returns posts from families where `family.type = charity`
 - `is_loved` is always `false` when unauthenticated
