@@ -188,7 +188,7 @@ The selected view persists for the session (client-side state).
 
 #### 5a. List View
 
-- Post cards identical to Screen 1 (Explore) — same fields, same interactions, same `...` menu logic
+- Post cards follow the canonical definition in `screen_1_home_explore.md` → **Section: Post Card** — same fields, layout, interactions, and `...` menu logic
 - Sorted by `created_at` desc (newest first)
 - Paginated: 10 posts per page, infinite scroll loads more
 

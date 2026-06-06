@@ -42,17 +42,14 @@ Navigated to from: Explore feed (tap post body/media), inline comment panel ("Vi
 
 ### 1. Post Card
 
-Identical to the post card in Screen 1 (Explore). All fields, rules, and interactions apply:
-- Family avatar (always family, not pet)
-- Pets subtitle from `pets` list
-- Media carousel with `N/Total` badge and per-frame pet badge
-- Tap **pet badge** → Pet Posts screen (all posts linked to that pet)
-- Tap **family name** → Family Posts screen (all posts by that family)
-- Tap **author name** → User Posts screen (all posts by that user)
+Identical to the canonical post card defined in `screen_1_home_explore.md` → **Section: Post Card**. All fields, layout rules, and interactions apply including:
+- Header: family avatar · family name (top-left) | `author_name · time` (top-right) | pets subtitle (bottom-left) | location (bottom-right, if set)
+- Media carousel with `N/Total` badge and per-frame pet badge (`media_tag.type = "pet"` only)
+- Tap **pet badge** → Pet Posts screen
+- Tap **family name** → Family Posts screen
+- Tap **author name** → User Posts screen
 - Love button with optimistic update
 - `...` context menu (same 3-case logic as Explore)
-
-Refer to `screen_1_home_explore.md` → **Section: Post Card** for full field definitions.
 
 ---
 

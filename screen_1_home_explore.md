@@ -68,6 +68,8 @@ The Messages unread count is fetched separately (not bundled in the feed respons
 
 ### 2. Post Card
 
+> **Canonical definition.** This post card layout applies to ALL screens that display posts: Explore feed, Post Detail, Family Posts, Pet Posts, Random Pet Posts, User Posts, and Loved Posts. Any update here propagates to all screens.
+
 Each post card displays:
 
 | Field | Description |
