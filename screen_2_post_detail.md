@@ -46,9 +46,9 @@ Identical to the post card in Screen 1 (Explore). All fields, rules, and interac
 - Family avatar (always family, not pet)
 - Pets subtitle from `pets` list
 - Media carousel with `N/Total` badge and per-frame pet badge
-- Tap pet badge → Pet Posts screen
-- Tap family name → Family Profile screen
-- Tap author name → User Profile screen
+- Tap **pet badge** → Pet Posts screen (all posts linked to that pet)
+- Tap **family name** → Family Posts screen (all posts by that family)
+- Tap **author name** → User Posts screen (all posts by that user)
 - Love button with optimistic update
 - `...` context menu (same 3-case logic as Explore)
 
@@ -71,10 +71,15 @@ Refer to `screen_1_home_explore.md` → **Section: Post Card** for full field de
 | `created_at` | Relative time (e.g. "2h ago") |
 | `reply_count` | Total number of replies to this comment |
 | `is_own` | Boolean — whether the current viewer authored this comment |
+| `is_deletable` | Boolean — server-computed; `true` only when `is_own=true` AND `reply_count=0` AND comment was created within the last 10 minutes |
 
 **Comment actions:**
 - **Reply** button (always visible) → sets reply context in fixed input bar (requires login to submit)
-- **Delete** button → visible only when `is_own = true`; tapping shows confirmation before `DELETE /comments/{comment_id}`
+- **Delete** button → visible only when `is_deletable = true`; tapping shows confirmation before `DELETE /comments/{comment_id}`
+
+**Commenting requires login:**
+- Unauthenticated users can read all comments and replies
+- Tapping the input bar, Reply button, or Send → redirect to Login
 
 ---
 
@@ -87,8 +92,8 @@ Replies are nested under their parent comment. Multi-level nesting is supported 
 - Tapping expands and loads the first 5 replies
 
 **Loaded reply:**
-- Same display fields as a top-level comment (`author`, `body`, `created_at`, `is_own`)
-- Has its own **Reply** and **Delete** buttons (same rules)
+- Same display fields as a top-level comment (`author`, `body`, `created_at`, `is_own`, `is_deletable`)
+- Has its own **Reply** and **Delete** buttons (same rules — `is_deletable` applies identically)
 - If a reply itself has replies, show "View N replies ▾" beneath it (same expand behaviour, recursively)
 
 **"Load more replies":**
@@ -108,8 +113,8 @@ Always pinned to the bottom of the screen, above the system navigation bar.
 | State | Display |
 |-------|---------|
 | Default | Placeholder: "Add a comment..." |
-| Replying to a comment | Banner above input: "Replying to @username  ×" — tap × to cancel reply |
-| Unauthenticated | Input is tappable → redirect to Login; Send button disabled |
+| Replying to a comment | Banner above input: "Replying to @username ×" — tap × to cancel reply |
+| Unauthenticated | Input and Reply buttons are tappable → redirect to Login; Send button disabled |
 | Authenticated, empty input | Send button disabled |
 | Authenticated, non-empty input | Send button enabled |
 
@@ -218,13 +223,29 @@ Fetch replies for a comment (triggered when user expands "View N replies").
 
 ### P. `DELETE /comments/{comment_id}`
 
-Delete a comment or reply. Only the author can delete their own comment.
+Delete a comment or reply.
 
-**Auth:** Required. Returns `403` if caller is not the comment author.
+**Auth:** Required → `401` if not logged in
 
-**Behaviour:** Deleting a comment that has replies — the comment body is replaced with `"[deleted]"` and the replies remain visible (soft delete). Deleting a reply with no children — hard delete, removed from list.
+**Server validates all three conditions before deleting:**
+1. Caller must be the comment author (`is_own`)
+2. Comment must have no replies (`reply_count = 0`)
+3. Comment must have been created within the last **10 minutes**
+
+If any condition fails → `403`.
+
+**Behaviour:** Hard delete only — comment is removed from the list entirely. No soft delete / "[deleted]" placeholder.
 
 **Response `204 No Content`**
+
+**Error Responses:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `NOT_COMMENT_AUTHOR` | Caller did not author this comment |
+| `403` | `COMMENT_HAS_REPLIES` | Comment already has one or more replies |
+| `403` | `DELETE_WINDOW_EXPIRED` | More than 10 minutes have passed since comment was created |
+| `404` | `COMMENT_NOT_FOUND` | Comment does not exist |
 
 ---
 
@@ -268,11 +289,12 @@ User types in input bar → taps Send
 ### Delete Comment
 
 ```
-User taps Delete on own comment
+User taps Delete on own comment  (button only visible when is_deletable=true)
   └─> Show confirmation dialog
         └─> Confirm → DELETE /comments/{comment_id}
-              ├─ Has replies → replace body with "[deleted]", keep replies visible
-              └─ No replies  → remove from list immediately
+              ├─ 204 → remove comment from list; decrement parent reply_count if it's a reply
+              └─ 403 COMMENT_HAS_REPLIES / DELETE_WINDOW_EXPIRED
+                    → hide Delete button immediately; show toast "Comment can no longer be deleted"
 ```
 
 ---
@@ -281,12 +303,15 @@ User taps Delete on own comment
 
 | Case | Expected Behaviour |
 |------|--------------------|
-| Unauthenticated user | Can view post and all comments; input bar tappable → redirect to Login |
+| Unauthenticated user | Can view post and all comments; tap input / Reply → redirect to Login |
 | Post not found (deleted) | Show "Post not found" error state with Back button |
 | Post `privacy=private`, viewer not a family member | Show `403` error state |
 | Post `privacy=followers`, viewer not following | Show `403` error state |
-| Comment with replies is deleted | Body shows "[deleted]"; replies remain; Delete button hidden |
-| Reply with no children is deleted | Removed from list; parent `reply_count` decremented |
+| Delete attempted after 10 min window or comment has replies | `403` returned; hide Delete button; show toast |
+| Comment deleted successfully | Removed from list; parent `reply_count` decremented if reply |
 | Input bar — replying context | Banner "Replying to @username ×" shown above input; tap × clears reply context |
 | No comments yet | Show empty state: "Be the first to comment" |
 | Deep link to post | Load `GET /posts/{post_id}` directly; Back button returns to previous screen or Explore if no history |
+| Tap family name on post | Navigate to Family Posts screen |
+| Tap author name on post | Navigate to User Posts screen |
+| Tap pet badge on media | Navigate to Pet Posts screen |

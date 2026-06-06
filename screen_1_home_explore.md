@@ -137,6 +137,9 @@ Each post card displays:
   - User can submit a new comment directly from the inline panel (requires login)
 
 - Tapping the **post media or caption area** → opens Post Detail screen (full-screen view with all comments)
+- Tapping **family name** → Family Posts screen (all posts by that family)
+- Tapping **author name** → User Posts screen (all posts by that user)
+- Tapping **pet badge** on media → Pet Posts screen (all posts linked to that pet)
 
 **Post Visibility Rules (enforced server-side — client never receives posts it shouldn't see):**
 
