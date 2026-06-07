@@ -106,6 +106,8 @@ Displayed between the Family Info Card and the Pets List.
 
 ### 3. Pets List
 
+**Only public pets shown** (`is_public = true`). Private pets are hidden from this screen entirely — Family Posts is viewed by non-members only; members see all pets (including private) in My Pets (screen_8).
+
 **Layout rules:**
 - `pet_count ≤ 5` → single vertical column (current behaviour)
 - `pet_count > 5` → **horizontal scroll**, 5 rows per column; swipe left to reveal more columns

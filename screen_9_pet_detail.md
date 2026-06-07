@@ -62,6 +62,7 @@ Male · 3 years · 47 posts
 | `name` | Pet name |
 | `species` | Species e.g. `"cat"`, `"dog"`, `"bird"` |
 | `breed` | Breed name, e.g. `"British Shorthair"` — `null` if unknown |
+| `is_public` | `true` / `false` — shown as a 🔒 lock badge next to pet name when `false` |
 | `gender` | `Male` / `Female` / `Unknown` |
 | `age_display` | e.g. `"3 years"`, `"5 months"` |
 | `post_count` | Total posts linked to this pet |
@@ -217,6 +218,7 @@ Opened from `[...]` → "Edit Pet". Owner only.
 |-------|----------|-------|
 | Avatar | No | Replace pet avatar |
 | Name | Yes | Pet display name |
+| Public | Yes | Toggle `is_public` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
 | Species | Yes | Read-only if set by AI scan; editable if entered manually |
 | Breed | No | Read-only if set by AI scan; editable if entered manually; can be left blank |
 | Gender | Yes | `male` / `female` / `unknown` |

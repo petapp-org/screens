@@ -122,10 +122,12 @@ Each post card displays:
 
 **Pet badge (bottom-left of media):**
 - `media_tag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; look up display info using `media_tag.id` against `post.pets` (where `pets[].id = media_tag.id`); tappable → Pet Posts screen
-- `media_tag.type = "random"` with `breed != null` → **no badge** (canonical rule; breed shown in Random Pets section context only)
-- `media_tag.type = "random"` with `breed = null, species != null` → **no badge**
-- `media_tag.type = "random"` → **no badge shown** (regardless of whether `breed` is populated)
+- `media_tag.type = "random"` → **no badge shown** (regardless of whether `breed`/`species` is populated; breed/species shown in Random Pets section context only)
 - Each media item in the carousel evaluates independently
+
+**Private pet enforcement (server-side):**
+- If `pet.is_public = false` AND viewer is not a family member → server returns `media_tag` as `{ type: "random", species: ..., breed: ... }` instead of `{ type: "pet", id: ..., ... }`
+- Client applies existing rules: `type = "random"` → no badge; no special client logic needed
 
 **Post Card Footer:**
 

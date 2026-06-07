@@ -76,13 +76,14 @@ Displays the user's **active family**. Same data as Screen 3 (Family Posts) info
 
 ### 2. Pet Rows
 
-All named pets of the active family. No pagination — all shown at once.
+All named pets of the active family — **both public and private** (viewer is always a family member here). No pagination — all shown at once.
 
 Each row:
 
 | Field | Display |
 |-------|---------|
-| `avatar_url` | Pet avatar. If pet has a pending health check, show a 🔒 lock icon overlay on avatar. |
+| `avatar_url` | Pet avatar |
+| `is_public` | 🔒 lock icon shown on row if `is_public = false` (private pet) |
 | `name` | Pet name |
 | `breed` | Breed name (truncated with `...` if long) |
 | `gender` | `Male` / `Female` / `Unknown` |
