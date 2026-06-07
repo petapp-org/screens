@@ -156,13 +156,13 @@ Parents                                    [× close]
 
 ### 4. Random Pets Section
 
-Displays posts where at least one media has `media_tag.type = "random" AND breed IS NOT NULL` — AI detected a breed but no named pet was matched.
+Displays posts where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected an animal but no named pet was matched.
 
 **Preview grid (2×2, max 4 cells):**
 
 Each cell shows:
 - Media thumbnail (top)
-- `breed` name in bold (below thumbnail)
+- `breed` name if available, otherwise `species` name — in bold (below thumbnail)
 - `📍 city_code, country_code · time` — time follows the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"HCMC, VN · 3h"`, `"HCMC, VN · 2d"`, `"HCMC, VN · 28 May"`
 
 - Tap any cell → **Post Detail screen** for that post

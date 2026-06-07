@@ -553,7 +553,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 | `random_count` | e.g. `"10 randoms"` |
 
 **Posts:**
-- Scope: per-family only — all posts from this family where at least one media has `media_tag.type = "random" AND breed IS NOT NULL`
+- Scope: per-family only — all posts from this family where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`
 - No filter tabs; no Suggested Families widget
 - Sorted `created_at` desc (newest first)
 - 10 posts per page, infinite scroll

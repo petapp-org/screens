@@ -60,7 +60,8 @@ Male · 3 years · 47 posts
 | Field | Display |
 |-------|---------|
 | `name` | Pet name |
-| `breed` | Breed name |
+| `species` | Species e.g. `"cat"`, `"dog"`, `"bird"` |
+| `breed` | Breed name, e.g. `"British Shorthair"` — `null` if unknown |
 | `gender` | `Male` / `Female` / `Unknown` |
 | `age_display` | e.g. `"3 years"`, `"5 months"` |
 | `post_count` | Total posts linked to this pet |
@@ -147,7 +148,7 @@ When status is a result state: render HTML blob below the status badge.
 
 ### 4b. Food Tab
 
-**Content:** HTML blob with breed-level food recommendations.
+**Content:** HTML blob with breed-level food recommendations (falls back to species-level content if `breed` is null).
 
 Includes:
 - Top 5 recommended foods (with brief reason)
@@ -165,7 +166,7 @@ Status states (same logic as Health):
 
 ### 4c. Behavior Tab
 
-**Content:** HTML blob with breed-level behavior guide.
+**Content:** HTML blob with breed-level behavior guide (falls back to species-level content if `breed` is null).
 
 Includes:
 - 5 common body language descriptions + what they mean
@@ -178,7 +179,7 @@ Status states: same pattern as Food tab.
 
 ### 4d. Med/Vac Tab
 
-**Content:** HTML blob with breed-level medical guide.
+**Content:** HTML blob with breed-level medical guide (falls back to species-level content if `breed` is null).
 
 Includes:
 - Vaccine schedule by life stage (kitten/puppy, adult, senior)
@@ -216,13 +217,14 @@ Opened from `[...]` → "Edit Pet". Owner only.
 |-------|----------|-------|
 | Avatar | No | Replace pet avatar |
 | Name | Yes | Pet display name |
-| Breed | No | Read-only if set by AI scan; editable if entered manually |
+| Species | Yes | Read-only if set by AI scan; editable if entered manually |
+| Breed | No | Read-only if set by AI scan; editable if entered manually; can be left blank |
 | Gender | Yes | `male` / `female` / `unknown` |
 | Birthday | No | Date picker |
 | Weight | No | Number + unit (kg) |
 
 - Submit → `PATCH /pets/{pet_id}`
-- `breed` field: if breed was set by AI scan, show as read-only with label *"Set by AI"*; owner can override by unlocking (tap lock icon → confirmation)
+- `species` and `breed` fields: if set by AI scan, shown as read-only with label *"Set by AI"*; owner can override by unlocking (tap lock icon → confirmation)
 
 ---
 

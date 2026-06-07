@@ -90,20 +90,23 @@ After publish → navigate to **My Pets** tab.
 
 ### 3. AI Scan Flow (per uploaded media)
 
-**Purpose:** detect if a pet is present in the media, identify its breed, then attempt to match with named pets in the current family.
+**Purpose:** detect if a pet is present in the media, identify its species and breed, then attempt to match with named pets in the current family.
 
 ```
 User taps [AI Scan] on a media item
   └─> POST /ai/scan-media  { media_url, family_id }
         └─> (loading state on thumbnail)
               ├─ Pet detected + match found in family
-              │     └─> tag: { type=pet, id=pet_xxx, breed=pet's_breed }
+              │     └─> tag: { type=pet, id=pet_xxx, species="cat", breed="British Shorthair" }
               │           Badge shows: [pet avatar]  pet name  ✓
-              ├─ Pet detected + no match in family
-              │     └─> tag: { type=random, id=null, breed="British Shorthair" }
-              │           Badge shows: breed name  (with edit pencil icon)
-              └─ No pet detected
-                    └─> tag: { type=random, id=null, breed=null }
+              ├─ Pet detected + no match + breed known
+              │     └─> tag: { type=random, id=null, species="cat", breed="British Shorthair" }
+              │           Badge shows: "British Shorthair"  (with edit pencil icon)
+              ├─ Pet detected + no match + breed unknown
+              │     └─> tag: { type=random, id=null, species="cat", breed=null }
+              │           Badge shows: "cat"  (with edit pencil icon)
+              └─ No animal detected
+                    └─> tag: { type=random, id=null, species=null, breed=null }
                           Badge shows: "Random"  (with edit pencil icon)
 ```
 
@@ -139,27 +142,35 @@ Actions available depend on the current tag state:
 - Select a different existing pet → tag updated to new `id`
 - Unlink → tag set to `{ type=random, id=null, breed=<AI-detected breed if any> }`
 
-**When `type=random, breed != null` (AI detected breed, no match):**
+**When `type=random, breed != null` (AI detected breed + species, no match):**
 - Keep as random (close sheet)
-- Select existing pet → tag set to `{ type=pet, id=pet_xxx, breed=pet's_breed }`
-- Create new pet (breed pre-filled from scan):
+- Select existing pet → tag set to `{ type=pet, id=pet_xxx, species=..., breed=pet's_breed }`
+- Create new pet (species + breed pre-filled from scan):
 
 | Field | Required | Notes |
 |-------|----------|-------|
 | Name | Yes | Pet's display name |
-| Breed | Yes | Pre-filled from `breed` |
+| Species | Yes | Pre-filled from `species` |
+| Breed | No | Pre-filled from `breed` |
 | Color | No | Text input (can pre-fill from AI scan `color` if returned) |
 | Gender | Yes | `male` / `female` / `unknown` |
 | Birthday | No | Date picker |
 | Weight | No | Number + unit (kg) |
 | Avatar | No | Upload photo or use a frame from this media |
 
-  Submit → `POST /families/{family_id}/pets` → tag set to `{ type=pet, id=new_pet_id, breed=... }`
+  Submit → `POST /families/{family_id}/pets` → tag set to `{ type=pet, id=new_pet_id, species=..., breed=... }`
 
-**When `type=random, breed=null` (no animal detected):**
+**When `type=random, breed=null, species != null` (AI detected species only, no breed, no match):**
 - Keep as random (close sheet)
-- Select existing pet manually → tag set to `{ type=pet, id=pet_xxx, breed=pet's_breed }`
-- *(Cannot create new pet — no breed info available)*
+- Select existing pet → tag set to `{ type=pet, id=pet_xxx, species=..., breed=pet's_breed }`
+- Create new pet (species pre-filled, breed left blank):
+  - Same form as above; `species` pre-filled, `breed` empty and optional
+  - Submit → `POST /families/{family_id}/pets`
+
+**When `type=random, species=null, breed=null` (no animal detected):**
+- Keep as random (close sheet)
+- Select existing pet manually → tag set to `{ type=pet, id=pet_xxx, species=..., breed=pet's_breed }`
+- *(Cannot create new pet — no species or breed info available)*
 
 ---
 

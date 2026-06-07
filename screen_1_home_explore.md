@@ -103,16 +103,17 @@ Each post card displays:
   "media_tag": {
     "type": "pet" | "random",
     "id": "string | null",
+    "species": "string | null",
     "breed": "string | null"
   }
 }
 ```
 
 **`media_tag` types:**
-| Type | Meaning | `id` | `breed` |
-|------|---------|------|---------|
-| `pet` | AI matched to a named pet in the family | `pet_id` — matches an entry in `post.pets` | breed of the matched pet |
-| `random` | AI detected no pet, or media is `embedded`; `breed` is populated if AI identified a breed but found no named pet match | `null` | breed string, or `null` if no detection |
+| Type | Meaning | `id` | `species` | `breed` |
+|------|---------|------|-----------|---------|
+| `pet` | AI matched to a named pet in the family | `pet_id` — matches an entry in `post.pets` | species of the matched pet | breed of the matched pet |
+| `random` | AI detected no named pet match, or media is `embedded` | `null` | species string if AI detected an animal (e.g. `"cat"`), or `null` | breed string if AI identified a specific breed, or `null` |
 
 **Rendering rules:**
 - `uploaded` → display the file stored on platform (image or video player)
@@ -121,6 +122,8 @@ Each post card displays:
 
 **Pet badge (bottom-left of media):**
 - `media_tag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; look up display info using `media_tag.id` against `post.pets` (where `pets[].id = media_tag.id`); tappable → Pet Posts screen
+- `media_tag.type = "random"` with `breed != null` → **no badge** (canonical rule; breed shown in Random Pets section context only)
+- `media_tag.type = "random"` with `breed = null, species != null` → **no badge**
 - `media_tag.type = "random"` → **no badge shown** (regardless of whether `breed` is populated)
 - Each media item in the carousel evaluates independently
 
