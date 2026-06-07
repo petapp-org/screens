@@ -1,10 +1,15 @@
-# Screen 10: Messages
+# Screen 10: Notifications
 
 ## Overview
 
-Inbox for all conversations — family threads and direct messages.  
-Auth required. Accessible from: Messages icon in Explore header (screen_1) and My Pets header (screen_8).  
-Red dot badge on Messages icon when there are any unread messages.
+Notification center with **two tabs**: **Chats** and **Notifications**.
+- **Chats** — message notifications: a flat list of conversation threads relevant to the user *right now*, scoped to the user's **currently active family** (plus the user's own DMs and threads the user personally sent).
+- **Notifications** — general activity notifications (comments, replies, follows, loves, AI health alerts, missing/found pets, invite accepted, etc.).
+
+Auth required. Accessible from: the **Messages icon** in the Explore header (screen_1) and My Pets header (screen_8).
+The Messages icon shows a **red dot** (no number) whenever there is any unread — combined across both tabs (chats unread + general unread). Inside the screen there is **no red dot**; unread items are shown in **bold** instead.
+
+> **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `SetActiveFamily (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats tab: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
 
 ---
 
@@ -12,62 +17,125 @@ Red dot badge on Messages icon when there are any unread messages.
 
 ```
 [Header]
-  Title: "Messages"
-  Right: [Compose icon]  ← future; not in scope yet
+  Title: "Notifications"
 
-[Search bar]
-  Placeholder: "Search by name or @tag"
-  └── Filters conversation list in real-time by user/family name or @tag
-  └── Min 2 characters to trigger; debounce 300ms
-  └── Matches across all sections (My Families, Sent to Families, DM)
-  └── No results → show "No conversations found"
+[Tab bar]
+  [ Chats ]   [ Notifications ]      ← tab label is BOLD when that tab has unread (no badge, no dot)
+  ──────                              (active tab underlined)
 
-━━ Family Conversations ━━━━━━━━━━━━━━━━  (unread badge: total across all family threads)
+────────────────────────────────────────────────────────────
+TAB 1 — CHATS  (flat thread list, scoped to active family)
+              scope: Pudding's Family   ← current active family, shown once at top
+────────────────────────────────────────────────────────────
 
-  My Families                              (collapsible, unread badge)
-  └─ Family X          (2 unread) ▼        (collapsible)
-       ● [avatar] userA          · 2m      ← unread: bold + dot
-         "hello bạn, gia đình..."
-       ● [avatar] Family_Y · userB · 5m
-         "cảm ơn bạn nhé"
-         [avatar] userC          · 1h      ← read: normal weight
-         "nhờ vợ mình nuôi..."
-  └─ Family Y          (0 unread) ▼
-         [avatar] userD          · 3h
-         "cute quá..."
+  ● [avatarA] userA                              · 2m   ← DM: name only, no arrow (unread: bold)
+    "hello bạn, gia đình bạn nuôi mèo đẹp nhỉ"
 
-  Sent to Families                         (collapsible)
-  └─ [avatar] → Family Z  · 2h
-       "cho hỏi về..."
-  └─ [avatar] → Family W  · 1d
-       "bạn có thể..."
+  ● [avatarB] userB → Pudding's Family           · 5m   ← user → my active family
+    "nhà mình muốn hỏi..."
 
-━━ Direct Messages ━━━━━━━━━━━━━━━━━━━━  (unread badge: total)
-  ● [avatar] userE     "ok nha bạn..."  · 15m
-    [avatar] userF     "thanks nhé..."  · 2h
+  ● [avatarFamY] Family_Y · userC → Pudding's…   · 1h   ← family → my active family (read: normal)
+    "cảm ơn nhé"
+
+    [avatarFamZ] you → Family Z                  · 2h   ← a thread I sent to a family
+    "cho hỏi về bé mèo nhà mình..."
+
+  (Empty: "No conversations yet")
+
+────────────────────────────────────────────────────────────
+TAB 2 — NOTIFICATIONS  (general activity, newest first)
+────────────────────────────────────────────────────────────
+
+  ● [avatarD] Linh Pham commented on your post          · 3m
+    "bé cún xinh quá ❤️"
+  ● [⚠ icon] AI Health Alert on Pudding                 · 1h
+    "Possible skin irritation detected in a recent photo"
+  ● [avatarE] Minh and 4 others loved your post         · 2h
+    [thumbnail]
+    [avatarF] Hoa started following your family          · 5h
+    [📍 icon] A missing dog was reported near you         · 1d
+
+  (Empty: "No notifications yet")
 ```
 
 ---
 
 ## Components
 
-### 1. Conversation List
+### TAB 1 — Chats
 
-**Sorting within each section:** unread first, then by last message time desc.
+#### 1. Chats Thread List
 
-**Each conversation row:**
+A **single flat list** — no "My Families / Sent to Families / DM" sections. The list contains exactly these threads (see **Access & Active-Family Rules**):
 
-| Section | Row display |
-|---------|-------------|
-| My Families → Family X | `[sender avatar]` `sender name` (+ `· family name` if sent on behalf of family) · last message preview · time |
-| Sent to Families | `[family avatar]` `→ Family name` · last message preview · time |
-| Direct Messages | `[user avatar]` `user name` · last message preview · time |
+1. Threads **received by the user's currently active family** (inbound from an external user or an external family).
+2. The user's **DMs** (both sent and received).
+3. Threads the user **personally sent** to other families.
 
-**Unread indicator:** bold text + filled dot badge on the row; unread count badge on parent section header.
+Threads received by the user's **non-active** families are **not shown** at all.
+
+**Scope line:** The current **active family** name is shown once at the top of the list (e.g. *"Pudding's Family"*) — it is the receiver of every type-2 row below, so it is not repeated as a separate header.
+
+**Sorting:** unread first, then by last message time desc.
+
+**Row rendering — hybrid by type** (DM compact; family threads spell out the receiver):
+
+| Type | Avatar | Title format | Example |
+|------|--------|--------------|---------|
+| **DM** | sender's user avatar | `{userName}` — **name only, no arrow** | `userA` |
+| **To active family** (individual sender) | sender's user avatar | `{userName} → {myActiveFamily}` | `userB → Pudding's Family` |
+| **To active family** (family sender) | sender family avatar | `{senderFamily} · {member} → {myActiveFamily}` | `Family_Y · userC → Pudding's Family` |
+| **I sent to a family** | receiver family avatar | `you → {receiverFamily}` | `you → Family Z` |
+
+- `{myActiveFamily}` = the user's current active family name (constant across all type-2 rows; client fills it from the active-family context). Truncate with `…` if long.
+- **Reading the type:** no arrow → **DM**; `… → {my active family}` → **received by my active family**; `you → …` → **I sent it**.
+
+**Other row elements:**
+
+| Element | Display |
+|---------|---------|
+| Last message preview | One line, truncated. May be my own message (rendered plainly — never bold; no special "You:" label). |
+| Time | Relative time of last message. |
+| CHARITY badge | Small badge next to a family name when that family `type = charity`. |
+
+**Unread indicator:** **bold** row text only. **No red dot** inside the screen (bold already conveys unread). The **Chats tab label** is bold when there are any unread threads.
+
+**Row tap:** → open **Thread View** (see below); calls `MarkThreadRead (BK)` on open.
+
+> A message preview can be the user's own last reply (e.g. in a DM the user answered). That row is **never bold** — outbound messages never mark a thread unread.
 
 ---
 
-### 2. Starting a Thread
+### TAB 2 — Notifications
+
+#### 2. General Notification List
+
+Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, optional thumbnail, relative time, and **bold when unread** (no red dot). The **Notifications tab label** is bold when there are any unread items. Tapping a row marks it read (`MarkNotificationRead (BT)`) and deep-links to its target.
+
+**Notification types:**
+
+| Type (enum) | Trigger | Row text (example) | Tap target |
+|-------------|---------|--------------------|------------|
+| `NEW_COMMENT` | Someone comments on the user's post | "`{actor}` commented on your post" + comment snippet | Post Detail (scrolled to comment) |
+| `NEW_REPLY` | Someone replies to the user's comment | "`{actor}` replied to your comment" + reply snippet | Post Detail (scrolled to reply) |
+| `POST_LOVES` | People love the user's post (**grouped**) | "`{actor}` and `{N}` others loved your post" + thumbnail | Post Detail |
+| `FAMILY_NEW_POST` | A family the user **follows** publishes a new post | "`{family}` shared a new post" + thumbnail | Post Detail |
+| `NEW_FOLLOWER` | Someone follows the user's family | "`{actor}` started following your family" | The follower's User Posts (or their family) |
+| `INVITE_ACCEPTED` | A parent the user invited accepts the family invite | "`{actor}` accepted your invite to `{family}`" | Family Posts / My Pets parents |
+| `HEALTH_ALERT` | AI detects a possible health issue in the user's pet media | "AI Health Alert on `{pet}`" + detail snippet | Pet Detail (screen_9) |
+| `MISSING_NEARBY` | A pet is reported missing near the user's location | "A missing `{species}` was reported near you" | Missing pet detail (Coming Soon) |
+| `PET_MISSING` | The user's own pet is marked missing (status confirmation) | "`{pet}` was marked as missing" | Pet Detail (screen_9) |
+| `PET_FOUND` | A previously-missing pet (own, or one the user reported/follows) is marked found | "`{pet}` was marked as found" | Pet Detail (screen_9) |
+
+**Grouping:** `POST_LOVES` collapses multiple lovers of the **same post** into one row (`{actor} and {N} others`). Other types are one row per event.
+
+> **Not included:** "Parent invite **received**" is intentionally **not** a notification type — there's no reliable way to surface an incoming invite as a noti in this model. Only `INVITE_ACCEPTED` (the outbound invite being accepted) is notified.
+
+---
+
+### 3. Starting a Thread
+
+*(unchanged — composing happens from other screens, not from this inbox)*
 
 **3 entry points:**
 
@@ -78,29 +146,28 @@ Red dot badge on Messages icon when there are any unread messages.
 | My Pets → Parents section → **Message icon** next to a user | Individual user only | That specific user |
 
 **Sender selection (only for family receivers):**
-- Show bottom sheet: *"Send as…"*
+- Bottom sheet *"Send as…"*:
   - `[user avatar]` Your name (individual)
   - `[family avatar]` Active family name
-- For user receivers: no prompt — always individual user as sender
+- For user receivers: no prompt — always individual user as sender.
 
 **Visibility rules (hide Message button):**
-- Viewing your own family's page → no Message button (can't message your own family)
-- Viewing your own profile/user → no Message icon (can't message yourself)
+- Viewing your own active family's page → no Message button (can't message your own family).
+- Viewing your own profile/user → no Message icon (can't message yourself).
 
-**Thread creation:**
-- If a thread already exists between the same sender ↔ receiver → **continue the existing thread**, do not create a new one
+**Thread creation:** If a thread already exists for the same sender ↔ receiver → **continue the existing thread**; never duplicate.
 
 ---
 
-### 3. Thread View
+### 4. Thread View
 
 ```
 [Header]
   Left: Back button
   Center: [sender avatar] sender name  →  [receiver avatar] receiver name
-  Right: [Search icon]  ... (future actions)
+  Right: [Search icon]
 
-[Scrollable messages area]
+[Scrollable messages area — oldest first, auto-scroll to bottom on open]
   ─── Jun 6, 2026 ───
   [userA avatar]
   userA
@@ -119,46 +186,55 @@ Red dot badge on Messages icon when there are any unread messages.
 ```
 
 **Reply (quoted reply — WhatsApp/Zalo style):**
-- Long press a message → shows reply option
-- Tapping Reply → input bar shows quoted preview of the selected message
-- Sent reply displays the quoted message block above the reply text
+- Long press a message → Reply option.
+- Tapping Reply → input bar shows quoted preview of the selected message.
+- Sent reply displays the quoted block above the reply text.
 
 **In-thread search:**
-- Tap **Search icon** in thread header → search bar slides in below header, messages area shifts down
-- **Server-side search** — queries the full thread history, not just loaded messages
-- Min 2 characters; debounce 300ms
-- Matching messages are highlighted; non-matching messages dimmed
-- Up/down arrows to jump between matches; jumps to the correct position in the thread even if message not yet loaded
-- Tap × or Back → dismiss search bar, restore normal view
+- Tap **Search icon** → search bar slides in below header.
+- **Server-side search** (`SearchThreadMessages (BM)`) — queries full thread history.
+- Min 2 characters; debounce 300ms.
+- Matching messages highlighted, non-matching dimmed; up/down arrows jump between matches (loads position even if not yet paged in).
+- Tap × / Back → restore normal view.
 
-**"Send as" dropdown (family threads only):**
-- Options: individual user / active family
-- Default: individual user
-- Selection persists within the session for this thread
+**"Send as" dropdown (family threads only):** individual user / active family; default individual; persists within the session for this thread.
 
-**Tap sender name/family name in header:**
-- → Opens a new thread with that entity (if no thread exists yet)
-- If receiver is a family: show sender selection prompt
-- If receiver is a user: individual sender only
+**Tap sender/receiver name in header:** opens (or reuses) a thread with that entity; if receiver is a family, show sender-selection prompt.
 
-**Thread membership display:**
-- On the receiving family side, each reply shows which member sent it: `Family_X · userB`
-- On the sending side (individual or family), messages show the sender's name and avatar
+**Thread membership display:** on the receiving family side each reply shows which member sent it (`Family_X · userB`); on the sending side, sender's name + avatar.
 
 ---
 
-### 4. Access Rules
+## Access & Active-Family Rules
 
-| Scenario | Behaviour |
-|----------|-----------|
-| User is a member of Family F | Threads received by Family F appear under **My Families > Family F** |
-| User is removed from Family F | **My Families > Family F** section hidden immediately; all threads received as Family F member no longer accessible |
-| User previously sent to Family F (before or after removal) | Thread remains visible under **Sent to Families** — user is sender, not member |
-| User continues thread after removal from Family F | Allowed — uses the existing thread in **Sent to Families** |
-| User belongs to multiple families | Each family appears as a separate collapsible row under **My Families** |
+The Chats tab is **scoped to the user's currently active family**. These rules are the source of truth.
 
-**Unread flags are per-member:**
-- Example: userA messages Family F (members B and C). B reads the message → B's unread flag cleared. C has not read → C still sees unread badge. Independent of each other.
+### Thread visibility
+
+| Thread kind | Visible in Chats? |
+|-------------|-------------------|
+| Received by the user's **active** family (inbound) | ✅ Yes |
+| Received by the user's **non-active** family | ❌ No — hidden entirely |
+| **DM** to/from the user | ✅ Yes — always (not scoped to active family) |
+| Thread the user **personally sent** to a family | ✅ Yes — always (user is the sender) |
+
+When the user **switches active family** (F → M, via `SetActiveFamily (AG)` in Profile Settings):
+- Threads received by **F disappear** from Chats; threads received by **M appear**.
+- DMs and the user's own sent threads are unaffected (always visible).
+
+### Unread rules
+
+- **Direction:** Only **inbound** messages can mark a thread unread. A reply the user sends — or a reply a **co-member** of the user's family sends (which is outbound *from* that family toward the original sender) — never marks the thread unread for the user or for other co-members. Example: A and B are members of F; C messages F → both A and B get unread. A replies → B does **not** get a new unread (A's reply is outbound from F to C).
+- **Activation timestamp (family-received threads):** A family-received message counts as **unread only if** `message.sentAt > the moment that family became active for this user`. Messages that arrived while the family was **not** active (or **before** the user joined the family) are treated as already-read and are **never** marked unread when the user later activates that family.
+  - **New member:** is invited to F → F's pre-existing messages predate the user's activation → **no unread** shown to the new member.
+  - **Switch F → M:** only messages sent **after** the switch-to-M count as unread; older messages in M's threads stay read.
+- **DMs & own sent threads:** standard unread (unread if there are inbound messages the user hasn't read); not gated by any active-family timestamp.
+
+### Removal from a family
+
+- When the user is **removed** from a family, they **lose all access** to that family's received threads **and the entire chat-notification history** for that family. Nothing from that family remains visible.
+- If the removed family was the user's **active** family, the server **auto-switches** the active family to another family the user belongs to — applying to **both** the Chats noti scope **and** the action/context everywhere (My Pets, "Send as", etc.). The newly active family's received threads appear immediately.
+- **Edge — no other family:** if the removed family was the only one, active family becomes **unset**; the Chats tab then shows only the user's DMs and own sent threads.
 
 ---
 
@@ -170,7 +246,7 @@ All calls go to `POST /graphql`.
 
 ### BG. Query: `MessageThreads`
 
-Fetch all threads for the current user (all sections).
+Fetch the Chats list for the current user. The server returns **only** the threads visible per the **Access & Active-Family Rules** (active-family-received + DMs + own-sent); non-active-family threads are excluded server-side. `unreadCount` is computed using the activation-timestamp rule.
 
 **Auth:** Required
 
@@ -178,27 +254,35 @@ Fetch all threads for the current user (all sections).
 query MessageThreads {
   messageThreads {
     id
-    type           # FAMILY_RECEIVED | FAMILY_SENT | DM
-    sender {
-      type         # USER | FAMILY
+    type             # FAMILY_RECEIVED | DM | FAMILY_SENT
+    counterpart {    # the "other side" to render on the row
+      type           # USER | FAMILY
       id
       name
       avatarUrl
+      isCharity      # true → show CHARITY badge (family only)
     }
-    receiver {
-      type         # USER | FAMILY
-      id
-      name
-      avatarUrl
-    }
+    direction        # INBOUND (received) | OUTBOUND (I sent it)
     lastMessage {
       body
       sentAt
+      senderType       # USER | FAMILY
+      senderName       # the member who actually sent it
+      senderFamilyName # set when senderType = FAMILY (sent on behalf of a family); else null
     }
-    unreadCount
+    unreadCount        # 0 when read; honors direction + activation-timestamp rules
   }
 }
 ```
+
+**Row rendering from this shape** (hybrid — DM compact, family threads spell out the receiver):
+- `type = DM` → title `{counterpart.name}` (name only, no arrow), avatar = `counterpart.avatarUrl`.
+- `type = FAMILY_RECEIVED`, `lastMessage.senderType = USER` → title `{lastMessage.senderName} → {myActiveFamily}`, avatar = `counterpart.avatarUrl`.
+- `type = FAMILY_RECEIVED`, `lastMessage.senderType = FAMILY` → title `{lastMessage.senderFamilyName} · {lastMessage.senderName} → {myActiveFamily}`, avatar = `counterpart.avatarUrl`.
+- `type = FAMILY_SENT` → title `you → {counterpart.name}`, avatar = `counterpart.avatarUrl`.
+- `{myActiveFamily}` is supplied by the client from the active-family context (not in this response — it is the same family for every `FAMILY_RECEIVED` row).
+- `counterpart.isCharity = true` → show CHARITY badge next to the family name.
+- `unreadCount > 0` → row bold.
 
 **Errors:**
 
@@ -293,8 +377,8 @@ mutation StartThread($input: StartThreadInput!) {
   startThread(input: $input) {
     id
     type
-    sender { type id name avatarUrl }
-    receiver { type id name avatarUrl }
+    counterpart { type id name avatarUrl isCharity }
+    direction
     unreadCount
   }
 }
@@ -396,7 +480,7 @@ mutation MarkThreadRead($threadId: ID!) {
 
 ### BL. Query: `UnreadMessageCount`
 
-For the Messages icon red dot badge in Explore and My Pets headers.
+Chats-tab unread count — `> 0` bolds the Chats tab label and contributes to the **Messages-icon red dot** (combined with `NotificationUnreadCount (BU)`).
 
 **Auth:** Required
 
@@ -406,7 +490,7 @@ query UnreadMessageCount {
 }
 ```
 
-**Note:** Delivered via **WebSocket push** when available; falls back to polling every 30s. Fetched separately from the thread list (not bundled).
+**Note:** Delivered via **WebSocket push** when available; falls back to polling every 30s. Honors the active-family scope + activation-timestamp rules (only currently-visible, post-activation inbound threads count).
 
 **Errors:**
 
@@ -418,7 +502,7 @@ query UnreadMessageCount {
 
 ### BM. Query: `SearchThreadMessages`
 
-Server-side search across all messages in a thread.  
+Server-side search across all messages in a thread.
 **Auth:** Required
 
 ```graphql
@@ -445,8 +529,8 @@ query SearchThreadMessages($threadId: ID!, $q: String!, $cursor: String, $limit:
 **Variables:** `{ "threadId": "thread_001", "q": "mèo", "limit": 20 }`
 
 **Notes:**
-- Min 2 characters required (enforced client-side before calling)
-- Results ordered by `sentAt asc` — client highlights matched messages and scrolls to position
+- Min 2 characters required (enforced client-side before calling).
+- Results ordered by `sentAt asc` — client highlights matched messages and scrolls to position.
 
 **Errors:**
 
@@ -459,38 +543,192 @@ query SearchThreadMessages($threadId: ID!, $q: String!, $cursor: String, $limit:
 
 ---
 
+### BS. Query: `Notifications`
+
+General-notification feed for the Notifications tab (paginated, newest first).
+
+**Auth:** Required
+
+```graphql
+query Notifications($cursor: String, $limit: Int) {
+  notifications(cursor: $cursor, limit: $limit) {
+    items {
+      id
+      type          # NEW_COMMENT | NEW_REPLY | POST_LOVES | FAMILY_NEW_POST |
+                    # NEW_FOLLOWER | INVITE_ACCEPTED | HEALTH_ALERT |
+                    # MISSING_NEARBY | PET_MISSING | PET_FOUND
+      actor {       # who triggered it; null for system/AI events
+        id
+        name
+        avatarUrl
+      }
+      target {      # what the row deep-links to
+        type        # POST | COMMENT | PET | FAMILY | USER | MISSING_REPORT
+        id
+      }
+      preview       # snippet/text shown under the title (nullable)
+      thumbnailUrl  # media thumbnail (POST_LOVES / FAMILY_NEW_POST); else null
+      groupCount    # extra count for grouped types (POST_LOVES); else null
+      isRead
+      createdAt
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:** `{ "cursor": null, "limit": 20 }`
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "notifications": {
+      "items": [
+        {
+          "id": "noti_001",
+          "type": "NEW_COMMENT",
+          "actor": {
+            "id": "user_044",
+            "name": "Linh Pham",
+            "avatarUrl": "https://cdn.petapp.com/users/user_044/avatar.jpg"
+          },
+          "target": { "type": "POST", "id": "post_988" },
+          "preview": "bé cún xinh quá ❤️",
+          "thumbnailUrl": null,
+          "groupCount": null,
+          "isRead": false,
+          "createdAt": "2026-06-07T08:55:00Z"
+        },
+        {
+          "id": "noti_002",
+          "type": "POST_LOVES",
+          "actor": {
+            "id": "user_071",
+            "name": "Minh",
+            "avatarUrl": "https://cdn.petapp.com/users/user_071/avatar.jpg"
+          },
+          "target": { "type": "POST", "id": "post_512" },
+          "preview": null,
+          "thumbnailUrl": "https://cdn.petapp.com/posts/post_512/thumb.jpg",
+          "groupCount": 4,
+          "isRead": false,
+          "createdAt": "2026-06-07T07:10:00Z"
+        }
+      ],
+      "nextCursor": "cursor_abc",
+      "hasMore": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+
+---
+
+### BT. Mutation: `MarkNotificationRead`
+
+Mark one notification (or all) as read.
+
+**Auth:** Required
+
+```graphql
+mutation MarkNotificationRead($id: ID) {
+  markNotificationRead(id: $id)   # id null → mark ALL general notifications read
+}
+```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `NOTIFICATION_NOT_FOUND` | `id` provided but does not exist for this user |
+
+---
+
+### BU. Query: `NotificationUnreadCount`
+
+Notifications-tab unread count — `> 0` bolds the Notifications tab label and contributes to the **Messages-icon red dot** (combined with `UnreadMessageCount (BL)`).
+
+**Auth:** Required
+
+```graphql
+query NotificationUnreadCount {
+  notificationUnreadCount
+}
+```
+
+**Note:** Delivered via **WebSocket push** when available; falls back to polling every 30s.
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+
+---
+
 ## User Flow Diagrams
 
-### Open Messages from header icon
+### Open Notifications from Messages icon
 
 ```
-User taps Messages icon
+User taps Messages icon (Explore / My Pets header)
   └─> [not authenticated] → redirect to Login
-  └─> [authenticated] → load MessageThreads
-        └─> Render grouped list (My Families / Sent to Families / DM)
+  └─> [authenticated] → open screen on last-used tab (default: Chats)
+        ├─ Chats tab        → MessageThreads (BG)   → flat thread list
+        └─ Notifications tab → Notifications (BS)    → general noti list
 ```
 
-### Start thread from Family Posts
+### Switch active family while Chats is open
 
 ```
-User taps Message button on Family F
-  └─> [not authenticated] → redirect to Login
-  └─> [is member of Family F] → Message button hidden (own family)
-  └─> [authenticated, non-member]
-        └─> Show "Send as…" bottom sheet
-              ├─ Send as self → StartThread { senderType=USER, receiverType=FAMILY }
-              └─ Send as active family → StartThread { senderType=FAMILY, receiverType=FAMILY }
-                    └─> If thread exists → open existing thread
-                    └─> If new → create thread → open thread view
+User switches active family F → M (SetActiveFamily AG, Profile Settings)
+  └─> Chats re-fetches MessageThreads (BG)
+        └─> F-received threads drop out; M-received threads appear
+              └─> DMs + own-sent threads unchanged
+                    └─> unread recomputed (only post-switch messages unread)
+```
+
+### Removed from active family
+
+```
+Server: user removed from active family F
+  └─> F-received threads + chat-noti history for F purged from view
+        └─> active family auto-switches F → M (noti scope + action context)
+              ├─ has other family (M) → M-received threads appear; M now active everywhere
+              └─ no other family       → active = unset; Chats shows DMs + own-sent only
+```
+
+### Open a thread (Chats)
+
+```
+User taps a thread row
+  └─> ThreadMessages (BH) { threadId, limit: 20 }  (oldest first, auto-scroll to bottom)
+        └─> MarkThreadRead (BK) { threadId }  → row un-bolds; badges decrement
+```
+
+### Open a general notification
+
+```
+User taps a notification row
+  └─> MarkNotificationRead (BT) { id }  → row un-bolds; tab badge decrements
+        └─> Deep-link to target (Post Detail / Pet Detail / User Posts / etc.)
 ```
 
 ### Reply in thread
 
 ```
 User taps Send
-  └─> SendMessage { threadId, body, repliedToId (if reply) }
-        └─> Message appended to thread
-              └─> MarkThreadRead { threadId } called automatically on open
+  └─> SendMessage (BJ) { threadId, body, repliedToId (if reply) }
+        └─> Message appended (outbound — never marks thread unread for anyone)
 ```
 
 ---
@@ -499,12 +737,18 @@ User taps Send
 
 | Case | Behaviour |
 |------|-----------|
-| User removed from Family F | My Families > Family F hidden; Sent to Families threads unaffected |
-| User re-added to Family F | My Families > Family F restored; previous threads visible again |
+| Switch active family F → M | F-received threads hidden; M-received shown; DMs + own-sent unchanged |
+| New member invited to family | No unread for messages predating activation; old threads show as read |
+| Removed from non-active family | That family's received threads + chat-noti history removed; active family unchanged |
+| Removed from active family (has other family) | Auto-switch active → another family; its threads appear; context switches everywhere |
+| Removed from active family (no other family) | Active = unset; Chats shows only DMs + own-sent threads |
+| Co-member replies in a family-received thread | Outbound from the family → does **not** mark unread for other co-members; only the original external sender is notified |
+| User's own message is the last in a thread | Row shows the preview plainly; never bold (outbound never unread) |
 | Thread exists, user starts new thread with same entity | Returns existing thread — no duplicate |
-| Family has 0 unread in My Families | Section still shown (collapsed); only hidden if user has no families at all |
-| No conversations yet (new user) | Each section shows empty state: "No conversations yet" |
-| Receiver family is deleted | Thread archived — visible as read-only, cannot send new messages |
+| Receiver family is deleted | Thread archived — read-only, cannot send new messages |
+| `POST_LOVES` for the same post by many users | Collapsed to one grouped row (`{actor} and {N} others`) |
+| Parent invite received | **Not** a notification — only `INVITE_ACCEPTED` is surfaced |
+| New user, no activity | Chats: "No conversations yet"; Notifications: "No notifications yet" |
 
 ---
 
@@ -512,13 +756,20 @@ User taps Send
 
 | # | Question | Decision |
 |---|----------|----------|
-| 1 | Unread flags | Per-member, independent (not per-family) |
-| 2 | Who can message a family | Any authenticated user — from Family Posts Message button |
-| 3 | Sender for family threads | User chooses: individual or active family — prompt shown at thread start |
-| 4 | Sender for DM | Always individual user — no prompt |
-| 5 | Thread deduplication | Same sender ↔ receiver → reuse existing thread |
-| 6 | Access after removal from family | My Families threads hidden; Sent to Families threads remain |
-| 7 | Reply style | Quoted reply (WhatsApp/Zalo style) |
-| 8 | Start thread from within thread | Tap header name → new thread with that entity |
-| 9 | Thread message sort order | Oldest first (`sentAt asc`); load earlier messages by paging up |
-| 10 | Unread count delivery | **WebSocket** (push) preferred for real-time dot badge; fall back to polling (every 30s) if WebSocket unavailable |
+| 1 | Screen identity | Renamed "Messages" → **"Notifications"** with two tabs: **Chats** and **Notifications** |
+| 2 | Header entry point | Existing **Messages icon** (Explore + My Pets headers); shows a **red dot** (no number) when any unread exists (combined chats + general) |
+| 3 | Chats list structure | **Single flat list** — no "My Families / Sent to Families / DM" sections; active family name shown once at top as scope line |
+| 3a | Chats row rendering | **Hybrid by type**: DM = name only (no arrow); to active family = `sender → {activeFamily}`; sent = `you → {family}`. Type is read from the arrow pattern |
+| 4 | Chats scope | Scoped to **active family** (received) + user's **DMs** + user's **own-sent** threads; non-active-family received threads hidden |
+| 5 | Unread indicator | **Inside the screen**: bold only (rows + tab labels), no red dot. **Header Messages icon**: red dot when any unread |
+| 6 | Unread direction | Only **inbound** messages mark unread; outbound (own or co-member's family reply) never does |
+| 7 | Unread timing | Family-received message is unread only if `sentAt > active-family activation timestamp` for the user |
+| 8 | New member unread | None for pre-membership/pre-activation messages |
+| 9 | Removal from family | Lose all received threads + chat-noti history for that family |
+| 10 | Removal from active family | Auto-switch active family (noti scope + action context); unset if no other family |
+| 11 | "You:" notification rows | Removed — sent messages never create a standalone notification; previews may still show own last message plainly |
+| 12 | Thread message sort | Oldest first (`sentAt asc`); auto-scroll to bottom on open; page up for older |
+| 13 | General noti: parent invite received | Excluded — only `INVITE_ACCEPTED` notified |
+| 14 | General noti: loves | Grouped per post (`{actor} and {N} others`) |
+| 15 | Unread count delivery | WebSocket push preferred; poll every 30s fallback (both `BL` and `BU`) |
+| 16 | CHARITY badge | Shown next to charity family names in Chats rows |

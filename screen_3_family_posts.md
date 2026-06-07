@@ -86,8 +86,9 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - Following → button label "Following"; tap → `UnfollowFamily mutation (E)` → button reverts to "Follow" immediately (optimistic); show undo toast for **5 seconds**: *"Unfollowed [Family Name]"* + **[Undo]** button → if Undo tapped: re-follow silently (no second toast), button returns to "Following"
 - Reuse endpoints D and E from Screen 1
 
-**Message button:**
-- Tap → opens Messages screen for this family (requires login → redirect to Login if not authenticated)
+**Message button:** *(hidden when this family is the user's own active family — can't message your own active family; see screen_10)*
+- Tap → show **"Send as…"** bottom sheet (your individual self **or** your active family), then `StartThread (BI)` → open the thread in the Notifications screen's Thread View (screen_10). If a thread already exists for the same sender ↔ this family, it is reused (no duplicate).
+- Requires login → redirect to Login if not authenticated.
 
 ---
 
@@ -160,16 +161,18 @@ Parents    [2]  >
 [drag handle]
 Parents                          [× close]
 ─────────────────────────────────────────
-[avatar]  Minh Dang
+[avatar]  Minh Dang              [✉]
           @minhdang
 ─────────────────────────────────────────
-[avatar]  Cecilia Tran
+[avatar]  Cecilia Tran           [✉]
           @ceciliatran
 ```
 
-- Each parent row shows: avatar + display name + tag (`@nickname`)
-- Tap a parent row → close bottom sheet → navigate to **User Posts screen** for that user
-- No login required to view
+- Each parent row shows: avatar + display name + tag (`@nickname`) + **Message icon `[✉]`** on the right
+- Tap a parent row (anywhere except the Message icon) → close bottom sheet → navigate to **User Posts screen** for that user
+- Tap **Message icon `[✉]`** → start a **DM** with that user: `StartThread (BI)` `{ senderType: USER (self), receiverType: USER }` → open the thread in the Notifications screen's Thread View (screen_10). Reuses existing DM thread if one exists. Requires login → redirect to Login if not authenticated.
+  - Message icon is **hidden on your own row** (can't DM yourself)
+- Viewing the parent list: no login required
 
 ---
 

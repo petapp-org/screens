@@ -257,6 +257,8 @@ query Post($id: ID!) {
 
 Reply to a comment (or to a reply — any depth).
 
+> **Triggers notification:** fires a `NEW_REPLY` notification to the author of the comment/reply being replied to (see screen_10 → Notifications tab). Not fired when replying to your own comment.
+
 **Auth:** Required → `UNAUTHENTICATED` error if not logged in
 
 **Operation:**

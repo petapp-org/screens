@@ -403,6 +403,8 @@ query SearchUsers($q: String!, $limit: Int) {
 Send a parent invite to a user.
 **Auth:** Required (owner only)
 
+> **Triggers notification:** when the invited user later **accepts**, an `INVITE_ACCEPTED` notification fires to the **inviter** (see screen_10 → Notifications tab). Note: the incoming invite itself is intentionally **not** surfaced as a notification (`parent invite received` is excluded — see screen_10).
+
 **Operation:**
 ```graphql
 mutation InviteParent($familyId: ID!, $userId: ID!) {
@@ -506,6 +508,8 @@ mutation CancelParentInvite($familyId: ID!, $userId: ID!) {
 ### AS. Mutation: `RemoveParent`
 Remove an accepted parent from the family.
 **Auth:** Required (owner only). Cannot remove self (owner).
+
+**Side effects for the removed user (see screen_10):** They lose all access to this family's received chat threads **and** the entire chat-notification history for this family. If this family was the removed user's **active** family, the server **auto-switches** their active family to another family they belong to (or unsets it if none) — this applies to both the Chats noti scope and the action/context everywhere.
 
 **Operation:**
 ```graphql

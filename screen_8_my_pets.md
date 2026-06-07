@@ -13,7 +13,7 @@ If logged in but no active family → show empty state with prompt to create or 
 ```
 [Header]
   Left: "My Pets" (title)
-  Right: Search icon | Messages icon (red dot if unread) | Profile avatar
+  Right: Search icon | Messages icon (red dot if any unread — combined Chats + Notifications; opens screen_10) | Profile avatar
 
 [Scrollable area]
   ├── Family Info Card (active family)
@@ -127,7 +127,7 @@ Parents                                    [× close]
 ──────────────────────────────────────────────────
 [avatar]  Minh Dang   [YOU]  [OWNER]      (no action)
 ──────────────────────────────────────────────────
-[avatar]  Cecilia Tran  [PARENT]           [Remove]
+[avatar]  Cecilia Tran  [PARENT]      [✉]  [Remove]
 ──────────────────────────────────────────────────
 [avatar]  Thao Nguyen  [INVITED]           [Cancel]
 ──────────────────────────────────────────────────
@@ -136,11 +136,14 @@ Parents                                    [× close]
 
 **Row types:**
 
-| Row | Badges | Action | Who can see action |
-|-----|--------|--------|--------------------|
-| Owner (self) | `YOU` + `OWNER` | None | — |
-| Accepted parent | `PARENT` | Remove | Owner only |
-| Pending invite | `INVITED` | Cancel | Owner only |
+| Row | Badges | Message icon `[✉]` | Action | Who can see action |
+|-----|--------|--------------------|--------|--------------------|
+| Owner (self) | `YOU` + `OWNER` | Hidden (can't DM yourself) | None | — |
+| Accepted parent | `PARENT` | Shown — opens a DM | Remove | Owner only |
+| Pending invite | `INVITED` | Hidden (not a member yet) | Cancel | Owner only |
+
+**Message icon `[✉]` (accepted co-parents only):**
+- Tap → start a **DM** with that user: `StartThread (BI)` `{ senderType: USER (self), receiverType: USER }` → open the thread in the Notifications screen's Thread View (screen_10). Reuses existing DM thread if one exists.
 
 **Remove action:**
 - Confirmation dialog → `RemoveParent mutation (AS)` (endpoint AS from Screen 6)

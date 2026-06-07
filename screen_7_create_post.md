@@ -493,6 +493,10 @@ mutation DeleteDraft($draftId: ID!) {
 Publish the post.  
 **Auth:** Required
 
+> **Triggers notification:** fires a `FAMILY_NEW_POST` notification to the family's **followers** (see screen_10 → Notifications tab), respecting post privacy (a `private` post notifies only family members; `followers`/`public` notify followers).
+>
+> **AI side-effects:** the post's media is scanned server-side; this may later raise a `HEALTH_ALERT` notification to the pet owner if a health concern is detected (see screen_9).
+
 **Operation:**
 ```graphql
 mutation CreatePost($input: CreatePostInput!) {

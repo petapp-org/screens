@@ -117,6 +117,8 @@ Shown only when `pet.missing_status != null`.
 
 **Content:** HTML blob from latest post's health analysis.
 
+> **Triggers notification:** when the server-side AI analysis (run after a post is published, see screen_7 → `CreatePost`) detects a possible health concern, it fires a `HEALTH_ALERT` notification to the pet's family/owner (see screen_10 → Notifications tab). This is a server-side async event, not a client call.
+
 **Status states:**
 
 | Status | Display | Color | Meaning |
@@ -627,6 +629,8 @@ mutation DeletePet($id: ID!) {
 Report a pet as missing.
 **Auth:** Required (family member)
 
+> **Triggers notifications** (see screen_10 → Notifications tab): a `PET_MISSING` notification to the family's members/followers, and a `MISSING_NEARBY` notification to other users near the last-seen location.
+
 **Operation:**
 ```graphql
 mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
@@ -693,6 +697,8 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
 
 Mark a missing pet as found.
 **Auth:** Required (owner only)
+
+> **Triggers notification:** fires a `PET_FOUND` notification (see screen_10 → Notifications tab) to the family's members/followers and to users who were notified of the original `MISSING_NEARBY`.
 
 **Operation:**
 ```graphql
