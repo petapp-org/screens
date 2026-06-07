@@ -2,8 +2,9 @@
 
 ## Overview
 
-Profile and post feed for a single family.  
-Navigated to from: tapping a family name on any post card (Explore feed, Post Detail, etc.).  
+Profile and post feed for a single family — shown to **unauthenticated users and non-members only**.  
+When a logged-in family member taps their own family name → redirected to **My Pets screen** (screen_8) instead.  
+Navigated to from: tapping a family name on any post card (Explore feed, Post Detail, etc.) when the viewer is not a member of that family.  
 Accessible without login — unauthenticated users can view everything. Actions (Follow, Message) require login.
 
 ---
@@ -125,7 +126,7 @@ Each pet row:
 | `post_count` | Total posts linked to this pet |
 
 **Interactions:**
-- Tap anywhere on the row (except Story button) → navigates to **Pet Posts screen** for that pet
+- Tap anywhere on the row (except Story button) → navigates to **Pet Posts screen** for that pet (viewer is always unauth/non-member on this screen)
 - **Story button** → disabled for now (render as disabled state, no action)
 
 **Random Pets row** (shown only when `random_count > 0`):
@@ -514,7 +515,9 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 
 ### Pet Posts Screen
 
-Triggered from: tapping a named pet row.
+**Triggered from:**
+- Tap **pet badge** on any post card media (Explore, Post Detail, Family Posts, User Posts, Random Pet Posts, Loved Posts) — any viewer
+- Tap **pet row** in Family Posts — viewer is always unauth/non-member
 
 **Header:**
 
@@ -523,11 +526,15 @@ Triggered from: tapping a named pet row.
 | `avatar_url` | Pet avatar |
 | `name` | Pet name |
 | `breed` | Breed name |
-| `gender` | `male` / `female` / `unknown` |
-| `age_display` | e.g. `"3 years"` |
 
-**Posts:** all posts where `media[].pet.id = pet_id`, sorted `created_at` desc.  
-API: `GET /pets/{pet_id}/posts?cursor=&limit=10`
+**Posts:**
+- No filter tabs; no Suggested Families widget
+- Sorted `created_at` desc (newest first)
+- 10 posts per page, infinite scroll
+- Privacy rules: same server-side enforcement as Explore — unauthenticated sees `public` posts only; authenticated sees `public` + `followers` (if following) + `private` (if family member)
+- Empty state: possible if pet has no posts visible to this viewer (e.g. all posts are private) — show message "No posts yet"
+- All canonical post card tap interactions apply (see `screen_1_home_explore.md` → Post Card)
+- API: `GET /pets/{pet_id}/posts?cursor=&limit=10`
 
 ---
 

@@ -3,8 +3,8 @@
 ## Overview
 
 Full detail view for a single named pet within a family.  
-Navigated to from: tapping a pet row in My Pets (Screen 8), tapping a pet row in Family Posts (Screen 3), or tapping a pet badge on a post media.  
-Accessible to: family members (owner + parents). Unauthenticated users or non-members cannot access Pet Detail — redirect to Family Posts screen instead.
+Navigated to from: tapping a pet row in **My Pets (Screen 8)** only.  
+Accessible to: family members (owner + parents) — My Pets is always viewed by a family member, so no auth check needed on entry.
 
 ---
 
@@ -703,9 +703,8 @@ mutation MarkPetFound($petId: ID!) {
 ### Open Pet Detail
 
 ```
-User taps pet row / pet badge
-  └─> [not family member] → redirect to Family Posts screen
-  └─> [family member] → GET /pets/{pet_id} + GET /families/{family_id}/pets
+User taps pet row in My Pets
+  └─> GET /pets/{pet_id} + GET /families/{family_id}/pets
         └─> Render pet identity + missing banner (if applicable)
               └─> Default tab: Health
                     ├─ status=checking → show spinner
