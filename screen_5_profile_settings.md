@@ -82,11 +82,19 @@ Active family is used for: receiving push notifications directed at the family, 
 ### 3. Activity — Loves
 
 Navigates to **Loved Posts screen**:
-- List of posts the user has loved
-- Sorted `created_at` desc (latest loved first)
+- Only accessible by the current user (private — no way to view another user's loved posts)
+- No filter tabs (unlike Explore)
+- No Suggested Families widget
+- Sorted by most recently loved first
 - 10 posts per page, infinite scroll
-- Same post card format as Explore — all canonical tap interactions apply (see `screen_1_home_explore.md` → Post Card): tap **family name** → Family Posts, tap **author name** → User Posts, tap **pet badge** → Pet Posts
 - API: `GET /users/me/loved-posts?cursor=&limit=10`
+
+**Post card:**
+- Same post card format as Explore — all canonical tap interactions apply (see `screen_1_home_explore.md` → Post Card): tap **family name** → Family Posts, tap **author name** → User Posts, tap **pet badge** → Pet Posts
+- Tap **Love button** → un-love; post is removed from the list immediately (optimistic); on API error revert and show error toast
+
+**Empty state** (user has not loved any posts):
+- Message: "You haven't loved any posts yet"
 
 ---
 
