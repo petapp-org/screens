@@ -550,7 +550,9 @@ API: `GET /families/{family_id}/posts?type=random&cursor=&limit=10`
 
 ### User Posts Screen
 
-Triggered from: tapping a parent in the Parents bottom sheet.
+**Triggered from:**
+- Tap **author name** on any post card (Explore, Post Detail, Family Posts, Pet Posts, Random Pet Posts, Loved Posts)
+- Tap **parent name** in the Parents bottom sheet (Family Posts, My Pets)
 
 **Header:**
 
@@ -559,10 +561,15 @@ Triggered from: tapping a parent in the Parents bottom sheet.
 | `avatar_url` | User avatar |
 | `display_name` | User's display name |
 | `tag` | `@tag` |
-| `families` | List of family names the user belongs to, e.g. `"Minh's Family"` |
 
-**Posts:** all posts created by this user, sorted `created_at` desc.  
-API: `GET /users/{user_id}/posts?cursor=&limit=10`
+**Posts:**
+- No filter tabs; no Suggested Families widget
+- Sorted `created_at` desc (newest first)
+- 10 posts per page, infinite scroll
+- Privacy rules: same server-side enforcement as Explore — unauthenticated sees `public` posts only; authenticated sees `public` + `followers` (if following the post's family) + `private` (if family member). Viewer always sees at least the post they tapped from.
+- Empty state: not applicable — screen is only reachable by tapping a post card, so at least 1 post is always visible
+- All canonical post card tap interactions apply (see `screen_1_home_explore.md` → Post Card)
+- API: `GET /users/{user_id}/posts?cursor=&limit=10`
 
 ---
 
