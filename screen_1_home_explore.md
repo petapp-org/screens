@@ -144,7 +144,7 @@ Each post card displays:
 - **Comment button / count:**
   - `34 comments` text and Comment button are both tappable
   - Tapping opens an **inline comment panel** (expands below the post card, does not navigate away)
-  - Inline panel shows the **latest 10 comments**, sorted by `created_at` desc
+  - Inline panel shows the **last 10 comments**, sorted by `created_at` asc (oldest first within the set); panel **auto-scrolls to bottom** on open so the newest comment is visible
   - If `comment_count > 10`: show a "View all N comments" link → navigates to Post Detail screen
   - User can submit a new comment directly from the inline panel (requires login)
   - **Close:** tap anywhere outside the panel (on the feed) to collapse it
@@ -535,6 +535,13 @@ mutation DismissFamilySuggestion($familyId: ID!) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in (server-side dismissal only; client-only dismissal always succeeds) |
+| `FAMILY_NOT_FOUND` | Family does not exist |
+
 ---
 
 ### D. Mutation: `FollowFamily`
@@ -569,6 +576,14 @@ mutation FollowFamily($familyId: ID!) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `FAMILY_NOT_FOUND` | Family does not exist |
+| `ALREADY_FOLLOWING` | Caller already follows this family |
 
 ---
 
@@ -605,6 +620,14 @@ mutation UnfollowFamily($familyId: ID!) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `FAMILY_NOT_FOUND` | Family does not exist |
+| `NOT_FOLLOWING` | Caller is not following this family |
+
 ---
 
 ### F. Mutation: `LovePost`
@@ -639,6 +662,13 @@ mutation LovePost($postId: ID!) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `POST_NOT_FOUND` | Post does not exist or has been deleted |
 
 ---
 
@@ -675,6 +705,14 @@ mutation UnlovePost($postId: ID!) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `POST_NOT_FOUND` | Post does not exist or has been deleted |
+| `NOT_LOVED` | Caller has not loved this post |
+
 ---
 
 ### H. Mutation: `HidePost`
@@ -707,6 +745,13 @@ mutation HidePost($postId: ID!, $scope: HideScope!) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `POST_NOT_FOUND` | Post does not exist or has been deleted |
 
 ---
 
@@ -794,6 +839,14 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `POST_NOT_FOUND` | Post does not exist or has been deleted |
+| `FORBIDDEN` | Caller is not the post author |
+
 ---
 
 ### J. Mutation: `DeletePost`
@@ -823,11 +876,19 @@ mutation DeletePost($postId: ID!) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `POST_NOT_FOUND` | Post does not exist or has been deleted |
+| `FORBIDDEN` | Caller is not the post author |
+
 ---
 
 ### K. Query: `PostComments`
 
-Fetch comments for the inline comment panel.
+Fetch comments for the inline comment panel. Returns comments sorted `createdAt asc` (oldest first); client auto-scrolls to bottom on open.
 
 **Auth:** Optional.
 
@@ -872,6 +933,16 @@ query PostComments($postId: ID!, $limit: Int, $cursor: String) {
           },
           "body": "Cute quá trời 😍",
           "createdAt": "2026-06-06T07:00:00Z"
+        },
+        {
+          "id": "comment_002",
+          "author": {
+            "id": "user_003",
+            "displayName": "Quang",
+            "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+          },
+          "body": "Mắt to ghê 👀",
+          "createdAt": "2026-06-06T07:15:00Z"
         }
       ],
       "totalCount": 34,
@@ -881,6 +952,12 @@ query PostComments($postId: ID!, $limit: Int, $cursor: String) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `POST_NOT_FOUND` | Post does not exist or has been deleted |
 
 ---
 
@@ -928,6 +1005,13 @@ mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `POST_NOT_FOUND` | Post does not exist or has been deleted |
 
 ---
 
@@ -1016,8 +1100,8 @@ User taps "..." on a post
 | Profile button — not logged in | Default placeholder avatar shown; tapping redirects to Login |
 | Love — optimistic update fails (API error) | Revert `love_count` and `is_loved` to previous state; show error toast |
 | Comment count = 0 | Comment button still tappable; inline panel opens showing empty state |
-| Comment count ≤ 10 | Show all comments inline; no "View all" link needed |
-| Comment count > 10 | Show latest 10 inline + "View all N comments" link → Post Detail screen |
+| Comment count ≤ 10 | Show all comments inline (oldest first); no "View all" link needed |
+| Comment count > 10 | Show last 10 comments (oldest first within set) + "View all N comments" link → Post Detail screen; auto-scroll to bottom |
 | Tapping My Pets / Shops / Services / More while not logged in | Redirect to Login screen |
 | Network error on feed load | Show error state with retry button |
 | Cursor expired (e.g. after long background) | Reset to first page silently |

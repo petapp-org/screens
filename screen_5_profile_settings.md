@@ -251,6 +251,12 @@ query Me {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+
 ---
 
 ### AG. Mutation: `SetActiveFamily`
@@ -285,6 +291,14 @@ mutation SetActiveFamily($input: SetActiveFamilyInput!) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `FAMILY_NOT_FOUND` | Family does not exist |
+| `NOT_A_MEMBER` | Caller is not a member of the specified family |
 
 ---
 
@@ -341,6 +355,12 @@ query MyLovedPosts($cursor: String, $limit: Int) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
 
 ---
 
@@ -400,6 +420,12 @@ query MyFollowing($cursor: String, $limit: Int) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+
 ---
 
 ### AJ. Query: `MyContactInfo`
@@ -432,6 +458,12 @@ query MyContactInfo {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
 
 ---
 
@@ -476,6 +508,13 @@ mutation UpdateMe($input: UpdateMeInput!) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `DISPLAY_NAME_TOO_LONG` | `displayName` exceeds 50 characters |
+
 ---
 
 ### AL. Mutation: `Logout`
@@ -510,6 +549,56 @@ mutation Logout($input: LogoutInput!) {
   }
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+
+---
+
+### Mutation: `RequestAccountDeletion` *(no assigned letter ID)*
+
+Schedule the current user's account for deletion after a 30-day grace period.  
+**Auth:** Required
+
+**Operation:**
+```graphql
+mutation RequestAccountDeletion {
+  requestAccountDeletion {
+    scheduledDeletionAt
+  }
+}
+```
+
+**Variables:**
+```json
+{}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "requestAccountDeletion": {
+      "scheduledDeletionAt": "2026-07-07T12:00:00Z"
+    }
+  }
+}
+```
+
+**Side effects:**
+- Sets `scheduled_deletion_at = now + 30 days` on the user record
+- Caller is immediately logged out client-side after receiving response
+- User logging back in within 30 days via OAuth cancels the deletion (`scheduled_deletion_at` cleared); show toast "Welcome back! Your account deletion has been cancelled."
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `DELETION_ALREADY_SCHEDULED` | Account already has a pending deletion request |
 
 ---
 

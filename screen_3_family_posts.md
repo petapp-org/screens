@@ -502,6 +502,12 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 - `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
 - Server enforces privacy: unauthenticated → `public` only; authenticated → `public` + `followers` (if following family) + `private` (if family member).
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `PET_NOT_FOUND` | Pet does not exist or has been deleted |
+
 ---
 
 ### U. Query: `RandomPetPosts`
@@ -548,6 +554,12 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
 - Server filters: only posts where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
 - `media_tag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `FAMILY_NOT_FOUND` | Family does not exist |
+
 ---
 
 ### V. Query: `UserPosts`
@@ -591,6 +603,12 @@ query UserPosts($userId: ID!, $cursor: String, $limit: Int) {
 
 **Notes:**
 - `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `USER_NOT_FOUND` | User does not exist |
 
 ---
 

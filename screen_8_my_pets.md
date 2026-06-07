@@ -302,6 +302,13 @@ query ActiveFamily {
 - `viewerRole`: `OWNER` | `PARENT` — controls visibility of Edit button and management actions in Parents popup
 - `parents` included here to avoid a separate API call when opening the bottom sheet
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `ACTIVE_FAMILY_NOT_SET` | User has no active family set |
+
 ---
 
 ### AZ. Query: `FamilyRandomMedia`
@@ -367,6 +374,13 @@ query FamilyRandomMedia($familyId: ID!, $cursor: String, $limit: Int) {
 - `breed`, `cityCode`, `countryCode`, `createdAt` used for cell subtitle display: `breed name · 📍 HCM, VN · 1 mo`
 - Screen fetches only the first 4 items for the preview; "View All" passes cursor for full list
 - "View All" navigates to Random Pet Posts screen — uses Query `U. RandomPetPosts` (screen_3)
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `FAMILY_NOT_FOUND` | Family does not exist |
 
 ---
 

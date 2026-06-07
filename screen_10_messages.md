@@ -200,6 +200,12 @@ query MessageThreads {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+
 ---
 
 ### BH. Query: `ThreadMessages`
@@ -266,6 +272,14 @@ query ThreadMessages($threadId: ID!, $cursor: String, $limit: Int) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `THREAD_NOT_FOUND` | Thread does not exist |
+| `NOT_THREAD_MEMBER` | Caller is not a member of this thread |
+
 ---
 
 ### BI. Mutation: `StartThread`
@@ -299,6 +313,13 @@ mutation StartThread($input: StartThreadInput!) {
 ```
 
 **Note:** If a thread already exists for the same sender ↔ receiver pair, returns the existing thread (no duplicate created).
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `RECEIVER_NOT_FOUND` | Receiver user or family does not exist |
 
 ---
 
@@ -341,6 +362,15 @@ mutation SendMessage($threadId: ID!, $input: SendMessageInput!) {
 }
 ```
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `THREAD_NOT_FOUND` | Thread does not exist |
+| `NOT_THREAD_MEMBER` | Caller is not a member of this thread |
+| `MESSAGE_EMPTY` | Message body is blank |
+
 ---
 
 ### BK. Mutation: `MarkThreadRead`
@@ -354,6 +384,13 @@ mutation MarkThreadRead($threadId: ID!) {
   markThreadRead(threadId: $threadId)
 }
 ```
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `THREAD_NOT_FOUND` | Thread does not exist |
 
 ---
 
@@ -370,6 +407,12 @@ query UnreadMessageCount {
 ```
 
 **Note:** Delivered via **WebSocket push** when available; falls back to polling every 30s. Fetched separately from the thread list (not bundled).
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
 
 ---
 
@@ -404,6 +447,15 @@ query SearchThreadMessages($threadId: ID!, $q: String!, $cursor: String, $limit:
 **Notes:**
 - Min 2 characters required (enforced client-side before calling)
 - Results ordered by `sentAt asc` — client highlights matched messages and scrolls to position
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `THREAD_NOT_FOUND` | Thread does not exist |
+| `NOT_THREAD_MEMBER` | Caller is not a member of this thread |
+| `QUERY_TOO_SHORT` | Search query is less than 2 characters (server-side enforcement) |
 
 ---
 

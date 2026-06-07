@@ -134,6 +134,12 @@ query SearchFamilies($q: String!, $cursor: String, $limit: Int) {
 
 **Variables:** `{ "q": "pudding", "limit": 20 }`
 
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `QUERY_TOO_SHORT` | Query is less than 2 characters |
+
 ---
 
 ### BO. Query: `SearchUsers`
@@ -156,6 +162,12 @@ query SearchUsers($q: String!, $cursor: String, $limit: Int) {
 **Variables:** `{ "q": "minh", "limit": 20 }`
 
 **Note:** `SearchUsers` is also used by the Invite Search Modal in screen_6 and screen_8 — same endpoint, same query shape.
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `QUERY_TOO_SHORT` | Query is less than 2 characters |
 
 ---
 
@@ -185,6 +197,12 @@ query SearchPets($q: String!, $cursor: String, $limit: Int) {
 **Variables:** `{ "q": "british", "limit": 20 }`
 
 **Note:** Only pets from public families are returned. Server filters based on family privacy settings.
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `QUERY_TOO_SHORT` | Query is less than 2 characters |
 
 ---
 
