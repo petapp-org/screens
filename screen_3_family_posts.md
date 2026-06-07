@@ -504,7 +504,11 @@ User taps Parents row
 ## Linked Screens
 
 All three linked screens follow the same pattern: **profile header + posts list**.  
-Posts list is identical to the Family Posts list view — same card format as Explore, 10 per page, infinite scroll, list/grid toggle.
+Posts list is identical to the Family Posts list view — same card format as Explore, 10 per page, infinite scroll, list/grid toggle.  
+All canonical post card tap interactions apply (see `screen_1_home_explore.md` → Post Card):
+- Tap **family name** → Family Posts screen
+- Tap **author name** → User Posts screen
+- Tap **pet badge** on media → Pet Posts screen
 
 ---
 

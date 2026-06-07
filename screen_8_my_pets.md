@@ -163,7 +163,7 @@ Displays posts where at least one media has `media_tag.type = "random" AND breed
 Each cell shows:
 - Media thumbnail (top)
 - `breed` name in bold (below thumbnail)
-- `📍 city_code, country_code · relative_time` (e.g. `"HCMC, VN · 1 mo"`)
+- `📍 city_code, country_code · time` — time follows the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"HCMC, VN · 3h"`, `"HCMC, VN · 2d"`, `"HCMC, VN · 28 May"`
 
 - Tap any cell → **Post Detail screen** for that post
 - If total breed-tagged posts > 4: show **"View All →"** link below grid
@@ -181,7 +181,7 @@ Each cell shows:
 All posts belonging to the active family, same as Family Posts screen (Screen 3).
 
 - Section header: **"MY PET POSTS"** + list/grid view toggle
-- Default: list view — canonical post card (Screen 1)
+- Default: list view — canonical post card (Screen 1); all canonical tap interactions apply: tap **family name** → Family Posts, tap **author name** → User Posts, tap **pet badge** → Pet Posts
 - Grid view: same 3-column thumbnail grid as Screen 3
 - Sorted `created_at` desc (newest first)
 - 10 posts per page, infinite scroll

@@ -81,7 +81,7 @@ Shown only when `pet.missing_status != null`.
 
 | Field | Display |
 |-------|---------|
-| `missing_status.reported_at` | Relative time, e.g. `"2 days ago"` |
+| `missing_status.reported_at` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"2d"`, `"28 May"` |
 | `missing_status.last_seen_location` | `city_code` display, e.g. `"HCM"` |
 
 **"Mark as Found" button:**

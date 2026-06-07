@@ -406,7 +406,20 @@ query Feed($filter: FeedFilter, $cursor: String, $limit: Int) {
   ```
   - Top-left: family name
   - Bottom-left: pet names joined by ` · ` (omit row if `pets` is empty)
-  - Top-right: `displayName · relative_time` (e.g. `"Mochi · 3h"`)
+  - Top-right: `displayName · time` (e.g. `"Mochi · 3h"`) — time format follows the rules below:
+
+**Time display rules (based on `created_at`):**
+
+| Condition | Format | Example |
+|-----------|--------|---------|
+| < 1 minute ago | `just now` | `Mochi · just now` |
+| < 1 hour ago | `Xm` | `Mochi · 5m` |
+| < 24 hours ago | `Xh` | `Mochi · 3h` |
+| < 7 days ago | `Xd` | `Mochi · 2d` |
+| ≥ 7 days ago, same year | `DD MMM` | `Mochi · 28 May` |
+| Different year | `DD/MM/YYYY` | `Mochi · 15/03/2025` |
+
+- On web: hovering the time text shows a tooltip with the full datetime (e.g. `"06/06/2026 13:00"`)
   - Bottom-right: location as `cityCode - countryCode` (omit if `location` is null)
 - `filter: FOLLOWING` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
 - `filter: RESCUE` returns posts from families where `family.type = CHARITY`

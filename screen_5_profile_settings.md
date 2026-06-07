@@ -85,7 +85,7 @@ Navigates to **Loved Posts screen**:
 - List of posts the user has loved
 - Sorted `created_at` desc (latest loved first)
 - 10 posts per page, infinite scroll
-- Same post card format as Explore
+- Same post card format as Explore — all canonical tap interactions apply (see `screen_1_home_explore.md` → Post Card): tap **family name** → Family Posts, tap **author name** → User Posts, tap **pet badge** → Pet Posts
 - API: `GET /users/me/loved-posts?cursor=&limit=10`
 
 ---

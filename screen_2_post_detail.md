@@ -65,7 +65,7 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 | `author.avatar_url` | Commenter's avatar |
 | `author.display_name` | Commenter's name — tappable → User Profile screen |
 | `body` | Comment text |
-| `created_at` | Relative time (e.g. "2h ago") |
+| `created_at` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"5m"`, `"3h"`, `"2d"`, `"28 May"` |
 | `reply_count` | Total number of replies to this comment |
 | `is_own` | Boolean — whether the current viewer authored this comment |
 | `is_deletable` | Boolean — server-computed; `true` only when `is_own=true` AND `reply_count=0` AND comment was created within the last 10 minutes |
