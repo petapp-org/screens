@@ -93,14 +93,27 @@ Navigates to **Loved Posts screen**:
 ### 4. Activity — Following
 
 Navigates to **Following screen**:
-- List of families the user follows
-- Each row: family avatar + family name + `@tag` + city/country + **Following button**
+- Sorted by most recently followed first
+- 20 families per page; **"Load more"** button at bottom — each tap loads 20 more
+- API: `GET /users/me/following?cursor=&limit=20`
+
+**Each row:**
+- Family avatar + family name + `@tag` + city/country
+- Tap anywhere on the row (except action buttons) → **Family Posts screen**
+- `standard` family → **Following button** only
+- `charity` family → **Following button** + **Donate button**
+  - Tap Donate → in-app Donate screen for that family (currently "Coming Soon")
+
+**Unfollow:**
 - Tap **Following button** → unfollow
   - Optimistic: remove row immediately
   - Show toast: "Unfollowed [Family name]" + **Undo** button (5s window)
   - Tap Undo → `POST /families/{id}/follow` → re-add row
   - No Undo tap → `DELETE /families/{id}/follow` confirmed
-- API: `GET /users/me/following?cursor=&limit=20`
+
+**Empty state** (user follows no one):
+- Message: "You're not following anyone yet"
+- Show **Suggested Families widget** (same component as Explore feed — see `screen_1_home_explore.md` → Suggested Families Widget)
 
 ---
 
