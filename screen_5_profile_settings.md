@@ -139,6 +139,9 @@ PREFERENCES
   Language  [>]           ← language picker
 
 [Log out]                 ← red text button, confirmation dialog before logging out
+
+DANGER ZONE
+  Delete Account  [>]     ← navigates to separate Delete Account screen (1 level deeper)
 ```
 
 **Edit Profile:**
@@ -148,9 +151,8 @@ PREFERENCES
 
 **Phone & Email:**
 - Shows current phone number (masked, e.g. `+84 *** *** 567`)
-- Shows linked email (from OAuth or added manually)
-- Option to add/change email
-- API: `GET /users/me/contact-info`, `PATCH /users/me/contact-info`
+- Shows linked email (from OAuth)
+- API: `GET /users/me/contact-info`
 
 **Push Notifications:**
 - Toggle stored locally + synced to server
@@ -164,6 +166,18 @@ PREFERENCES
 - Tap → confirmation dialog: "Are you sure you want to log out?"
 - Confirm → clear local tokens → redirect to Register/Login screen
 - `POST /auth/logout` `{ refresh_token }` (invalidates refresh token server-side)
+
+**Delete Account screen** (1 level deeper — tap "Delete Account [>]" to navigate here):
+- Explains consequences: posts, pets, and family data will be removed
+- Explains grace period: "Your account will be permanently deleted after 30 days. Log in again within 30 days to cancel deletion."
+- Single **"Delete My Account"** button (red, destructive style)
+- Tap → confirmation dialog: "Are you sure? This starts a 30-day deletion period." → Confirm → `POST /users/me/delete-request`
+- After confirm: log out immediately → redirect to Register/Login screen
+- Server sets `scheduled_deletion_at = now + 30 days`
+
+**Reactivation (within 30 days):**
+- User logs in via OAuth → server detects `scheduled_deletion_at` is set → clears `scheduled_deletion_at` → account fully restored
+- Show toast on login: "Welcome back! Your account deletion has been cancelled."
 
 ---
 
