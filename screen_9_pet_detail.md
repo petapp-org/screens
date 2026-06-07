@@ -87,9 +87,11 @@ Shown only when `pet.missing_status != null`.
 | `missing_status.last_seen_location` | `city_code` display, e.g. `"HCM"` |
 
 **"Mark as Found" button:**
-- Owner only
-- Tap → confirmation: *"Mark Bụi as found?"* → `PATCH /pets/{pet_id}/found`
+- Shown to all family members (owner + parents)
+- **Disabled** for parents — only owner can tap it
+- Tap (owner) → confirmation: *"Mark Bụi as found?"* → `PATCH /pets/{pet_id}/found`
 - Banner removed immediately on success
+- Button re-enables automatically when a new missing report is filed (`pet.missing_status != null`)
 
 ---
 

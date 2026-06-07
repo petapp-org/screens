@@ -81,7 +81,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 **Follow button:**
 - Not following → button label "Follow"; tap → `POST /families/{id}/follow` (requires login → redirect to Login)
-- Following → button label "Following"; tap → `DELETE /families/{id}/follow`
+- Following → button label "Following"; tap → `DELETE /families/{id}/follow` → button reverts to "Follow" immediately (optimistic); show undo toast for **5 seconds**: *"Unfollowed [Family Name]"* + **[Undo]** button → if Undo tapped: re-follow silently (no second toast), button returns to "Following"
 - Reuse endpoints D and E from Screen 1
 
 **Message button:**
@@ -433,6 +433,99 @@ query FamilyParents($familyId: ID!) {
 
 ---
 
+### T. Query: `PetPosts`
+
+Fetch posts for a specific named pet.  
+**Auth:** Optional — bearer token enables `followers` + `private` posts for eligible viewers.
+
+**Operation:**
+```graphql
+query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
+  petPosts(petId: $petId, cursor: $cursor, limit: $limit) {
+    pet {
+      id
+      name
+      breed
+      species
+      avatarUrl
+    }
+    posts {
+      ...PostCard
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:** `{ "petId": "pet_111", "limit": 10 }`
+
+**Notes:**
+- `PostCard` fragment follows the canonical post shape from Screen 1.
+- Server enforces privacy: unauthenticated → `public` only; authenticated → `public` + `followers` (if following family) + `private` (if family member).
+
+---
+
+### U. Query: `RandomPetPosts`
+
+Fetch posts with random (unmatched) animal detections for a specific family.  
+**Auth:** Optional — same privacy enforcement as above.
+
+**Operation:**
+```graphql
+query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
+  randomPetPosts(familyId: $familyId, cursor: $cursor, limit: $limit) {
+    family {
+      id
+      name
+      avatarUrl
+      randomCount
+    }
+    posts {
+      ...PostCard
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:** `{ "familyId": "fam_xyz", "limit": 10 }`
+
+**Notes:**
+- Server filters: only posts where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
+- `media_tag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
+
+---
+
+### V. Query: `UserPosts`
+
+Fetch posts authored by a specific user.  
+**Auth:** Optional — same privacy enforcement as above.
+
+**Operation:**
+```graphql
+query UserPosts($userId: ID!, $cursor: String, $limit: Int) {
+  userPosts(userId: $userId, cursor: $cursor, limit: $limit) {
+    user {
+      id
+      displayName
+      tag
+      avatarUrl
+    }
+    posts {
+      ...PostCard
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:** `{ "userId": "user_001", "limit": 10 }`
+
+---
+
 ## User Flow Diagrams
 
 ### Open Family Posts screen
@@ -536,7 +629,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 - Privacy rules: same server-side enforcement as Explore — unauthenticated sees `public` posts only; authenticated sees `public` + `followers` (if following) + `private` (if family member)
 - Empty state: possible if pet has no posts visible to this viewer (e.g. all posts are private) — show message "No posts yet"
 - All canonical post card tap interactions apply (see `screen_1_home_explore.md` → Post Card)
-- API: `GET /pets/{pet_id}/posts?cursor=&limit=10`
+- API: Query `PetPosts` (endpoint T above)
 
 ---
 
@@ -562,7 +655,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 - Privacy rules: same server-side enforcement as Explore
 - Empty state: not applicable — both entry points are guarded (`random_count > 0` / section hidden when 0 posts)
 - Post card follows canonical format (see `screen_1_home_explore.md` → Post Card); `media_tag.type = "random"` → no pet badge shown on any media frame → no link to Pet Posts screen from within this screen
-- API: `GET /families/{family_id}/posts?type=random&cursor=&limit=10`
+- API: Query `RandomPetPosts` (endpoint U above)
 
 ---
 
@@ -587,7 +680,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 - Privacy rules: same server-side enforcement as Explore — unauthenticated sees `public` posts only; authenticated sees `public` + `followers` (if following the post's family) + `private` (if family member). Viewer always sees at least the post they tapped from.
 - Empty state: not applicable — screen is only reachable by tapping a post card, so at least 1 post is always visible
 - All canonical post card tap interactions apply (see `screen_1_home_explore.md` → Post Card)
-- API: `GET /users/{user_id}/posts?cursor=&limit=10`
+- API: Query `UserPosts` (endpoint V above)
 
 ---
 

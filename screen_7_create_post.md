@@ -232,6 +232,7 @@ Scan an uploaded media item for pet detection.
 mutation ScanMedia($input: ScanMediaInput!) {
   scanMedia(input: $input) {
     detected
+    species
     breed
     color
     matchedPet {
@@ -248,7 +249,8 @@ mutation ScanMedia($input: ScanMediaInput!) {
 {
   "input": {
     "mediaUrl": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
-    "familyId": "fam_xyz"
+    "familyId": "fam_xyz",
+    "skipPetMatch": false
   }
 }
 ```
@@ -261,6 +263,7 @@ Pet detected + matched to family pet:
   "data": {
     "scanMedia": {
       "detected": true,
+      "species": "Cat",
       "breed": "Orange Tabby Cat",
       "color": "orange",
       "matchedPet": {
@@ -279,6 +282,7 @@ Pet detected + no family match:
   "data": {
     "scanMedia": {
       "detected": true,
+      "species": "Cat",
       "breed": "British Shorthair",
       "color": "grey",
       "matchedPet": null
@@ -293,6 +297,7 @@ No pet detected:
   "data": {
     "scanMedia": {
       "detected": false,
+      "species": null,
       "breed": null,
       "color": null,
       "matchedPet": null
@@ -303,7 +308,7 @@ No pet detected:
 
 **Notes:**
 - `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `media_tag`.
-- Resulting `media_tag` written to the post uses only `{ type, id, breed }` (Screen 1 canonical structure).
+- Resulting `media_tag` written to the post uses `{ type, id, species, breed }` (Screen 1 canonical structure).
 - In Random Pets context (`[+]` from Screen 8), call with `familyId` omitted or `skipPetMatch: true` — `matchedPet` is always `null`.
 
 ---
@@ -393,6 +398,7 @@ mutation SaveDraft($input: CreatePostInput!) {
         "mediaTag": {
           "type": "PET",
           "id": "pet_111",
+          "species": "Cat",
           "breed": "Orange Tabby Cat"
         }
       }
@@ -467,6 +473,7 @@ mutation CreatePost($input: CreatePostInput!) {
       mediaTag {
         type
         id
+        species
         breed
       }
     }
@@ -496,6 +503,7 @@ mutation CreatePost($input: CreatePostInput!) {
         "mediaTag": {
           "type": "PET",
           "id": "pet_111",
+          "species": "Cat",
           "breed": "Orange Tabby Cat"
         }
       },
@@ -506,6 +514,7 @@ mutation CreatePost($input: CreatePostInput!) {
         "mediaTag": {
           "type": "RANDOM",
           "id": null,
+          "species": null,
           "breed": null
         }
       }

@@ -50,7 +50,9 @@ Search by: `name`, `@tag`
 ```
 
 - Tap row → **Family Posts screen** (or My Pets if own family)
-- Follow / Donate buttons: same behaviour as Suggested Families widget (screen_1)
+- Follow button: same behaviour as Suggested Families widget (screen_1)
+- **Unfollow Undo**: tapping "Following" → unfollow optimistically + show 5s toast *"Unfollowed [Family Name]"* + **[Undo]** → if Undo tapped: re-follow silently
+- Donate button: charity families only; same behaviour as Suggested Families widget (screen_1)
 
 ---
 

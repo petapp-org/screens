@@ -82,7 +82,7 @@ Shown once after a new account is created via any method.
 
 **Tag validation:**
 - Real-time uniqueness check as user types (debounced 500ms)
-- `GET /users/check-tag?tag=minhdang` → `{ available: true|false }`
+- Uses `CheckUserTag` query (see endpoint AF below)
 - Show green checkmark if available, red X if taken
 
 **Submit:**
@@ -357,6 +357,46 @@ mutation SetupProfile($input: SetupProfileInput!) {
 
 ---
 
+### AF. Query: `CheckUserTag`
+
+Check tag availability during Profile Setup.  
+**Auth:** Not required
+
+**Operation:**
+```graphql
+query CheckUserTag($tag: String!) {
+  checkUserTag(tag: $tag) {
+    available
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "tag": "minhdang"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "checkUserTag": {
+      "available": true
+    }
+  }
+}
+```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `400` | `INVALID_TAG_FORMAT` | Tag contains invalid characters |
+
+---
+
 ## Edge Cases & Notes
 
 | Case | Expected Behaviour |
@@ -366,3 +406,4 @@ mutation SetupProfile($input: SetupProfileInput!) {
 | Tag already set, user tries to change | `400 TAG_ALREADY_SET`; hide tag field on Edit Profile for existing users |
 | OAuth account already registered | Treated as login (`is_new_user=false`); skip profile setup |
 | User skips avatar on profile setup | Default avatar (initials or placeholder) used until manually updated |
+| Redirect to Login (from any auth-required action) | After successful login/signup, **always navigate to Explore** — no return_url; Explore is the universal post-login landing screen |

@@ -204,7 +204,7 @@ query MessageThreads {
 
 ### BB. Query: `ThreadMessages`
 
-Fetch messages in a thread (paginated, newest first).
+Fetch messages in a thread (paginated, **oldest first** — `sentAt asc`). Load earlier messages by passing the oldest known message cursor.
 
 **Auth:** Required
 
@@ -340,7 +340,7 @@ query UnreadMessageCount {
 }
 ```
 
-**Note:** Fetched separately from the feed (not bundled). Can be polled or pushed via WebSocket.
+**Note:** Delivered via **WebSocket push** when available; falls back to polling every 30s. Fetched separately from the thread list (not bundled).
 
 ---
 
@@ -405,3 +405,5 @@ User taps Send
 | 6 | Access after removal from family | My Families threads hidden; Sent to Families threads remain |
 | 7 | Reply style | Quoted reply (WhatsApp/Zalo style) |
 | 8 | Start thread from within thread | Tap header name → new thread with that entity |
+| 9 | Thread message sort order | Oldest first (`sentAt asc`); load earlier messages by paging up |
+| 10 | Unread count delivery | **WebSocket** (push) preferred for real-time dot badge; fall back to polling (every 30s) if WebSocket unavailable |
