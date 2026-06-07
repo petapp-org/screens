@@ -187,7 +187,7 @@ All calls go to `POST /graphql`.
 
 ---
 
-### AF. Query: `Me`
+### Query: `Me` *(shared — no assigned letter ID)*
 Fetch current user profile (for the Me screen header), including all family memberships.  
 **Auth:** Required
 
@@ -318,7 +318,23 @@ query MyLovedPosts($cursor: String, $limit: Int) {
 {
   "data": {
     "myLovedPosts": {
-      "posts": [ "...same Post shape as Screen 1..." ],
+      "posts": [
+        {
+          "id": "post_001",
+          "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg", "type": "STANDARD" },
+          "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
+          "pets": [ { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" } ],
+          "caption": "Bụi nằm chờ mama nấu cơm 🌕",
+          "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
+          "media": [ { "id": "media_001", "type": "UPLOADED", "url": "https://cdn.petapp.com/media/001.jpg", "thumbnailUrl": null, "mimeType": "image/jpeg", "width": 1080, "height": 1080, "durationSeconds": null, "provider": null, "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } } ],
+          "loveCount": 24,
+          "commentCount": 3,
+          "isLoved": true,
+          "isOwn": false,
+          "privacy": "PUBLIC",
+          "createdAt": "2026-06-06T08:00:00Z"
+        }
+      ],
       "nextCursor": "cursor_token_here",
       "hasMore": true
     }
