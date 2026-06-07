@@ -75,7 +75,7 @@ Active family is used for: receiving push notifications directed at the family, 
 - Toggling ON a family → sets it as active; all other families toggle OFF automatically
 - Only 1 can be ON at a time across owned + joined families
 - Creating a new family → auto-activates it (all others deactivated)
-- `PATCH /users/me/active-family` `{ family_id }` → `200 OK`
+- `SetActiveFamily mutation (AG)` `{ family_id }` → `200 OK`
 
 ---
 
@@ -87,7 +87,7 @@ Navigates to **Loved Posts screen**:
 - No Suggested Families widget
 - Sorted by most recently loved first
 - 10 posts per page, infinite scroll
-- API: `GET /users/me/loved-posts?cursor=&limit=10`
+- API: `MyLovedPosts query (AH)`
 
 **Post card:**
 - Same post card format as Explore — all canonical tap interactions apply (see `screen_1_home_explore.md` → Post Card): tap **family name** → Family Posts, tap **author name** → User Posts, tap **pet badge** → Pet Posts
@@ -103,7 +103,7 @@ Navigates to **Loved Posts screen**:
 Navigates to **Following screen**:
 - Sorted by most recently followed first
 - 20 families per page; **"Load more"** button at bottom — each tap loads 20 more
-- API: `GET /users/me/following?cursor=&limit=20`
+- API: `MyFollowing query (AI)`
 
 **Each row:**
 - Family avatar + family name + `@tag` + city/country
@@ -116,8 +116,8 @@ Navigates to **Following screen**:
 - Tap **Following button** → unfollow
   - Optimistic: remove row immediately
   - Show toast: "Unfollowed [Family name]" + **Undo** button (5s window)
-  - Tap Undo → `POST /families/{id}/follow` → re-add row
-  - No Undo tap → `DELETE /families/{id}/follow` confirmed
+  - Tap Undo → `FollowFamily mutation (D)` → re-add row
+  - No Undo tap → `UnfollowFamily mutation (E)` confirmed
 
 **Empty state** (user follows no one):
 - Message: "You're not following anyone yet"
@@ -147,16 +147,16 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `tag` (shown greyed out with note "Tag cannot be changed")
-- `PATCH /users/me` `{ name, avatar_url }`
+- `UpdateMe mutation (AK)` `{ name, avatar_url }`
 
 **Phone & Email:**
 - Shows current phone number (masked, e.g. `+84 *** *** 567`)
 - Shows linked email (from OAuth)
-- API: `GET /users/me/contact-info`
+- API: `MyContactInfo query (AJ)`
 
 **Push Notifications:**
 - Toggle stored locally + synced to server
-- `PATCH /users/me/preferences` `{ push_notifications_enabled: true|false }`
+- `UpdateMe mutation (AK)` `{ push_notifications_enabled: true|false }`
 
 **Language:**
 - Picker for app display language
@@ -165,13 +165,13 @@ DANGER ZONE
 **Log out:**
 - Tap → confirmation dialog: "Are you sure you want to log out?"
 - Confirm → clear local tokens → redirect to Register/Login screen
-- `POST /auth/logout` `{ refresh_token }` (invalidates refresh token server-side)
+- `Logout mutation (AL)` `{ refresh_token }` (invalidates refresh token server-side)
 
 **Delete Account screen** (1 level deeper — tap "Delete Account [>]" to navigate here):
 - Explains consequences: posts, pets, and family data will be removed
 - Explains grace period: "Your account will be permanently deleted after 30 days. Log in again within 30 days to cancel deletion."
 - Single **"Delete My Account"** button (red, destructive style)
-- Tap → confirmation dialog: "Are you sure? This starts a 30-day deletion period." → Confirm → `POST /users/me/delete-request`
+- Tap → confirmation dialog: "Are you sure? This starts a 30-day deletion period." → Confirm → `RequestAccountDeletion mutation`
 - After confirm: log out immediately → redirect to Register/Login screen
 - Server sets `scheduled_deletion_at = now + 30 days`
 
@@ -503,8 +503,8 @@ mutation Logout($input: LogoutInput!) {
 |------|--------------------|
 | User has no owned family | Show "Create Family Page" row; no toggle shown |
 | User owns a family | Replace "Create Family Page" with owned family row (OWNER badge) |
-| User tries to create 2nd family | `POST /families` returns `403 FAMILY_ALREADY_OWNED`; show error |
-| Toggle ON a family | All other toggles turn OFF immediately (optimistic); `PATCH /users/me/active-family` |
+| User tries to create 2nd family | `CreateFamily mutation` returns `FAMILY_ALREADY_OWNED`; show error |
+| Toggle ON a family | All other toggles turn OFF immediately (optimistic); `SetActiveFamily mutation (AG)` |
 | Unfollow with Undo | Row removed immediately; toast with 5s Undo window; confirmed on timeout or close |
 | No loved posts | Empty state: "You haven't loved any posts yet" |
 | No followed families | Empty state: "You're not following any families yet" |

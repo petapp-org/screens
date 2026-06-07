@@ -143,11 +143,11 @@ Parents                                    [× close]
 | Pending invite | `INVITED` | Cancel | Owner only |
 
 **Remove action:**
-- Confirmation dialog → `DELETE /families/{id}/parents/{user_id}` (endpoint AS from Screen 6)
+- Confirmation dialog → `RemoveParent mutation (AS)` (endpoint AS from Screen 6)
 - Row removed immediately on confirm
 
 **Cancel invite action:**
-- `DELETE /families/{id}/invites/{user_id}` (endpoint AR from Screen 6)
+- `CancelParentInvite mutation (AR)` (endpoint AR from Screen 6)
 - Row removed immediately
 
 **Invite Another Parent:**
@@ -189,7 +189,7 @@ All posts belonging to the active family, same as Family Posts screen (Screen 3)
 - Grid view: same 3-column thumbnail grid as Screen 3
 - Sorted `created_at` desc (newest first)
 - 10 posts per page, infinite scroll
-- API: `GET /families/{family_id}/posts?cursor=&limit=10` (endpoint R from Screen 3)
+- API: `FamilyPosts query (R)` (endpoint R from Screen 3)
 
 ---
 
@@ -380,9 +380,9 @@ User taps My Pets tab
   └─> [logged in, no active family] → empty state: "No active family"
         └─> Tap "Set active family" → Profile Settings
   └─> [logged in, has active family]
-        └─> GET /users/me/active-family
+        └─> ActiveFamily query (AY)
               └─> Render family card + pet rows + parents (loaded)
-                    └─> GET /families/{id}/random-media?limit=20
+                    └─> FamilyRandomMedia query (AZ)
                           └─> Render random pets grid
 ```
 
@@ -391,9 +391,9 @@ User taps My Pets tab
 ```
 User taps Manage Parents
   └─> Open Parents bottom sheet (data already loaded from AY)
-        ├─ Owner: tap Remove on a parent → confirmation → DELETE /families/{id}/parents/{user_id}
-        ├─ Owner: tap Cancel on invite → DELETE /families/{id}/invites/{user_id}
-        └─ Owner: tap Invite Another Parent → search modal → POST /families/{id}/invites
+        ├─ Owner: tap Remove on a parent → confirmation → RemoveParent mutation (AS)
+        ├─ Owner: tap Cancel on invite → CancelParentInvite mutation (AR)
+        └─ Owner: tap Invite Another Parent → search modal → InviteParent mutation (AQ)
 ```
 
 ---
@@ -423,4 +423,4 @@ User taps Manage Parents
 | 4 | Health status detail | To be specced in a separate Pet Detail / Health screen |
 | 5 | `[+]` in Random Pets | Navigate to Create Post screen; AI scan in this context = breed-detect only (skip family pet matching — result is `breed` or `random`, never `pet`) |
 | 6 | Lock icon on pet avatar | Not used — health status shown via badge only (no lock icon) |
-| 7 | MY PET POSTS section | Reuses endpoint R (`GET /families/{id}/posts`) from Screen 3; no new endpoint needed |
+| 7 | MY PET POSTS section | Reuses `FamilyPosts query (R)` from Screen 3; no new endpoint needed |

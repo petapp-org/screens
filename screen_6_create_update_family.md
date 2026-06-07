@@ -54,7 +54,7 @@ Requires login. Only the family owner can edit.
 ### 1. Avatar Picker
 
 - Tap → opens device image picker
-- Selected image uploaded via `POST /media/upload` before form submission
+- Selected image uploaded via media upload endpoint before form submission
 - Shows upload progress indicator on the avatar
 - On Create: optional (default avatar used if skipped)
 - On Update: always shows current avatar
@@ -120,7 +120,7 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 ```
 [Avatar]  [Parent name]  [PARENT]         [Remove]
 ```
-- Tap Remove → confirmation dialog → `DELETE /families/{id}/parents/{user_id}`
+- Tap Remove → confirmation dialog → `RemoveParent mutation (AS)`
 - Row removed immediately on confirmation
 
 **Invited parent row** (`status = invited`):
@@ -128,7 +128,7 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 [Avatar]  [Invited name]  [INVITED]       [Cancel]
 ```
 - INVITED badge highlighted (e.g. amber/orange colour)
-- Tap Cancel → `DELETE /families/{id}/invites/{user_id}` → row removed
+- Tap Cancel → `CancelParentInvite mutation (AR)` → row removed
 
 **Invite Another Parent row** (always last):
 ```
@@ -152,11 +152,11 @@ Bottom sheet or full-screen modal.
 **Search behaviour:**
 - Min 2 characters to trigger search
 - Debounced 400ms
-- `GET /users/search?q=minhdang&limit=10`
+- `SearchUsers query (AP)`
 - Results exclude: current user (owner), already-added parents, already-invited users
 
 **Select a user:**
-- Tap result → `POST /families/{id}/invites` `{ user_id }`
+- Tap result → `InviteParent mutation (AQ)` `{ user_id }`
 - Close modal → new row appears in Parents list with INVITED status
 
 **No match:**
@@ -553,11 +553,11 @@ mutation RemoveParent($familyId: ID!, $userId: ID!) {
 User taps "Create Family Page" in Profile Settings
   └─> Navigate to Create Family screen
         └─> Fill in name, tag (real-time check), about, privacy
-              └─> Optionally upload avatar → POST /media/upload
-                    └─> Optionally invite parents → GET /users/search → POST /families/{id}/invites
+              └─> Optionally upload avatar (media upload endpoint)
+                    └─> Optionally invite parents → SearchUsers query (AP) → InviteParent mutation (AQ)
                           └─> Tap "Create Family"
-                                └─> POST /families
-                                      ├─ 409 TAG_TAKEN → show error on tag field
+                                └─> CreateFamily mutation (AM)
+                                      ├─ TAG_TAKEN → show error on tag field
                                       └─ 201 → navigate to new Family Posts screen
                                                 (new family auto-set as active)
 ```
@@ -567,8 +567,8 @@ User taps "Create Family Page" in Profile Settings
 ```
 Tap "Invite Another Parent"
   └─> Open Invite Search Modal
-        └─> Type ≥2 chars → GET /users/search?q=...
-              ├─ Results shown → tap user → POST /families/{id}/invites
+        └─> Type ≥2 chars → SearchUsers query (AP)
+              ├─ Results shown → tap user → InviteParent mutation (AQ)
               │     └─ Close modal → INVITED row added to Parents list
               └─ No results → "No user found" — cannot invite
 ```
@@ -579,8 +579,8 @@ Tap "Invite Another Parent"
 Owner taps Edit in Family Posts screen
   └─> Navigate to Update Family screen (fields pre-filled)
         └─> Edit fields
-              └─> Tap "Save Changes" → PATCH /families/{id}
-                    └─> 200 → navigate back, family info updated
+              └─> Tap "Save Changes" → UpdateFamily mutation (AN)
+                    └─> success → navigate back, family info updated
 ```
 
 ---

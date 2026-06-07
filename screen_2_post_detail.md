@@ -72,7 +72,7 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 
 **Comment actions:**
 - **Reply** button (always visible) → sets reply context in fixed input bar (requires login to submit)
-- **Delete** button → visible only when `is_deletable = true`; tapping shows confirmation before `DELETE /comments/{comment_id}`
+- **Delete** button → visible only when `is_deletable = true`; tapping shows confirmation before `DeleteComment mutation (P)`
 
 **Commenting requires login:**
 - Unauthenticated users can read all comments and replies
@@ -116,7 +116,7 @@ Always pinned to the bottom of the screen, above the system navigation bar.
 | Authenticated, non-empty input | Send button enabled |
 
 **Submit behaviour:**
-- Tap Send → `POST /posts/{post_id}/comments` (top-level) or `POST /comments/{parent_id}/replies` (reply)
+- Tap Send → `CreateComment mutation (L)` (top-level) or `CreateReply mutation (N)` (reply)
 - Optimistic update: new comment/reply appears immediately in the list
 - On API error: remove optimistic item, restore input text, show error toast
 - After successful submit: clear input, scroll to the new comment/reply
@@ -511,7 +511,7 @@ User taps Delete on own comment  (button only visible when isDeletable=true)
 | Comment deleted successfully | Removed from list; parent `reply_count` decremented if reply |
 | Input bar — replying context | Banner "Replying to @username ×" shown above input; tap × clears reply context |
 | No comments yet | Show empty state: "Be the first to comment" |
-| Deep link to post | Load `GET /posts/{post_id}` directly; Back button returns to previous screen or Explore if no history |
+| Deep link to post | Load `Post query (M)` directly; Back button returns to previous screen or Explore if no history |
 | Tap family name on post | Navigate to Family Posts screen |
 | Tap author name on post | Navigate to User Posts screen |
 | Tap pet badge on media | Navigate to Pet Posts screen |

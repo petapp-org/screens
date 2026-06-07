@@ -94,7 +94,7 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 ```
 User taps [AI Scan] on a media item
-  └─> POST /ai/scan-media  { media_url, family_id }
+  └─> ScanMedia mutation (AT)  { media_url, family_id }
         └─> (loading state on thumbnail)
               ├─ Pet detected + match found in family
               │     └─> tag: { type=pet, id=pet_xxx, species="cat", breed="British Shorthair" }
@@ -158,14 +158,14 @@ Actions available depend on the current tag state:
 | Weight | No | Number + unit (kg) |
 | Avatar | No | Upload photo or use a frame from this media |
 
-  Submit → `POST /families/{family_id}/pets` → tag set to `{ type=pet, id=new_pet_id, species=..., breed=... }`
+  Submit → `CreatePet mutation (AU)` → tag set to `{ type=pet, id=new_pet_id, species=..., breed=... }`
 
 **When `type=random, breed=null, species != null` (AI detected species only, no breed, no match):**
 - Keep as random (close sheet)
 - Select existing pet → tag set to `{ type=pet, id=pet_xxx, species=..., breed=pet's_breed }`
 - Create new pet (species pre-filled, breed left blank):
   - Same form as above; `species` pre-filled, `breed` empty and optional
-  - Submit → `POST /families/{family_id}/pets`
+  - Submit → `CreatePet mutation (AU)`
 
 **When `type=random, species=null, breed=null` (no animal detected):**
 - Keep as random (close sheet)
@@ -205,10 +205,10 @@ Actions available depend on the current tag state:
 ### 8. Draft Auto-save
 
 - Draft is saved automatically as the user fills in the form (debounced, every 3s of inactivity)
-- `PUT /posts/draft` with current form state
+- `SaveDraft mutation (AV)` with current form state
 - If user taps Cancel:
   - Confirmation dialog: "Discard post?" → Discard / Keep editing
-  - Discard → `DELETE /posts/draft` → navigate back
+  - Discard → `DeleteDraft mutation (AW)` → navigate back
   - Keep editing → dismiss dialog
 - Draft is deleted automatically after successful publish
 
@@ -220,7 +220,7 @@ Actions available depend on the current tag state:
 - **Disabled** until:
   - At least 1 media added
   - All media items have a tag (any `type`: `pet` or `random`, with or without `breed`)
-- On tap → validate → `POST /posts` → on success, delete draft → navigate to My Pets tab (active family)
+- On tap → validate → `CreatePost mutation (AX)` → on success, delete draft → navigate to My Pets tab (active family)
 
 ---
 
@@ -652,16 +652,16 @@ User opens Create Post (e.g. from fab button)
         └─ Has active family → load draft (if exists) or empty form
               └─> Add media (upload or embed)
                     └─> For each uploaded media: tap AI Scan
-                          └─> POST /ai/scan-media
+                          └─> ScanMedia mutation (AT)
                                 ├─ Match → badge auto-set to pet name
                                 ├─ Breed detected → badge shows breed (user can accept or edit)
                                 └─ No detection → badge shows "Random" (user can edit)
                     └─> [Optional] edit tags manually
                     └─> Fill caption, location, privacy
                     └─> Tap Post
-                          └─> POST /posts
-                                ├─ 201 → DELETE /posts/draft → navigate to My Pets tab (active family)
-                                └─ 400 → show validation error
+                          └─> CreatePost mutation (AX)
+                                ├─ success → DeleteDraft mutation (AW) → navigate to My Pets tab (active family)
+                                └─ error → show validation error
 ```
 
 ### Switch Family Mid-flow

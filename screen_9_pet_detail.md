@@ -89,7 +89,7 @@ Shown only when `pet.missing_status != null`.
 **"Mark as Found" button:**
 - Shown to all family members (owner + parents)
 - **Disabled** for parents — only owner can tap it
-- Tap (owner) → confirmation: *"Mark Bụi as found?"* → `PATCH /pets/{pet_id}/found`
+- Tap (owner) → confirmation: *"Mark Bụi as found?"* → `MarkPetFound mutation (BF)`
 - Banner removed immediately on success
 - Button re-enables automatically when a new missing report is filed (`pet.missing_status != null`)
 
@@ -201,7 +201,7 @@ Status states: same pattern as Food tab.
 - Owner only; hidden for non-owner parents
 - Tap → confirmation dialog:
   *"Delete Bụi? This pet will be removed from your family's pet list. Posts linked to Bụi will remain. This action can be undone."*
-  → Confirm → `DELETE /pets/{pet_id}` (soft delete: `is_deleted = true`)
+  → Confirm → `DeletePet mutation (BD)` (soft delete: `is_deleted = true`)
 - Pet immediately disappears from:
   - Pet switcher (header)
   - My Pets pet rows (Screen 8)
@@ -227,7 +227,7 @@ Opened from `[...]` → "Edit Pet". Owner only.
 | Birthday | No | Date picker |
 | Weight | No | Number + unit (kg) |
 
-- Submit → `PATCH /pets/{pet_id}`
+- Submit → `UpdatePet mutation (BC)`
 - `species` and `breed` fields: if set by AI scan, shown as read-only with label *"Set by AI"*; owner can override by unlocking (tap lock icon → confirmation)
 
 ---
@@ -253,7 +253,7 @@ Report Missing: Bụi                              [× close]
 | `media` | No | Up to 5 items; uploaded files only; no AI scan triggered |
 
 **On submit:**
-- `POST /pets/{pet_id}/missing-report`
+- `ReportMissing mutation (BE)`
 - Pet `missing_status` set: `{ reported_at, last_seen_location, media[] }`
 - Pet status in all UI shows `MISSING` badge (amber/red)
 - Missing banner appears on Pet Detail (Section 3)
@@ -268,14 +268,12 @@ Triggered after a post is published that links to a pet (new or existing):
 ```
 Post published → media_tag.type = pet → pet identified/created
   │
-  ├─ Health analysis (per post)
-  │     POST /ai/analyze-health { post_id, pet_id }
+  ├─ Health analysis (per post)  [server-side async process — not a client API call]
   │     └─> pet.health_status = "checking" while in queue
   │           └─> Complete → update pet health record + status
   │           └─> No result → pet.health_status = "no_data"
   │
-  └─ Breed data (if breed not yet generated)
-        POST /ai/generate-breed-data { breed }
+  └─ Breed data (if breed not yet generated)  [server-side async process — not a client API call]
         └─> All 3 tabs (Food, Behavior, Med/Vax) generated in parallel
               └─> Stored as HTML blobs on breed record
               └─> pet tab statuses update from "checking" → populated
@@ -525,6 +523,7 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
   "id": "pet_111",
   "input": {
     "name": "Bụi Bụi",
+    "species": "Cat",
     "isPublic": true,
     "gender": "MALE",
     "birthday": "2023-01-15",
@@ -732,7 +731,7 @@ mutation MarkPetFound($petId: ID!) {
 
 ```
 User taps pet row in My Pets
-  └─> GET /pets/{pet_id} + GET /families/{family_id}/pets
+  └─> Pet query (BA) + FamilyPets query (BB)
         └─> Render pet identity + missing banner (if applicable)
               └─> Default tab: Health
                     ├─ status=checking → show spinner
@@ -744,7 +743,7 @@ User taps pet row in My Pets
 
 ```
 User taps another pet avatar in switcher
-  └─> GET /pets/{other_pet_id}
+  └─> Pet query (BA) { id: other_pet_id }
         └─> Re-render all sections with new pet data
             (stay on same tab)
 ```
@@ -755,8 +754,8 @@ User taps another pet avatar in switcher
 User taps [Report Missing]
   └─> Open bottom sheet
         └─> Fill location (required) + attach media (optional)
-              └─> POST /pets/{pet_id}/missing-report
-                    └─> 201 → close sheet → missing banner appears
+              └─> ReportMissing mutation (BE)
+                    └─> success → close sheet → missing banner appears
                                push notification sent to followers
 ```
 
@@ -766,8 +765,8 @@ User taps [Report Missing]
 User taps [Delete Bụi]
   └─> Confirmation dialog
         ├─ Cancel → dismiss
-        └─ Confirm → DELETE /pets/{pet_id}
-              └─> 204 → navigate to My Pets tab
+        └─ Confirm → DeletePet mutation (BD)
+              └─> success → navigate to My Pets tab
                         pet removed from all active UI
                         posts unchanged
 ```

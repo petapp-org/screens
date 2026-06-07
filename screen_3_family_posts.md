@@ -82,8 +82,8 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - `type = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**
-- Not following → button label "Follow"; tap → `POST /families/{id}/follow` (requires login → redirect to Login)
-- Following → button label "Following"; tap → `DELETE /families/{id}/follow` → button reverts to "Follow" immediately (optimistic); show undo toast for **5 seconds**: *"Unfollowed [Family Name]"* + **[Undo]** button → if Undo tapped: re-follow silently (no second toast), button returns to "Following"
+- Not following → button label "Follow"; tap → `FollowFamily mutation (D)` (requires login → redirect to Login)
+- Following → button label "Following"; tap → `UnfollowFamily mutation (E)` → button reverts to "Follow" immediately (optimistic); show undo toast for **5 seconds**: *"Unfollowed [Family Name]"* + **[Undo]** button → if Undo tapped: re-follow silently (no second toast), button returns to "Following"
 - Reuse endpoints D and E from Screen 1
 
 **Message button:**
@@ -485,8 +485,21 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 
 **Variables:** `{ "petId": "pet_111", "limit": 10 }`
 
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "petPosts": {
+      "pet": { "id": "pet_111", "name": "Bụi", "species": "Cat", "breed": "Orange Tabby Cat", "avatarUrl": "..." },
+      "posts": [ { "id": "post_abc", "caption": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentCount": 5, "privacy": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } ],
+      "nextCursor": "cursor_xyz", "hasMore": true
+    }
+  }
+}
+```
+
 **Notes:**
-- `PostCard` fragment follows the canonical post shape from Screen 1.
+- `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
 - Server enforces privacy: unauthenticated → `public` only; authenticated → `public` + `followers` (if following family) + `private` (if family member).
 
 ---
@@ -517,7 +530,21 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
 
 **Variables:** `{ "familyId": "fam_xyz", "limit": 10 }`
 
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "randomPetPosts": {
+      "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "randomCount": 10 },
+      "posts": [ { "id": "post_def", "caption": "Mèo lạ ghé thăm nhà 🐱", "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }], "loveCount": 18, "commentCount": 2, "privacy": "PUBLIC", "createdAt": "2026-06-05T10:00:00Z" } ],
+      "nextCursor": "cursor_abc", "hasMore": true
+    }
+  }
+}
+```
+
 **Notes:**
+- `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
 - Server filters: only posts where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
 - `media_tag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
 
@@ -548,6 +575,22 @@ query UserPosts($userId: ID!, $cursor: String, $limit: Int) {
 ```
 
 **Variables:** `{ "userId": "user_001", "limit": 10 }`
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "userPosts": {
+      "user": { "id": "user_001", "displayName": "Minh Tuan", "tag": "minhtuan", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
+      "posts": [ { "id": "post_ghi", "caption": "Bụi dậy sớm cùng tui 🌅", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 34, "commentCount": 6, "privacy": "PUBLIC", "createdAt": "2026-06-06T07:00:00Z" } ],
+      "nextCursor": "cursor_xyz", "hasMore": false
+    }
+  }
+}
+```
+
+**Notes:**
+- `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
 
 ---
 
@@ -590,7 +633,7 @@ User taps Random Pets row  (only visible when random_count > 0)
 
 ```
 User taps Parents row
-  └─> GET /families/{family_id}/parents
+  └─> Family query (Q) (parents already loaded)
         └─> Open Parents bottom sheet with list of parents
               └─> User taps a parent row
                     └─> Close bottom sheet → Navigate to User Posts screen (user_id)

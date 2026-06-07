@@ -87,7 +87,7 @@ Shown once after a new account is created via any method.
 - Show a persistent helper text below the field: *"⚠️ Your tag cannot be changed after you create your account."*
 
 **Submit:**
-- `PATCH /users/me` `{ name, tag, avatar_url }` (avatar uploaded separately via media endpoint first)
+- `SetupProfile mutation (AE)` `{ name, tag, avatar_url }` (avatar uploaded separately via media endpoint first)
 - On success → navigate to Explore
 
 ---
