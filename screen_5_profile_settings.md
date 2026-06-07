@@ -341,6 +341,7 @@ query MyFollowing($cursor: String, $limit: Int) {
       name
       tag
       avatarUrl
+      type
       city
       country
       followerCount
@@ -370,6 +371,7 @@ query MyFollowing($cursor: String, $limit: Int) {
           "name": "Daily Cats",
           "tag": "dailycats",
           "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+          "type": "STANDARD",
           "city": "Internet",
           "country": "",
           "followerCount": 3840

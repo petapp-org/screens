@@ -105,7 +105,7 @@ All calls go to `POST /graphql`.
 
 ---
 
-### BG. Query: `SearchFamilies`
+### BM. Query: `SearchFamilies`
 
 ```graphql
 query SearchFamilies($q: String!, $cursor: String, $limit: Int) {
@@ -136,7 +136,7 @@ query SearchFamilies($q: String!, $cursor: String, $limit: Int) {
 
 ---
 
-### BH. Query: `SearchUsers`
+### BN. Query: `SearchUsers`
 
 ```graphql
 query SearchUsers($q: String!, $cursor: String, $limit: Int) {
@@ -159,7 +159,7 @@ query SearchUsers($q: String!, $cursor: String, $limit: Int) {
 
 ---
 
-### BI. Query: `SearchPets`
+### BO. Query: `SearchPets`
 
 ```graphql
 query SearchPets($q: String!, $cursor: String, $limit: Int) {

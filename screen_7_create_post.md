@@ -4,7 +4,7 @@
 
 Form screen for creating a new post under the user's active family.  
 Requires login and an active family. Draft is auto-saved throughout; on successful publish the draft is deleted.  
-After publish → navigate to **My Pets** tab.
+After publish → navigate to **My Pets** tab (active family). Post can only be created under the active family — no family switching mid-flow.
 
 **Prerequisites:**
 - User must be logged in
@@ -150,8 +150,8 @@ Actions available depend on the current tag state:
 | Field | Required | Notes |
 |-------|----------|-------|
 | Name | Yes | Pet's display name |
-| Species | Yes | Pre-filled from `species` |
-| Breed | No | Pre-filled from `breed` |
+| Species | Yes | Pre-filled from scan; **select from DB option list** (not free text) |
+| Breed | No | Pre-filled from scan; **select from DB option list** filtered by selected species |
 | Color | No | Text input (can pre-fill from AI scan `color` if returned) |
 | Gender | Yes | `male` / `female` / `unknown` |
 | Birthday | No | Date picker |
@@ -170,7 +170,10 @@ Actions available depend on the current tag state:
 **When `type=random, species=null, breed=null` (no animal detected):**
 - Keep as random (close sheet)
 - Select existing pet manually → tag set to `{ type=pet, id=pet_xxx, species=..., breed=pet's_breed }`
-- *(Cannot create new pet — no species or breed info available)*
+- Create new pet manually — form shows message: *"We couldn't detect an animal in this media. Please fill in the details manually."*
+  - `species` and `breed` fields are **not pre-filled**; user selects from DB-backed option lists (not free text input)
+  - `species` is required; `breed` is optional (leave blank if unknown)
+  - All other fields same as above
 
 ---
 
@@ -217,7 +220,7 @@ Actions available depend on the current tag state:
 - **Disabled** until:
   - At least 1 media added
   - All media items have a tag (any `type`: `pet` or `random`, with or without `breed`)
-- On tap → validate → `POST /posts` → on success, delete draft → navigate to My Pets tab
+- On tap → validate → `POST /posts` → on success, delete draft → navigate to My Pets tab (active family)
 
 ---
 
@@ -323,6 +326,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
   createPet(familyId: $familyId, input: $input) {
     id
     name
+    species
     breed
     gender
     ageDisplay
@@ -337,6 +341,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
   "familyId": "fam_xyz",
   "input": {
     "name": "Snowball",
+    "species": "Cat",
     "breed": "British Shorthair",
     "gender": "FEMALE",
     "birthday": "2024-01-15",
@@ -353,6 +358,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
     "createPet": {
       "id": "pet_222",
       "name": "Snowball",
+      "species": "Cat",
       "breed": "British Shorthair",
       "gender": "FEMALE",
       "ageDisplay": "1 year old",
@@ -556,7 +562,7 @@ User opens Create Post (e.g. from fab button)
                     └─> Fill caption, location, privacy
                     └─> Tap Post
                           └─> POST /posts
-                                ├─ 201 → DELETE /posts/draft → navigate to My Pets tab
+                                ├─ 201 → DELETE /posts/draft → navigate to My Pets tab (active family)
                                 └─ 400 → show validation error
 ```
 

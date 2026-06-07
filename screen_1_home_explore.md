@@ -147,6 +147,7 @@ Each post card displays:
   - Inline panel shows the **latest 10 comments**, sorted by `created_at` desc
   - If `comment_count > 10`: show a "View all N comments" link → navigates to Post Detail screen
   - User can submit a new comment directly from the inline panel (requires login)
+  - **Close:** tap anywhere outside the panel (on the feed) to collapse it
 
 - Tapping the **post media or caption area** → opens Post Detail screen (full-screen view with all comments)
 - Tapping **family name** → My Pets screen if the current user is a member of that family; otherwise Family Posts screen

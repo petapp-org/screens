@@ -125,10 +125,10 @@ Red dot badge on Messages icon when there are any unread messages.
 
 **In-thread search:**
 - Tap **Search icon** in thread header → search bar slides in below header, messages area shifts down
-- Search text within the current thread's messages
+- **Server-side search** — queries the full thread history, not just loaded messages
 - Min 2 characters; debounce 300ms
 - Matching messages are highlighted; non-matching messages dimmed
-- Up/down arrows to jump between matches
+- Up/down arrows to jump between matches; jumps to the correct position in the thread even if message not yet loaded
 - Tap × or Back → dismiss search bar, restore normal view
 
 **"Send as" dropdown (family threads only):**
@@ -168,7 +168,7 @@ All calls go to `POST /graphql`.
 
 ---
 
-### BA. Query: `MessageThreads`
+### BG. Query: `MessageThreads`
 
 Fetch all threads for the current user (all sections).
 
@@ -202,7 +202,7 @@ query MessageThreads {
 
 ---
 
-### BB. Query: `ThreadMessages`
+### BH. Query: `ThreadMessages`
 
 Fetch messages in a thread (paginated, **oldest first** — `sentAt asc`). Load earlier messages by passing the oldest known message cursor.
 
@@ -239,7 +239,7 @@ query ThreadMessages($threadId: ID!, $cursor: String, $limit: Int) {
 
 ---
 
-### BC. Mutation: `StartThread`
+### BI. Mutation: `StartThread`
 
 Create or retrieve an existing thread between sender and receiver.
 
@@ -273,7 +273,7 @@ mutation StartThread($input: StartThreadInput!) {
 
 ---
 
-### BD. Mutation: `SendMessage`
+### BJ. Mutation: `SendMessage`
 
 Send a message in a thread.
 
@@ -314,7 +314,7 @@ mutation SendMessage($threadId: ID!, $input: SendMessageInput!) {
 
 ---
 
-### BE. Mutation: `MarkThreadRead`
+### BK. Mutation: `MarkThreadRead`
 
 Mark a thread as read for the current user.
 
@@ -328,7 +328,7 @@ mutation MarkThreadRead($threadId: ID!) {
 
 ---
 
-### BF. Query: `UnreadMessageCount`
+### BL. Query: `UnreadMessageCount`
 
 For the Messages icon red dot badge in Explore and My Pets headers.
 
@@ -341,6 +341,40 @@ query UnreadMessageCount {
 ```
 
 **Note:** Delivered via **WebSocket push** when available; falls back to polling every 30s. Fetched separately from the thread list (not bundled).
+
+---
+
+### BM. Query: `SearchThreadMessages`
+
+Server-side search across all messages in a thread.  
+**Auth:** Required
+
+```graphql
+query SearchThreadMessages($threadId: ID!, $q: String!, $cursor: String, $limit: Int) {
+  searchThreadMessages(threadId: $threadId, q: $q, cursor: $cursor, limit: $limit) {
+    messages {
+      id
+      body
+      sentAt
+      sender {
+        userId
+        userName
+        familyId
+        familyName
+      }
+    }
+    totalCount
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Variables:** `{ "threadId": "thread_001", "q": "mèo", "limit": 20 }`
+
+**Notes:**
+- Min 2 characters required (enforced client-side before calling)
+- Results ordered by `sentAt asc` — client highlights matched messages and scrolls to position
 
 ---
 

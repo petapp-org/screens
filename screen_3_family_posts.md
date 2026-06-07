@@ -74,9 +74,11 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `donor_count` | Number of people who have donated. Only meaningful when `type = charity`; `null` for standard families. |
 
 **Avatar display rules:**
-- `pet_count = 0` → show single default family avatar
-- `pet_count = 1` → show that pet's avatar
-- `pet_count ≥ 2` → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
+- Family avatar can be explicitly set by the owner (via Screen 6 Update Family); if not set, falls back to stacked pet avatars
+- `pet_count = 0` (public pets) → show single default family avatar
+- `pet_count = 1` (public pet) → show that pet's avatar
+- `pet_count ≥ 2` (public pets) → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
+- Only **public pets** (`is_public = true`) are included in the stacked display — private pets are never shown to non-members
 - `type = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**

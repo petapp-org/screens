@@ -84,6 +84,7 @@ Shown once after a new account is created via any method.
 - Real-time uniqueness check as user types (debounced 500ms)
 - Uses `CheckUserTag` query (see endpoint AF below)
 - Show green checkmark if available, red X if taken
+- Show a persistent helper text below the field: *"⚠️ Your tag cannot be changed after you create your account."*
 
 **Submit:**
 - `PATCH /users/me` `{ name, tag, avatar_url }` (avatar uploaded separately via media endpoint first)

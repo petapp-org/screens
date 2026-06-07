@@ -24,7 +24,7 @@ If logged in but no active family → show empty state with prompt to create or 
   │     └── [Post button]  [Edit button]
   │
   ├── Pet Rows (one per named pet, no pagination)
-  │     ├── [avatar]  Name · Breed
+  │     ├── [avatar]  Name · Breed  [🔒 if private]
   │     │             gender · age · N posts
   │     │             [health status badge]
   │     │             [Story — disabled]  [>]
@@ -56,7 +56,7 @@ Displays the user's **active family**. Same data as Screen 3 (Family Posts) info
 
 | Field | Display |
 |-------|---------|
-| `avatar_url` / `pet_avatars` | Stacked pet avatars (same rules as Screen 3: 0 pet = default, 1 = single, ≥2 = stacked rotating) |
+| `avatar_url` / `pet_avatars` | Stacked pet avatars — same rules as Screen 3: 0 public pet = default family avatar, 1 = single pet avatar, ≥2 = stacked rotating (up to 5). Only **public pets** shown in stacked display; family avatar (if explicitly set) takes precedence over stacked pets |
 | `name` | Family display name |
 | `tag` | `@tag` |
 | `city_code`, `country_code` | Displayed as `📍 HCM, VN` |
@@ -91,14 +91,17 @@ Each row:
 | `post_count` | `N posts` |
 | `health_status` | Badge — see Health Status below |
 
-**Health Status badge:**
+**Health Status badge** (simplified aggregate shown on row — matches Screen 9 values):
 
 | Status | Badge | Color | Meaning |
 |--------|-------|-------|---------|
-| `normal` | `NORMAL` | Green | No issues |
-| `check` | `CHECK` | Amber/Orange | Needs attention |
+| `CHECKING` | `CHECKING` | Grey | AI analysis in progress / no data yet |
+| `NORMAL` | `NORMAL` | Green | No issues |
+| `CONCERN` | `CONCERN` | Amber | Needs attention |
+| `BAD` | `BAD` | Orange | Serious issues |
+| `CRITICAL` | `CRITICAL` | Red | Urgent — vet visit needed |
 
-> Full health status logic will be defined in a separate Pet Detail / Health spec.
+> Detailed per-tab health logic (Food / Behavior / Med) defined in Screen 9.
 
 **Story button:** disabled (greyed out, no action) — same as Screen 3.
 

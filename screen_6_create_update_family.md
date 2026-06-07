@@ -451,6 +451,15 @@ mutation InviteParent($familyId: ID!, $userId: ID!) {
 | `409` | `ALREADY_MEMBER` | User is already a parent or has a pending invite |
 | `404` | `USER_NOT_FOUND` | Target user does not exist |
 
+**Parent `status` enum:**
+
+| Value | Meaning |
+|-------|---------|
+| `INVITED` | Invite sent, awaiting acceptance |
+| `JOINED` | User accepted and is an active parent |
+
+> Rejected invites are removed from the list entirely — the owner must re-invite the user if needed.
+
 ---
 
 ### AR. Mutation: `CancelParentInvite`
