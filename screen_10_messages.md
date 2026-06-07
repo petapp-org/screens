@@ -16,7 +16,11 @@ Red dot badge on Messages icon when there are any unread messages.
   Right: [Compose icon]  ← future; not in scope yet
 
 [Search bar]
-  Placeholder: "Search conversations"
+  Placeholder: "Search by name or @tag"
+  └── Filters conversation list in real-time by user/family name or @tag
+  └── Min 2 characters to trigger; debounce 300ms
+  └── Matches across all sections (My Families, Sent to Families, DM)
+  └── No results → show "No conversations found"
 
 ━━ Family Conversations ━━━━━━━━━━━━━━━━  (unread badge: total across all family threads)
 
@@ -94,7 +98,7 @@ Red dot badge on Messages icon when there are any unread messages.
 [Header]
   Left: Back button
   Center: [sender avatar] sender name  →  [receiver avatar] receiver name
-  Right: ... (future actions)
+  Right: [Search icon]  ... (future actions)
 
 [Scrollable messages area]
   ─── Jun 6, 2026 ───
@@ -118,6 +122,14 @@ Red dot badge on Messages icon when there are any unread messages.
 - Long press a message → shows reply option
 - Tapping Reply → input bar shows quoted preview of the selected message
 - Sent reply displays the quoted message block above the reply text
+
+**In-thread search:**
+- Tap **Search icon** in thread header → search bar slides in below header, messages area shifts down
+- Search text within the current thread's messages
+- Min 2 characters; debounce 300ms
+- Matching messages are highlighted; non-matching messages dimmed
+- Up/down arrows to jump between matches
+- Tap × or Back → dismiss search bar, restore normal view
 
 **"Send as" dropdown (family threads only):**
 - Options: individual user / active family
