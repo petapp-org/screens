@@ -77,7 +77,7 @@ Requires login. Only the family owner can edit.
 |------|--------|
 | Required | Cannot submit without a tag |
 | Format | Letters, numbers, underscores only; no spaces; max 30 chars |
-| Unique | Checked in real-time against `GET /families/check-tag?tag=...` |
+| Unique | Checked in real-time via `AO. CheckFamilyTag` query |
 | Prefix | Always displayed with `@` prefix (stored without `@`) |
 | Editable | **Create only** — read-only (greyed out) on Update screen |
 

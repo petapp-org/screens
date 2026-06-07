@@ -364,7 +364,7 @@ query FamilyRandomMedia($familyId: ID!, $cursor: String, $limit: Int) {
 - `thumbnailUrl` used directly in the 2×2 grid cells
 - `breed`, `cityCode`, `countryCode`, `createdAt` used for cell subtitle display: `breed name · 📍 HCM, VN · 1 mo`
 - Screen fetches only the first 4 items for the preview; "View All" passes cursor for full list
-- "View All" navigates to Random Pet Posts screen — uses endpoint `GET /families/{id}/posts?type=random` (Screen 3)
+- "View All" navigates to Random Pet Posts screen — uses Query `U. RandomPetPosts` (screen_3)
 
 ---
 
@@ -403,7 +403,7 @@ User taps Manage Parents
 | No active family | Empty state: family card area shows "No active family" + "Go to Settings" button |
 | `random_count = 0` | Hide "randoms" from stats line; RANDOM PETS section shows empty state |
 | `viewer_role = parent` (not owner) | Edit button hidden; Parents popup is read-only (no Remove/Cancel/Invite actions) |
-| `health_status = check` | Amber `CHECK` badge on pet row |
+| `healthStatus = CONCERN` | Amber `CONCERN` badge on pet row |
 | Story button | Disabled (greyed out, no action) |
 | No pets in family | Pet rows section shows empty state: "No pets yet — create a post to add pets" |
 | Random Pets grid — tap cell | Navigate to Post Detail for the parent post |

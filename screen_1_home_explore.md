@@ -277,6 +277,7 @@ query Feed($filter: FeedFilter, $cursor: String, $limit: Int) {
         mediaTag {
           type
           id
+          species
           breed
         }
       }
@@ -349,6 +350,7 @@ query Feed($filter: FeedFilter, $cursor: String, $limit: Int) {
               "mediaTag": {
                 "type": "PET",
                 "id": "pet_111",
+                "species": "Cat",
                 "breed": "Orange Tabby Cat"
               }
             },
@@ -365,6 +367,7 @@ query Feed($filter: FeedFilter, $cursor: String, $limit: Int) {
               "mediaTag": {
                 "type": "RANDOM",
                 "id": null,
+                "species": null,
                 "breed": null
               }
             },

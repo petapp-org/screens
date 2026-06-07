@@ -303,8 +303,10 @@ query Pet($id: ID!) {
   pet(id: $id) {
     id
     name
+    species
     breed
     breedId
+    isPublic
     gender
     ageDisplay
     birthday
@@ -366,8 +368,10 @@ query Pet($id: ID!) {
     "pet": {
       "id": "pet_111",
       "name": "Bụi",
+      "species": "Cat",
       "breed": "Orange Tabby Cat",
       "breedId": "breed_orange_tabby_cat",
+      "isPublic": true,
       "gender": "MALE",
       "ageDisplay": "3 years",
       "birthday": "2023-01-15",
@@ -487,8 +491,10 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
   updatePet(id: $id, input: $input) {
     id
     name
+    species
     breed
     breedId
+    isPublic
     gender
     ageDisplay
     birthday
@@ -517,6 +523,7 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
   "id": "pet_111",
   "input": {
     "name": "Bụi Bụi",
+    "isPublic": true,
     "gender": "MALE",
     "birthday": "2023-01-15",
     "weightKg": 4.5,
@@ -534,8 +541,10 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
     "updatePet": {
       "id": "pet_111",
       "name": "Bụi Bụi",
+      "species": "Cat",
       "breed": "Orange Tabby Cat",
       "breedId": "breed_orange_tabby_cat",
+      "isPublic": true,
       "gender": "MALE",
       "ageDisplay": "3 years",
       "birthday": "2023-01-15",
@@ -554,6 +563,17 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
 **Notes:**
 - `breed` field: if was set by AI scan (`breedSource = "AI"`), override requires explicit `forceBreedUpdate: true` in input
 - Changing `breed` triggers re-generation of Food/Behavior/Med/Vax tabs (queued)
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `NOT_OWNER` | Caller is a parent, not the owner |
+| `403` | `NOT_FAMILY_MEMBER` | Caller is not a member of this pet's family |
+| `404` | `PET_NOT_FOUND` | Pet does not exist or is soft-deleted |
+| `409` | `BREED_AI_LOCKED` | Attempt to change AI-set breed without `forceBreedUpdate: true` |
+| `422` | `INVALID_SPECIES` | Provided species value does not exist in the DB |
+| `422` | `INVALID_BREED` | Provided breed does not belong to the given species |
 
 ---
 

@@ -314,6 +314,14 @@ No pet detected:
 - Resulting `media_tag` written to the post uses `{ type, id, species, breed }` (Screen 1 canonical structure).
 - In Random Pets context (`[+]` from Screen 8), call with `familyId` omitted or `skipPetMatch: true` — `matchedPet` is always `null`.
 
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `400` | `INVALID_MEDIA_URL` | URL is not reachable or not a supported media format |
+| `404` | `FAMILY_NOT_FOUND` | `familyId` does not exist |
+| `504` | `AI_TIMEOUT` | AI scan service did not respond in time — client should retry |
+
 ---
 
 ### AU. Mutation: `CreatePet`
@@ -343,6 +351,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
     "name": "Snowball",
     "species": "Cat",
     "breed": "British Shorthair",
+    "isPublic": true,
     "gender": "FEMALE",
     "birthday": "2024-01-15",
     "weightKg": 3.2,
@@ -360,6 +369,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
       "name": "Snowball",
       "species": "Cat",
       "breed": "British Shorthair",
+      "isPublic": true,
       "gender": "FEMALE",
       "ageDisplay": "1 year old",
       "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
@@ -367,6 +377,16 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
   }
 }
 ```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `NOT_FAMILY_MEMBER` | Caller is not a member of the given family |
+| `404` | `FAMILY_NOT_FOUND` | Family does not exist |
+| `422` | `INVALID_SPECIES` | Species value not found in DB |
+| `422` | `INVALID_BREED` | Breed does not belong to the given species |
+| `422` | `NAME_REQUIRED` | Pet name is missing |
 
 ---
 
@@ -424,6 +444,13 @@ mutation SaveDraft($input: CreatePostInput!) {
 }
 ```
 
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `NOT_FAMILY_MEMBER` | User is not a member of the specified family |
+| `404` | `FAMILY_NOT_FOUND` | Family does not exist |
+
 ---
 
 ### AW. Mutation: `DeleteDraft`
@@ -452,6 +479,12 @@ mutation DeleteDraft($draftId: ID!) {
   }
 }
 ```
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `404` | `DRAFT_NOT_FOUND` | Draft ID does not exist or already deleted |
 
 ---
 
@@ -540,6 +573,70 @@ mutation CreatePost($input: CreatePostInput!) {
 | `400` | `TOO_MANY_MEDIA` | More than 10 media items |
 | `400` | `MULTIPLE_EMBEDDED` | More than 1 embedded URL |
 | `403` | `NOT_FAMILY_MEMBER` | User is not a member of the specified family |
+
+---
+
+### BQ. Query: `ListSpecies`
+
+Fetch all available species options for the Create Pet form.  
+**Auth:** Not required
+
+```graphql
+query ListSpecies {
+  listSpecies {
+    id
+    name
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "listSpecies": [
+      { "id": "species_cat", "name": "Cat" },
+      { "id": "species_dog", "name": "Dog" },
+      { "id": "species_bird", "name": "Bird" }
+    ]
+  }
+}
+```
+
+---
+
+### BR. Query: `ListBreeds`
+
+Fetch all breed options for a given species, for the Create Pet form.  
+**Auth:** Not required
+
+```graphql
+query ListBreeds($speciesId: ID!) {
+  listBreeds(speciesId: $speciesId) {
+    id
+    name
+  }
+}
+```
+
+**Variables:** `{ "speciesId": "species_cat" }`
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "listBreeds": [
+      { "id": "breed_british_shorthair", "name": "British Shorthair" },
+      { "id": "breed_orange_tabby", "name": "Orange Tabby Cat" }
+    ]
+  }
+}
+```
+
+**Notes:**
+- Called after user selects a species to populate the breed dropdown
+- Breed list is filtered to the selected species
+- If user changes species, breed selection is reset
 
 ---
 

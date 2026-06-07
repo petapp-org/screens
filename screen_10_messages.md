@@ -237,6 +237,35 @@ query ThreadMessages($threadId: ID!, $cursor: String, $limit: Int) {
 }
 ```
 
+**Variables:** `{ "threadId": "thread_001", "limit": 20 }`
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "threadMessages": {
+      "messages": [
+        {
+          "id": "msg_001",
+          "sender": {
+            "userId": "user_001",
+            "userName": "Minh Dang",
+            "userAvatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
+            "familyId": null,
+            "familyName": null
+          },
+          "body": "hello bạn, gia đình bạn nuôi mèo đẹp nhỉ",
+          "repliedTo": null,
+          "sentAt": "2026-06-01T09:00:00Z"
+        }
+      ],
+      "nextCursor": "cursor_xyz",
+      "hasMore": true
+    }
+  }
+}
+```
+
 ---
 
 ### BI. Mutation: `StartThread`
