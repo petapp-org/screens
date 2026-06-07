@@ -336,6 +336,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
     name
     species
     breed
+    isPublic
     gender
     ageDisplay
     avatarUrl

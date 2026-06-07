@@ -224,6 +224,7 @@ query ActiveFamily {
       name
       avatarUrl
       breed
+      isPublic
       gender
       ageDisplay
       postCount
@@ -270,6 +271,7 @@ query ActiveFamily {
           "name": "Bụi",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
           "breed": "Orange Tabby Cat",
+          "isPublic": true,
           "gender": "MALE",
           "ageDisplay": "3 years",
           "postCount": 47,

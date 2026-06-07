@@ -358,13 +358,36 @@ query FamilyPosts($familyId: ID!, $cursor: String, $limit: Int) {
 {
   "data": {
     "familyPosts": {
-      "posts": [],
+      "posts": [
+        {
+          "id": "post_abc",
+          "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "type": "STANDARD" },
+          "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "..." },
+          "pets": [{ "id": "pet_111", "name": "Bụi", "avatarUrl": "..." }],
+          "caption": "Bụi nằm chờ mama 🌕",
+          "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
+          "media": [
+            {
+              "id": "media_001", "type": "UPLOADED",
+              "url": "https://cdn.petapp.com/media/001.jpg",
+              "thumbnailUrl": null, "mimeType": "image/jpeg",
+              "width": 1080, "height": 1080, "durationSeconds": null, "provider": null,
+              "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }
+            }
+          ],
+          "loveCount": 42, "commentCount": 5,
+          "isLoved": false, "privacy": "PUBLIC",
+          "createdAt": "2026-06-06T08:00:00Z"
+        }
+      ],
       "nextCursor": "cursor_abc123",
       "hasMore": true
     }
   }
 }
 ```
+
+> `posts[]` follows the canonical Post shape from `screen_1_home_explore.md` → Query A (Feed).
 
 **Errors:**
 
@@ -534,10 +557,10 @@ query UserPosts($userId: ID!, $cursor: String, $limit: Int) {
 
 ```
 User taps family name on a post
-  └─> GET /families/{family_id}
-        ├─ 404 → show "Family not found" error state
+  └─> Family query (Q) { familyId }
+        ├─ FAMILY_NOT_FOUND → show "Family not found" error state
         └─ 200 → render info card + pets list + about
-              └─> GET /families/{family_id}/posts?limit=10
+              └─> FamilyPosts query (R) { familyId, limit: 10 }
                     └─> Render posts in default list view
 ```
 
@@ -546,7 +569,7 @@ User taps family name on a post
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → GET /families/{family_id}/posts?cursor=<next_cursor>
+        └─> Scroll to load more → FamilyPosts query (R) { familyId, cursor: <next_cursor> }
 ```
 
 ### Tap Pet row

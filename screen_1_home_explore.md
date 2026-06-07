@@ -757,6 +757,7 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
       mediaTag {
         type
         id
+        species
         breed
       }
     }
@@ -936,35 +937,35 @@ mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
 
 ```
 User opens app
-  └─> GET /feed/explore?filter=latest&limit=10
-        ├─ [unauthenticated] → returns posts with is_loved=false
-        └─ [authenticated]   → returns posts with is_loved populated
+  └─> Feed query (A) { filter: LATEST, limit: 10 }
+        ├─ [unauthenticated] → returns posts with isLoved=false
+        └─ [authenticated]   → returns posts with isLoved populated
              └─> Render first 10 posts
                    └─> After post #1, inject Suggested Families widget
-                         └─> GET /families/suggested?limit=5
+                         └─> SuggestedFamilies query (B) { limit: 5 }
 ```
 
 ### Infinite Scroll
 
 ```
 User scrolls to bottom
-  └─> GET /feed/explore?filter=latest&cursor=<next_cursor>&limit=10
+  └─> Feed query (A) { filter: LATEST, cursor: <next_cursor>, limit: 10 }
         └─> Append new posts to list
-              └─> has_more=false → show "You're all caught up" state
+              └─> hasMore=false → show "You're all caught up" state
 ```
 
 ### Suggested Families — Dismiss & Refresh
 
 ```
 User taps × on a family card
-  └─> [authenticated]  → POST /families/{id}/dismiss-suggestion
+  └─> [authenticated]  → DismissFamilySuggestion mutation (C) { familyId }
   └─> [unauthenticated] → store dismissed id in localStorage/session
   └─> Remove card from widget
         └─> If 0 families remain → widget hides until next reload
 
 User pulls to refresh / navigates away and back
-  └─> GET /families/suggested?limit=5&exclude_ids=<dismissed_ids>
-        └─> New 5 families shown (server excludes dismissed + already-following)
+  └─> SuggestedFamilies query (B) { limit: 5 }  (server excludes dismissed + already-following)
+        └─> New 5 families shown
 ```
 
 ### Follow from Suggested Widget
@@ -972,7 +973,7 @@ User pulls to refresh / navigates away and back
 ```
 User taps Follow
   └─> [unauthenticated] → redirect to Login
-  └─> [authenticated]   → POST /families/{id}/follow
+  └─> [authenticated]   → FollowFamily mutation (D) { familyId }
         └─> Button changes to "Following" (or Unfollow on hover/long-press)
 ```
 
@@ -982,9 +983,9 @@ User taps Follow
 User taps "..." on a post
   └─> [unauthenticated] → redirect to Login
   └─> [authenticated, not author]
-        ├─> "Hide this post"         → POST /posts/{id}/hide  { scope: "post" }
-        ├─> "Hide posts from @user"  → POST /posts/{id}/hide  { scope: "author" }
-        └─> "Hide posts from Family" → POST /posts/{id}/hide  { scope: "family" }
+        ├─> "Hide this post"         → HidePost mutation (H) { postId, scope: POST }
+        ├─> "Hide posts from @user"  → HidePost mutation (H) { postId, scope: AUTHOR }
+        └─> "Hide posts from Family" → HidePost mutation (H) { postId, scope: FAMILY }
               └─> Post (and matching scope) removed from feed immediately
 ```
 

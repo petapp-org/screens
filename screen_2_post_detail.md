@@ -142,17 +142,52 @@ Fetch a single post for the detail view.
 query Post($id: ID!) {
   post(id: $id) {
     id
+    family {
+      id
+      name
+      avatarUrl
+      type
+    }
     author {
       id
       displayName
       avatarUrl
     }
-    body
-    createdAt
-    isLoved
-    isOwn
+    pets {
+      id
+      name
+      avatarUrl
+    }
+    caption
+    location {
+      city
+      cityCode
+      country
+      countryCode
+    }
+    media {
+      id
+      type
+      url
+      thumbnailUrl
+      mimeType
+      width
+      height
+      durationSeconds
+      provider
+      mediaTag {
+        type
+        id
+        species
+        breed
+      }
+    }
     loveCount
     commentCount
+    isLoved
+    isOwn
+    privacy
+    createdAt
   }
 }
 ```
@@ -168,17 +203,42 @@ query Post($id: ID!) {
   "data": {
     "post": {
       "id": "post_001",
+      "family": {
+        "id": "fam_xyz",
+        "name": "Minh's Family",
+        "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+        "type": "STANDARD"
+      },
       "author": {
         "id": "user_001",
         "displayName": "Minh Tuan",
         "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
       },
-      "body": "Post caption here",
-      "createdAt": "2026-06-06T08:00:00Z",
+      "pets": [
+        { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" }
+      ],
+      "caption": "Bụi nằm chờ mama nấu cơm 🌕",
+      "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
+      "media": [
+        {
+          "id": "media_001",
+          "type": "UPLOADED",
+          "url": "https://cdn.petapp.com/media/001.jpg",
+          "thumbnailUrl": null,
+          "mimeType": "image/jpeg",
+          "width": 1080,
+          "height": 1080,
+          "durationSeconds": null,
+          "provider": null,
+          "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }
+        }
+      ],
+      "loveCount": 12,
+      "commentCount": 4,
       "isLoved": false,
       "isOwn": false,
-      "loveCount": 12,
-      "commentCount": 4
+      "privacy": "PUBLIC",
+      "createdAt": "2026-06-06T08:00:00Z"
     }
   }
 }
@@ -395,23 +455,23 @@ mutation DeleteComment($input: DeleteCommentInput!) {
 
 ```
 User taps post in Explore feed
-  └─> GET /posts/{post_id}
-        ├─ 404 → show "Post not found" error screen
-        ├─ 403 → show "You don't have permission to view this post"
+  └─> Post query (M) { id: post_id }
+        ├─ POST_NOT_FOUND → show "Post not found" error screen
+        ├─ FORBIDDEN → show "You don't have permission to view this post"
         └─ 200 → render post card
-              └─> GET /posts/{post_id}/comments?limit=20
+              └─> PostComments query (K) { postId, limit: 20 }
                     └─> Render top-level comments
-                          └─> Each comment with reply_count > 0 shows "View N replies ▾"
+                          └─> Each comment with replyCount > 0 shows "View N replies ▾"
 ```
 
 ### Expand Replies
 
 ```
 User taps "View N replies ▾"
-  └─> GET /comments/{comment_id}/replies?limit=5
+  └─> CommentReplies query (O) { commentId, limit: 5 }
         └─> Render first 5 replies under comment
-              ├─ has_more=true → show "Load N more replies"
-              └─ Each reply with reply_count > 0 → shows "View N replies ▾" (recursive)
+              ├─ hasMore=true → show "Load N more replies"
+              └─ Each reply with replyCount > 0 → shows "View N replies ▾" (recursive)
 ```
 
 ### Submit Comment
@@ -419,8 +479,8 @@ User taps "View N replies ▾"
 ```
 User types in input bar → taps Send
   └─> [unauthenticated] → redirect to Login
-  └─> [authenticated, top-level] → POST /posts/{post_id}/comments
-  └─> [authenticated, replying]  → POST /comments/{parent_id}/replies
+  └─> [authenticated, top-level] → CreateComment mutation (L) { postId, body }
+  └─> [authenticated, replying]  → CreateReply mutation (N) { parentId, body }
         ├─ Optimistic: prepend new item immediately
         ├─ Success: confirm item, clear input
         └─ Error: remove item, restore input text, show toast
@@ -429,11 +489,11 @@ User types in input bar → taps Send
 ### Delete Comment
 
 ```
-User taps Delete on own comment  (button only visible when is_deletable=true)
+User taps Delete on own comment  (button only visible when isDeletable=true)
   └─> Show confirmation dialog
-        └─> Confirm → DELETE /comments/{comment_id}
-              ├─ 204 → remove comment from list; decrement parent reply_count if it's a reply
-              └─ 403 COMMENT_HAS_REPLIES / DELETE_WINDOW_EXPIRED
+        └─> Confirm → DeleteComment mutation (P) { commentId }
+              ├─ Success → remove comment from list; decrement parent replyCount if reply
+              └─ COMMENT_HAS_REPLIES / DELETE_WINDOW_EXPIRED
                     → hide Delete button immediately; show toast "Comment can no longer be deleted"
 ```
 

@@ -442,6 +442,7 @@ query FamilyPets($familyId: ID!) {
     id
     name
     avatarUrl
+    isPublic
     healthStatus
     missingStatus {
       reportedAt
@@ -470,6 +471,7 @@ query FamilyPets($familyId: ID!) {
         "id": "pet_111",
         "name": "Bụi",
         "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
+        "isPublic": true,
         "healthStatus": "NORMAL",
         "missingStatus": null
       }

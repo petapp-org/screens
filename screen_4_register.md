@@ -34,20 +34,20 @@ After first-time registration via any method, user is prompted to complete their
 
 ```
 1. User enters phone number → tap Continue
-     └─> POST /auth/phone/request-otp  { phone: "+84901234567" }
-           ├─ 400 INVALID_PHONE → show inline error
+     └─> RequestOtp mutation (AA) { phone: "+84901234567" }
+           ├─ INVALID_PHONE → show inline error
            └─ 200 → navigate to OTP screen
 
 2. OTP screen: 6-digit input + countdown timer (60s resend)
-     └─> POST /auth/phone/verify-otp  { phone, otp }
-           ├─ 400 INVALID_OTP → show error, allow retry
-           ├─ 429 TOO_MANY_ATTEMPTS → show "Too many attempts, try again later"
-           └─ 200 → { access_token, refresh_token, is_new_user }
-                 ├─ is_new_user=true  → navigate to Profile Setup screen
-                 └─ is_new_user=false → navigate to Explore (home)
+     └─> VerifyOtp mutation (AB) { phone, otp }
+           ├─ INVALID_OTP → show error, allow retry
+           ├─ TOO_MANY_ATTEMPTS → show "Too many attempts, try again later"
+           └─ 200 → { accessToken, refreshToken, isNewUser }
+                 ├─ isNewUser=true  → navigate to Profile Setup screen
+                 └─ isNewUser=false → navigate to Explore (home)
 
 3. Resend OTP: available after 60s countdown
-     └─> POST /auth/phone/request-otp (same as step 1)
+     └─> RequestOtp mutation (AA) (same as step 1)
 ```
 
 ### Flow B — Google / Apple OAuth
@@ -55,10 +55,10 @@ After first-time registration via any method, user is prompted to complete their
 ```
 1. User taps "Sign in with Google" / "Sign in with Apple"
      └─> Native OAuth flow (handled by SDK)
-           └─> POST /auth/oauth  { provider: "google"|"apple", id_token: "..." }
-                 └─ 200 → { access_token, refresh_token, is_new_user }
-                       ├─ is_new_user=true  → navigate to Profile Setup screen
-                       └─ is_new_user=false → navigate to Explore (home)
+           └─> AuthWithGoogle mutation (AC) / AuthWithApple mutation (AD) { idToken: "..." }
+                 └─ 200 → { accessToken, refreshToken, isNewUser }
+                       ├─ isNewUser=true  → navigate to Profile Setup screen
+                       └─ isNewUser=false → navigate to Explore (home)
 ```
 
 ---
