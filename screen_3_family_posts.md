@@ -533,18 +533,27 @@ API: `GET /pets/{pet_id}/posts?cursor=&limit=10`
 
 ### Random Pet Posts Screen
 
-Triggered from: tapping the Random Pets row (only when `random_count > 0`).
+**Triggered from:**
+- Tap **Random Pets row** in Family Posts (only when `random_count > 0`)
+- Tap **"View All →"** in Random Pets section in My Pets (screen_8; only shown when random posts exist)
 
 **Header:**
 
 | Field | Display |
 |-------|---------|
 | Family avatar | Family avatar |
-| Label | "Random Pets" |
+| Label | `"Random Pets"` |
 | `random_count` | e.g. `"10 randoms"` |
 
-**Posts:** all posts from this family where at least one media has `media_tag.type = "random" AND breed IS NOT NULL`.  
-API: `GET /families/{family_id}/posts?type=random&cursor=&limit=10`
+**Posts:**
+- Scope: per-family only — all posts from this family where at least one media has `media_tag.type = "random" AND breed IS NOT NULL`
+- No filter tabs; no Suggested Families widget
+- Sorted `created_at` desc (newest first)
+- 10 posts per page, infinite scroll
+- Privacy rules: same server-side enforcement as Explore
+- Empty state: not applicable — both entry points are guarded (`random_count > 0` / section hidden when 0 posts)
+- Post card follows canonical format (see `screen_1_home_explore.md` → Post Card); `media_tag.type = "random"` → no pet badge shown on any media frame → no link to Pet Posts screen from within this screen
+- API: `GET /families/{family_id}/posts?type=random&cursor=&limit=10`
 
 ---
 
