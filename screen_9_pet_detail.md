@@ -26,10 +26,11 @@ Accessible to: family members (owner + parents) — My Pets is always viewed by 
   Health  |  Food  |  Behavior  |  Med/Vac
 
 [Tab content area — HTML blob rendered as-is]
-  └─ Health tab also shows:
-       [Report Missing button]
-  └─ All tabs bottom:
-       [Delete Pet button]
+  (content switches with the active tab)
+
+[Below the tabs — always visible, independent of the active tab]
+  [📍 Report Missing button]   (all family members)
+  [Delete Pet button]          (owner only)
 ```
 
 ---
@@ -68,7 +69,7 @@ Male · 3 years · 47 posts
 | `post_count` | Total posts linked to this pet |
 
 **`[...]` action menu:**
-- "Edit Pet" → opens Edit Pet bottom sheet (see Section 6)
+- "Edit Pet" → opens Edit Pet bottom sheet (see Section 7)
 - Owner only; hidden for non-owner parents
 
 ---
@@ -83,7 +84,7 @@ Shown only when `pet.missing_status != null`.
 
 | Field | Display |
 |-------|---------|
-| `missing_status.reported_at` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"2d"`, `"28 May"` |
+| `missing_status.last_seen_at` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules) — how long since the pet was last seen. E.g. `"2d"`, `"28 May"` |
 | `missing_status.last_seen_location` | `city_code` display, e.g. `"HCM"` |
 
 **"Mark as Found" button:**
@@ -140,15 +141,6 @@ When status is a result state: render HTML blob below the status badge.
 - Each indicator: description + status + photo count from analyzed post
 - Source: media from the latest post linked to this pet
 
-**"Report Missing" button** (below health content, always visible in Health tab):
-
-```
-[📍 Report Missing]
-```
-
-- Tap → opens Report Missing bottom sheet (see Section 7)
-- Shown to all family members (owner + parents)
-
 ---
 
 ### 4b. Food Tab
@@ -194,10 +186,23 @@ Status states: same pattern as Food tab.
 
 ---
 
-### 5. Delete Pet Button
+### 5. Report Missing Button
 
 ```
-[Delete Bụi]   ← red/destructive color, bottom of all tabs
+[📍 Report Missing]   ← below the category tabs, above Delete Pet
+```
+
+- Positioned **below the category tabs** — always visible regardless of which tab (Health / Food / Behavior / Med-Vac) is active. It is **not** part of any tab's content (the tabs only switch the HTML blob above).
+- Tap → opens the **Report Missing form** (see Section 8). The pet is already in context (the pet currently shown), so **no pet selector** is shown.
+- Shown to **all family members** (owner + parents).
+- **Hidden** when the pet is already missing (`missing_status != null`) — in that state the Missing banner + "Mark as Found" (Section 3) take over.
+
+---
+
+### 6. Delete Pet Button
+
+```
+[Delete Bụi]   ← red/destructive color, below the Report Missing button
 ```
 
 - Owner only; hidden for non-owner parents
@@ -214,7 +219,7 @@ Status states: same pattern as Food tab.
 
 ---
 
-### 6. Edit Pet Bottom Sheet
+### 7. Edit Pet Bottom Sheet
 
 Opened from `[...]` → "Edit Pet". Owner only.
 
@@ -234,25 +239,57 @@ Opened from `[...]` → "Edit Pet". Owner only.
 
 ---
 
-### 7. Report Missing Bottom Sheet
+### 8. Report Missing Form
+
+A **full-screen form** (`← Report Missing`). Shared by two entry points; the only difference is whether a **pet selector** appears at the top.
+
+**Entry modes:**
+
+| Opened from | Pet selector | Pet scope |
+|-------------|--------------|-----------|
+| **Pet Detail** — Report Missing button (Section 5) | Not shown — pet is the one on screen | — |
+| **Lost Pets screen** banner (`screen_18`) | **Shown** at top — pick the pet | The user's **active family** pets, **including private** (`is_public = false`); already-missing / deleted excluded. Reporting ignores pet privacy. See `screen_18` for selector details. |
 
 ```
-[drag handle]
-Report Missing: Bụi                              [× close]
-──────────────────────────────────────────────────────────
-📍  Last seen location *
-    [City / Country picker]
+[Header]  ← Report Missing
 
-📷  Attach photos/videos (optional)
-    [Media picker — max 5, no AI scan]
+( Pet selector — only from Lost Pets )
+  Which pet is missing?   [ Bụi ▼ ]
 
-[Submit Report]
+PHOTOS *                                      (at least 1)
+  [ + ]  [ photo①  ★cover ]  [ photo② ]  [ photo③ ]  →  scroll
+  · first photo = cover; tap a photo → "Set as cover"
+  · reorderable; 1–10; uploaded only, no AI scan
+
+LAST SEEN
+  📍 Location *   [ map — drag pin 📍 ]
+                  → lat/lng captured; city/country auto-filled below
+                  Đà Lạt, Việt Nam
+  🕑 When *       [ date + time picker ]   default: now
+
+DESCRIPTION *
+  [ multiline — identifying details, collar, behavior, responds to name… ]
+
+[ Submit Report ]   ← full-width; disabled until ALL required fields set
 ```
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| `last_seen_location` | Yes | `{ city, city_code, country, country_code }` — same picker as post location |
-| `media` | No | Up to 5 items; uploaded files only; no AI scan triggered |
+| `pet` | Yes | Pre-selected (Pet Detail) or via selector (Lost Pets — active family, incl. private) |
+| `photos` | **Yes** | **At least 1**, up to 10. Uploaded files only; **ordered**, `photos[0]` = **cover**; reorderable; "Set as cover" moves a photo to the front; no AI scan. On the Lost Pet Detail screen (`screen_19`) these render as a **single header carousel** (cover first) — there is no separate "more photos" block (decision: merged). |
+| `last_seen_location` | Yes | User drags a pin on the map → `{ lat, lng }`; reverse-geocoded → `{ city, city_code, country, country_code }` shown for confirmation. **No district.** |
+| `last_seen_at` | Yes | Date + time the pet was **last seen** (distinct from `reported_at`); defaults to now; cannot be in the future. |
+| `description` | **Yes** | Free text — identifying details to help others recognise the pet. Cannot be empty. |
+
+> **Submit** is enabled only when **all required fields** are set: a pet, ≥ 1 photo, a map location, a last-seen time, and a non-empty description.
+
+**Upload:** each photo uploaded via `RequestMediaUpload (BV)` `{ purpose: "MISSING_PHOTO" }` (screen_4) → use the returned `publicUrl`; no AI scan (missing photos are never scanned).
+
+**On submit → `ReportMissing mutation (BE)`:**
+- `pet.missing_status` set with the full shape: `last_seen_location` (+ `lat`/`lng`), `last_seen_at`, `description`, ordered `photos` (cover first), `reported_by` (the caller), `reported_at`.
+- `MISSING` badge appears across the UI; Missing banner appears on Pet Detail (Section 3).
+- Push notification to family **followers**: *"Bụi from Minh's Family is missing! Last seen in Đà Lạt"*.
+- The report appears in **Lost Pets** (`screen_17` / `screen_18`) for the report's city, and on the **Lost Pet Detail** screen (`screen_19`).
 
 **On submit:**
 - `ReportMissing mutation (BE)`
@@ -315,13 +352,24 @@ query Pet($id: ID!) {
     postCount
     healthStatus
     missingStatus {
+      id
       reportedAt
+      reportedBy {
+        id
+        displayName
+        avatarUrl
+      }
       lastSeenLocation {
         city
         cityCode
         country
         countryCode
+        lat
+        lng
       }
+      lastSeenAt
+      description
+      photos
     }
     isDeleted
     familyId
@@ -420,6 +468,7 @@ query Pet($id: ID!) {
 - When `tabs.health.status = CHECKING` or `NO_DATA`: `html` is `null`
 - Same for Food/Behavior/Med/Vac tabs
 - `viewerRole`: `"owner"` | `"parent"` — controls visibility of Edit / Delete / Mark as Found actions
+- `missingStatus` is `null` when the pet is not missing. When set: `photos` is an **ordered** list with `photos[0]` = cover; `reportedBy` is the family member who filed the report; `lastSeenAt` is when the pet was last seen (distinct from `reportedAt`). These power the Missing banner (Section 3) and the Lost Pet Detail screen (`screen_19`).
 
 **Errors:**
 
@@ -638,30 +687,63 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
     id
     petId
     reportedAt
+    reportedBy {
+      id
+      displayName
+      avatarUrl
+    }
     lastSeenLocation {
       city
       cityCode
       country
       countryCode
+      lat
+      lng
     }
-    mediaUrls
+    lastSeenAt
+    description
+    photos
   }
 }
 ```
 
+**`MissingReportInput`:**
+```json
+{
+  "lastSeenLocation": {
+    "city": "string", "cityCode": "string",
+    "country": "string", "countryCode": "string",
+    "lat": "float", "lng": "float"
+  },
+  "lastSeenAt": "ISO 8601 datetime (not in the future)",
+  "description": "string (required, non-empty)",
+  "photos": ["string url, 1–10, ordered — photos[0] = cover"]
+}
+```
+
+- `lat`/`lng` come from the map pin; `city`/`cityCode`/`country`/`countryCode` are reverse-geocoded (client may send what it resolved, server may re-validate).
+- `photos` are pre-uploaded `publicUrl`s from `RequestMediaUpload (BV)` `{ purpose: "MISSING_PHOTO" }`; **at least 1 required**; order is preserved; index 0 is the cover.
+- `description` is **required** and must be non-empty.
+
 **Variables:**
 ```json
 {
-  "petId": "pet_111",
+  "petId": "pet_201",
   "input": {
     "lastSeenLocation": {
-      "city": "Hồ Chí Minh",
-      "cityCode": "HCM",
+      "city": "Đà Lạt",
+      "cityCode": "DL",
       "country": "Việt Nam",
-      "countryCode": "VN"
+      "countryCode": "VN",
+      "lat": 11.9404,
+      "lng": 108.4583
     },
-    "mediaUrls": [
-      "https://cdn.petapp.com/media/tmp_missing_001.jpg"
+    "lastSeenAt": "2026-06-07T17:30:00Z",
+    "description": "Buckskin Vietnamese pony, dark mane, wearing a green halter rope. Responds to \"Măng\".",
+    "photos": [
+      "https://cdn.petapp.com/media/miss_cover.jpg",
+      "https://cdn.petapp.com/media/miss_2.jpg",
+      "https://cdn.petapp.com/media/miss_3.jpg"
     ]
   }
 }
@@ -673,23 +755,49 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
   "data": {
     "reportMissing": {
       "id": "missing_report_001",
-      "petId": "pet_111",
-      "reportedAt": "2026-06-06T10:00:00Z",
-      "lastSeenLocation": {
-        "city": "Hồ Chí Minh",
-        "cityCode": "HCM",
-        "country": "Việt Nam",
-        "countryCode": "VN"
+      "petId": "pet_201",
+      "reportedAt": "2026-06-08T03:00:00Z",
+      "reportedBy": {
+        "id": "user_001",
+        "displayName": "Minh Tuan",
+        "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
       },
-      "mediaUrls": ["https://cdn.petapp.com/media/tmp_missing_001.jpg"]
+      "lastSeenLocation": {
+        "city": "Đà Lạt",
+        "cityCode": "DL",
+        "country": "Việt Nam",
+        "countryCode": "VN",
+        "lat": 11.9404,
+        "lng": 108.4583
+      },
+      "lastSeenAt": "2026-06-07T17:30:00Z",
+      "description": "Buckskin Vietnamese pony, dark mane, wearing a green halter rope. Responds to \"Măng\".",
+      "photos": [
+        "https://cdn.petapp.com/media/miss_cover.jpg",
+        "https://cdn.petapp.com/media/miss_2.jpg",
+        "https://cdn.petapp.com/media/miss_3.jpg"
+      ]
     }
   }
 }
 ```
 
 **Side effects:**
-- `pet.missingStatus` set
-- Push notification dispatched to family followers
+- `pet.missingStatus` set with the full shape above; `reportedBy` = the caller.
+- Push notification dispatched to family followers.
+- Report becomes visible in Lost Pets (`screen_17` / `screen_18`) for `lastSeenLocation.cityCode` and on Lost Pet Detail (`screen_19`).
+
+**Errors:**
+
+| Status | Code | Scenario |
+|--------|------|----------|
+| `403` | `NOT_FAMILY_MEMBER` | Caller is not a member of the pet's family |
+| `404` | `PET_NOT_FOUND` | Pet does not exist or is soft-deleted |
+| `409` | `ALREADY_MISSING` | Pet already has an active missing report |
+| `422` | `LAST_SEEN_IN_FUTURE` | `lastSeenAt` is in the future |
+| `422` | `MISSING_LOCATION` | `lastSeenLocation` (lat/lng) not provided |
+| `422` | `MISSING_PHOTOS` | No photo provided (at least 1 required) |
+| `422` | `MISSING_DESCRIPTION` | `description` is empty |
 
 ---
 
@@ -757,12 +865,14 @@ User taps another pet avatar in switcher
 ### Report Missing
 
 ```
-User taps [Report Missing]
-  └─> Open bottom sheet
-        └─> Fill location (required) + attach media (optional)
-              └─> ReportMissing mutation (BE)
-                    └─> success → close sheet → missing banner appears
-                               push notification sent to followers
+User taps [Report Missing]  (Pet Detail → pet already in context)
+  └─> Report Missing form (full screen, Section 8)
+        ├─ [from Lost Pets banner] pick pet first (active family, incl. private)
+        └─> drag map pin (location *) + pick When * + photos (optional, set cover) + description
+              └─> upload photos (RequestMediaUpload, MISSING_PHOTO)
+                    └─> ReportMissing mutation (BE)
+                          └─> success → missing banner appears; followers notified;
+                              report visible in Lost Pets + Lost Pet Detail
 ```
 
 ### Delete Pet
@@ -809,3 +919,9 @@ User taps [Delete Bụi]
 | 8 | Mark as Found access | Owner only |
 | 9 | Missing push notification | Sent to family followers on report; optional "found" notification on resolution |
 | 10 | `[+]` in pet switcher | Creates post (pet created via AI scan); same as normal Create Post flow |
+| 11 | Report Missing placement | A button **below the category tabs** (Section 5), not inside the Health tab; tabs only switch the HTML blob |
+| 12 | Report Missing surface | **Full-screen form** (Section 8), shared between Pet Detail and the Lost Pets banner |
+| 13 | Report pet selector scope (from Lost Pets) | **Active family** pets only, **including private** (reporting ignores pet privacy) |
+| 14 | Missing photos | Single **ordered** photo set; `photos[0]` = cover; rendered as one header carousel on Lost Pet Detail (no separate "more photos") |
+| 15 | Last seen | Map pin `lat`/`lng` + auto city/country (no district) **plus** an explicit `last_seen_at` time, distinct from `reported_at` |
+| 16 | Reporter identity | `missing_status.reported_by` recorded → Lost Pet Detail shows "Reported missing from {member / you}" to family members |
