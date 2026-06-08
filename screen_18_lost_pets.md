@@ -122,7 +122,7 @@ Horizontal scrollable chip row. Two independent dimensions; **distance** and **s
 | **5km** | Distance | `maxDistanceKm: 5` (mutually exclusive with `Within 1km`) |
 | **Cats** | Species | `species: [CAT]` (mutually exclusive with Dogs/Other) |
 | **Dogs** | Species | `species: [DOG]` (mutually exclusive with Cats/Other) |
-| **Other** | Species | species **not in** `[CAT, DOG]` (mutually exclusive with Cats/Dogs) |
+| **Other** | Species | `species: [OTHER]` — server sentinel for any species not CAT/DOG (mutually exclusive with Cats/Dogs) |
 
 - **Distance chips require real GPS.** Without GPS (`distanceKm` is null because `originLat/Lng` weren't supplied), `Within 1km` and `5km` are **disabled** (greyed). Species chips and `All` remain available.
 - Selecting a chip re-runs `LostPets (CB)` with the combined filter; resets pagination.
@@ -141,7 +141,7 @@ Full, paginated list of missing reports in the selected city (after filters).
 | `pet.avatarUrl` | Pet avatar with **"Missing"** badge overlaid bottom-left |
 | `pet.name` `(family.name)` | `"Măng (Minh's Family)"` |
 | `pet.species` · `pet.breed` | `"Pony · buckskin"` (species only if breed is null) |
-| `lastSeen.cityCode`, `countryCode` | Muted: `"Đà Lạt, VN"` |
+| `lastSeen.cityShortName`, `countryCode` | Muted: `"Đà Lạt, VN"` |
 
 - **Sorting:** default `reportedAt` desc (newest first). When a **distance chip** is active, sort by `distanceKm` asc (nearest first).
 - **Pagination:** infinite scroll via `LostPets (CB)` `cursor`.
@@ -221,8 +221,8 @@ User taps a list row  OR  a map pin's card
 | 2 | Pet selector scope | Pets of the user's **active family** only (switch active family to report another family's pet) |
 | 3 | Private pets in report | Included — reporting ignores pet privacy; shown with 🔒 but selectable |
 | 4 | Already-missing / deleted pets | Excluded from the selector |
-| 5 | No reportable pet | Show prompt linking to Create Family / Add pet |
-| 6 | Filter dimensions | Distance (All/1km/5km) + Species (Cats/Dogs/Other) combine; mutually exclusive within each |
+| 5 | No reportable pet | Show prompt linking to set/create an active family (Profile Settings → Family Pages) |
+| 6 | Filter dimensions | Distance (All/1km/5km) + Species (Cats/Dogs/Other) combine; mutually exclusive within each. `Other` → `species: [OTHER]` sentinel |
 | 7 | Distance chips without GPS | Disabled |
 | 8 | List sort | `reportedAt` desc by default; `distanceKm` asc when a distance chip is active |
 | 9 | City scope | Inherited from More tab's selected city |
@@ -231,5 +231,6 @@ User taps a list row  OR  a map pin's card
 
 ## Open Items (next steps)
 
-- **Lost Pet Detail** (`screen_19`) — header photo carousel, last-seen map + time, description, How-you-can-help, Share / "I saw {pet}". To be specified next.
 - **Full-screen map** (`[Open map]`) — detailed pan/zoom/cluster interactions; optional pins-only query if volume grows.
+
+> Done: Lost Pet Detail is specified in `screen_19`.

@@ -291,13 +291,6 @@ DESCRIPTION *
 - Push notification to family **followers**: *"Bụi from Minh's Family is missing! Last seen in Đà Lạt"*.
 - The report appears in **Lost Pets** (`screen_17` / `screen_18`) for the report's city, and on the **Lost Pet Detail** screen (`screen_19`).
 
-**On submit:**
-- `ReportMissing mutation (BE)`
-- Pet `missing_status` set: `{ reported_at, last_seen_location, media[] }`
-- Pet status in all UI shows `MISSING` badge (amber/red)
-- Missing banner appears on Pet Detail (Section 3)
-- Push notification sent to all **followers** of this family: *"Bụi from Minh's Family is missing! Last seen in HCM"*
-
 ---
 
 ## AI Processing Pipeline (background)
@@ -361,6 +354,7 @@ query Pet($id: ID!) {
       }
       lastSeenLocation {
         city
+        cityShortName
         cityCode
         country
         countryCode
@@ -694,6 +688,7 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
     }
     lastSeenLocation {
       city
+      cityShortName
       cityCode
       country
       countryCode
@@ -721,7 +716,7 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
 }
 ```
 
-- `lat`/`lng` come from the map pin; `city`/`cityCode`/`country`/`countryCode` are reverse-geocoded (client may send what it resolved, server may re-validate).
+- `lat`/`lng` come from the map pin; `city`/`cityCode`/`country`/`countryCode` are reverse-geocoded (client may send what it resolved, server may re-validate). The server derives **`cityShortName`** (curated short label) — the client need not send it; it is returned on read for display on Lost Pets rows / detail.
 - `photos` are pre-uploaded `publicUrl`s from `RequestMediaUpload (BV)` `{ purpose: "MISSING_PHOTO" }`; **at least 1 required**; order is preserved; index 0 is the cover.
 - `description` is **required** and must be non-empty.
 
@@ -764,6 +759,7 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
       },
       "lastSeenLocation": {
         "city": "Đà Lạt",
+        "cityShortName": "Đà Lạt",
         "cityCode": "DL",
         "country": "Việt Nam",
         "countryCode": "VN",
@@ -835,6 +831,7 @@ mutation MarkPetFound($petId: ID!) {
 
 **Side effects:**
 - `pet.missingStatus` cleared
+- The active missing **report** is **not deleted** — its `status` flips `MISSING → FOUND`. It leaves all in-app Lost Pets listings (`screen_17` / `screen_18`), but its shared **Lost Pet Detail** link (`screen_19`) keeps resolving and renders the **found state**.
 - Optional push notification: *"Good news! Bụi from Minh's Family has been found 🎉"*
 
 ---

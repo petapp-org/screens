@@ -93,7 +93,7 @@ Source: `reported_by` on the report — returned by the API **only** to family m
 
 | Field | Display |
 |-------|---------|
-| Location | `"{city}, {countryCode}"` (e.g. `"Đà Lạt, VN"`) — from `last_seen.city` / `country_code` |
+| Location | `"{cityShortName}, {countryCode}"` (e.g. `"Đà Lạt, VN"`) — from `last_seen.city_short_name` / `country_code` (consistent with the More tab + Lost Pets rows) |
 | When | `last_seen.at` as a full datetime (e.g. `"Yesterday, May 9 · 5:30 PM"`) — this is **when the pet was last seen**, distinct from the report time in Section 2 |
 | Map | A map with a single pin at `last_seen.lat` / `last_seen.lng`; tappable to open in the device map app / fullscreen |
 
@@ -169,6 +169,7 @@ query LostPet($reportId: ID!) {
     }
     lastSeen {
       city
+      cityShortName
       cityCode
       country
       countryCode
@@ -216,6 +217,7 @@ query LostPet($reportId: ID!) {
       },
       "lastSeen": {
         "city": "Đà Lạt",
+        "cityShortName": "Đà Lạt",
         "cityCode": "DL",
         "country": "Việt Nam",
         "countryCode": "VN",

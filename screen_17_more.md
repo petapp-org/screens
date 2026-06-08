@@ -68,7 +68,7 @@ Single row pinned below the header.
 
 | Element | Description |
 |---------|-------------|
-| Pin icon + label | Current **selected city**, formatted `"{cityCode}, {countryCode}"` (e.g. `"HCMC, VN"`) |
+| Pin icon + label | Current **selected city**, formatted `"{cityShortName}, {countryCode}"` (e.g. `"HCMC, VN"`). `cityShortName` is the curated short label (e.g. `HCMC`, `HN`, `Đà Lạt`) — distinct from `cityCode` (`HCM`) and the full `city` name shown in the picker. |
 | Change button | Tap → opens **Choose Your City** bottom sheet |
 
 **Auto-detection (on app open / first visit to More):**
@@ -161,7 +161,7 @@ Shows missing pets **in the selected city** (decision: scoped to the selected ci
 | `pet.name` | Pet name (bold) |
 | `family.name` | Family name in parentheses next to the name: `"Măng (Minh's Family)"` |
 | `pet.species` · `pet.breed` | Second line: `"Pony · buckskin"` — show species only if breed is null |
-| `lastSeen.cityCode` · `countryCode` | Third line, muted: `"Đà Lạt, VN"` |
+| `lastSeen.cityShortName` · `countryCode` | Third line, muted: `"Đà Lạt, VN"` (short label + country code) |
 
 - **Tap a row** → **Lost Pet Detail screen** for that report.
 - **Empty state** (no missing pets in the selected city): show a compact empty message e.g. *"No lost pets reported in {City} right now"* and **hide the "View All →" link**.
@@ -195,6 +195,7 @@ Returns the list of supported cities with coordinates and availability — power
 query Cities {
   cities {
     city
+    cityShortName
     cityCode
     country
     countryCode
@@ -213,6 +214,7 @@ query Cities {
     "cities": [
       {
         "city": "Ho Chi Minh City",
+        "cityShortName": "HCMC",
         "cityCode": "HCM",
         "country": "Vietnam",
         "countryCode": "VN",
@@ -223,6 +225,7 @@ query Cities {
       },
       {
         "city": "Hà Nội",
+        "cityShortName": "HN",
         "cityCode": "HN",
         "country": "Vietnam",
         "countryCode": "VN",
@@ -233,6 +236,7 @@ query Cities {
       },
       {
         "city": "Singapore",
+        "cityShortName": "Singapore",
         "cityCode": "SG",
         "country": "Singapore",
         "countryCode": "SG",
@@ -291,6 +295,7 @@ query LostPets(
       }
       lastSeen {
         city
+        cityShortName
         cityCode
         country
         countryCode
@@ -311,12 +316,14 @@ query LostPets(
 **`LostPetsFilter` (used by the full Lost Pets screen, not the More section):**
 ```json
 {
-  "species": ["CAT", "DOG"],
+  "species": ["CAT", "DOG", "OTHER"],
   "maxDistanceKm": 5,
   "originLat": 10.78,
   "originLng": 106.70
 }
 ```
+
+- `species` values: `CAT` | `DOG` | `OTHER`. `OTHER` is a server-side sentinel meaning "any species that is not CAT or DOG" — it powers the **Other** filter chip on the full screen.
 
 **Variables (More section — preview):**
 ```json
@@ -345,6 +352,7 @@ query LostPets(
           },
           "lastSeen": {
             "city": "Đà Lạt",
+            "cityShortName": "Đà Lạt",
             "cityCode": "DL",
             "country": "Việt Nam",
             "countryCode": "VN",
@@ -451,11 +459,14 @@ User taps a Lost Pet row (section)
 | 6 | Distance chips (`1km/5km`) | Filter **within** the selected city; require real GPS (`distanceKm`); disabled without GPS |
 | 7 | Reporting entry point | Not in the More hub section — reports filed from `screen_9` (Pet Detail → Report Missing button, below the category tabs) or the Lost Pets screen banner (`screen_18`) |
 | 8 | Pet Friendly / Events / Rescue | Out of scope this phase |
+| 9 | City display label | Add `cityShortName` (curated short label, e.g. `HCMC` / `Đà Lạt` / `HN`) used in the location bar + lost-pet rows + Lost Pet Detail; `cityCode` stays for keys/logic, full `city` shown in the picker |
+| 10 | "Other" species filter | `LostPetsFilter.species` accepts an `OTHER` sentinel = any species not `CAT`/`DOG` |
 
 ---
 
 ## Open Items (next steps)
 
-- **Lost Pets screen** (full list + map + filter chips + "Have a missing pet?" banner) — to be specified (`screen_18`).
-- **Lost Pet Detail screen** (header photo carousel, last-seen map, description, how-you-can-help, Share / "I saw {pet}") — to be specified (`screen_19`).
-- **Report Missing form upgrade** in `screen_9` — add `lastSeenAt`, map pin `lat`/`lng`, `description`, cover photo selection; extend `ReportMissing (BE)` + `missing_status`.
+- **Pet Friendly / Events / Rescue** categories — future phases (placeholders this phase).
+- **Full-screen map** (`Open map` on `screen_18`) — pan/zoom/cluster; optional pins-only query if volume grows.
+
+> Done: Lost Pets screen (`screen_18`), Lost Pet Detail (`screen_19`), and the Report Missing form upgrade (`screen_9` §8 + `BE`) are specified.
