@@ -135,7 +135,7 @@ Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, opt
 
 ### 3. Starting a Thread
 
-*(unchanged — composing happens from other screens, not from this inbox)*
+*(composing happens from other screens, not from this inbox)*
 
 **3 entry points:**
 
@@ -151,8 +151,8 @@ Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, opt
   - `[family avatar]` Active family name
 - For user receivers: no prompt — always individual user as sender.
 
-**Visibility rules (hide Message button):**
-- Viewing your own active family's page → no Message button (can't message your own family).
+**Visibility rules (hide Message button / icon):**
+- Viewing a family **you are a member of** (active **or** non-active) → no Message button (you're already on the receiving side; can't message your own family).
 - Viewing your own profile/user → no Message icon (can't message yourself).
 
 **Thread creation:** If a thread already exists for the same sender ↔ receiver → **continue the existing thread**; never duplicate.
@@ -746,6 +746,7 @@ User taps Send
 | User's own message is the last in a thread | Row shows the preview plainly; never bold (outbound never unread) |
 | Thread exists, user starts new thread with same entity | Returns existing thread — no duplicate |
 | Receiver family is deleted | Thread archived — read-only, cannot send new messages |
+| General notification target deleted (post/comment/pet removed) | Tapping marks it read and shows a "This content is no longer available" state instead of deep-linking |
 | `POST_LOVES` for the same post by many users | Collapsed to one grouped row (`{actor} and {N} others`) |
 | Parent invite received | **Not** a notification — only `INVITE_ACCEPTED` is surfaced |
 | New user, no activity | Chats: "No conversations yet"; Notifications: "No notifications yet" |

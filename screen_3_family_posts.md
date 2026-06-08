@@ -86,7 +86,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - Following → button label "Following"; tap → `UnfollowFamily mutation (E)` → button reverts to "Follow" immediately (optimistic); show undo toast for **5 seconds**: *"Unfollowed [Family Name]"* + **[Undo]** button → if Undo tapped: re-follow silently (no second toast), button returns to "Following"
 - Reuse endpoints D and E from Screen 1
 
-**Message button:** *(hidden when this family is the user's own active family — can't message your own active family; see screen_10)*
+**Message button:** *(hidden when you are a member of this family — active or non-active; you're already on the receiving side, can't message your own family; see screen_10)*
 - Tap → show **"Send as…"** bottom sheet (your individual self **or** your active family), then `StartThread (BI)` → open the thread in the Notifications screen's Thread View (screen_10). If a thread already exists for the same sender ↔ this family, it is reused (no duplicate).
 - Requires login → redirect to Login if not authenticated.
 
