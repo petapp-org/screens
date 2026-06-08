@@ -147,6 +147,7 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `tag` (shown greyed out with note "Tag cannot be changed")
+- Changing the avatar: upload via `RequestMediaUpload (BV)` `{ purpose: "USER_AVATAR" }` (screen_4) → use returned `publicUrl`; no AI scan
 - `UpdateMe mutation (AK)` `{ name, avatar_url }`
 
 **Phone & Email:**

@@ -220,7 +220,7 @@ Opened from `[...]` → "Edit Pet". Owner only.
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| Avatar | No | Replace pet avatar |
+| Avatar | No | Replace pet avatar — upload via `RequestMediaUpload (BV)` `{ purpose: "PET_AVATAR" }` (screen_4) → use returned `publicUrl`; no AI scan |
 | Name | Yes | Pet display name |
 | Public | Yes | Toggle `is_public` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
 | Species | Yes | Read-only if set by AI scan; editable if entered manually |

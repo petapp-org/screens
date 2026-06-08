@@ -227,7 +227,7 @@ Actions available depend on the current tag state:
 ## API Endpoints Required
 
 ### AT. Mutation: `ScanMedia`
-Scan an uploaded media item for pet detection.  
+Scan an **already-uploaded** media item for pet detection. The media is first uploaded via `RequestMediaUpload (BV)` (screen_4) — `media_url` here is the `publicUrl` it returned. **Pet detection runs on post media only**; avatars (user/family/pet) are uploaded the same way but never scanned.
 **Auth:** Required
 
 **Operation:**
