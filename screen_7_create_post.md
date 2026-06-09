@@ -68,15 +68,29 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 **Max 10 media items per post. Min 1 required.**
 
+**Media kinds & tagging:**
+
+| Kind | AI Scan | How it's tagged |
+|------|---------|-----------------|
+| Uploaded **photo** | ✅ AI Scan button | AI scan sets the initial tag; user can override (§4) |
+| Uploaded **video** | ❌ none | **Manual tag only** — no AI scan on video (§4, manual mode) |
+| **Embedded** URL (YouTube/Vimeo) | ❌ none | Auto-tagged `Random` |
+
+**Uploaded video constraints** (validated on selection; over-limit → reject with a message):
+- Max **duration: 90 seconds**
+- Max **file size: 100 MB**
+- Formats: **MP4 / MOV** (H.264)
+
 **Add Media button:** opens action sheet:
 - "Upload from device" → image/video file picker (multiple selection allowed, up to remaining slots)
 - "Embed URL" → text input for YouTube/Vimeo URL (only 1 embedded URL allowed per post; button hidden once one is added)
 
-**Uploaded media thumbnail:**
-- Shows image preview or video thumbnail
-- `×` remove button (top-right)
-- Tag badge (bottom-left): displays current tag status
-- **AI Scan button** (bottom-right or overlay): triggers scan for that media
+**Uploaded photo thumbnail:**
+- Image preview · `×` remove (top-right) · Tag badge (bottom-left) · **AI Scan button** (bottom-right)
+
+**Uploaded video thumbnail:**
+- Video thumbnail with a **duration overlay** (e.g. `0:42`) + play icon · `×` remove · Tag badge (bottom-left)
+- **No AI Scan button** — tapping the tag badge opens the manual tag sheet directly (§4)
 
 **Embedded media:**
 - Shows video thumbnail (fetched from YouTube/Vimeo API)
@@ -88,7 +102,9 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 ---
 
-### 3. AI Scan Flow (per uploaded media)
+### 3. AI Scan Flow (per uploaded **photo**)
+
+> **Photos only.** Uploaded **videos are not AI-scanned** — they are tagged manually (§4, manual mode). Embedded media is auto-`random`. `ScanMedia (AT)` is never called for videos or embeds.
 
 **Purpose:** detect if a pet is present in the media, identify its species and breed, then attempt to match with named pets in the current family.
 
@@ -117,6 +133,8 @@ User taps [AI Scan] on a media item
 ### 4. Tag Edit Flow (manual override)
 
 Triggered by tapping the tag badge or edit (pencil) icon on any media item.
+
+> **Uploaded videos** (no AI scan) open this sheet directly in **manual mode** — identical to the *"no animal detected"* case below: select an existing pet, create a new pet (species/breed chosen manually from the DB option lists), or mark as Random. There is no AI pre-fill for videos.
 
 Opens a bottom sheet:
 
@@ -227,7 +245,7 @@ Actions available depend on the current tag state:
 ## API Endpoints Required
 
 ### AT. Mutation: `ScanMedia`
-Scan an **already-uploaded** media item for pet detection. The media is first uploaded via `RequestMediaUpload (BV)` (screen_4) — `media_url` here is the `publicUrl` it returned. **Pet detection runs on post media only**; avatars (user/family/pet) are uploaded the same way but never scanned.
+Scan an **already-uploaded** media item for pet detection. The media is first uploaded via `RequestMediaUpload (BV)` (screen_4) — `media_url` here is the `publicUrl` it returned. **Pet detection runs on uploaded photos only** — **videos and embeds are never scanned** (videos are tagged manually, embeds are auto-`random`); avatars (user/family/pet) are uploaded the same way but never scanned.
 **Auth:** Required
 
 **Operation:**
@@ -654,13 +672,14 @@ User opens Create Post (e.g. from fab button)
   └─> Check active family
         ├─ No active family → prompt to set in Profile Settings
         └─ Has active family → load draft (if exists) or empty form
-              └─> Add media (upload or embed)
-                    └─> For each uploaded media: tap AI Scan
-                          └─> ScanMedia mutation (AT)
-                                ├─ Match → badge auto-set to pet name
-                                ├─ Breed detected → badge shows breed (user can accept or edit)
-                                └─ No detection → badge shows "Random" (user can edit)
-                    └─> [Optional] edit tags manually
+              └─> Add media (upload photo/video or embed)
+                    ├─> Uploaded photo → tap AI Scan → ScanMedia mutation (AT)
+                    │         ├─ Match → badge auto-set to pet name
+                    │         ├─ Breed detected → badge shows breed (accept or edit)
+                    │         └─ No detection → badge "Random" (user can edit)
+                    ├─> Uploaded video → no scan → tag manually (§4 manual mode)
+                    └─> Embed URL → auto-tagged "Random"
+                    └─> [Optional] edit/override any tag manually (§4)
                     └─> Fill caption, location, privacy
                     └─> Tap Post
                           └─> CreatePost mutation (AX)
@@ -689,6 +708,9 @@ User taps "Switch" on family row
 | No active family | Prompt shown before opening form; cannot create post |
 | Embedded URL added | Auto-tagged as `random`; no AI Scan button shown; only 1 allowed per post |
 | 2nd embedded URL attempt | "Add Embed" button hidden once 1 embedded exists |
+| Uploaded **video** added | No AI Scan button; must tag manually (select pet / create pet / Random) before posting |
+| Video over 90s or 100 MB | Rejected on selection with a message (e.g. "Video must be 90s or shorter") — not added to the grid |
+| Unsupported video format | Rejected on selection (only MP4 / MOV) |
 | Media limit reached (10) | "Add Media" button disabled; counter shows "10 / 10" |
 | AI scan — no pet detected | Tag: `{ type=random, breed=null }`; user can manually link to existing pet |
 | AI scan — breed detected, no family pet match | Tag: `{ type=random, breed="..." }`; user can keep, link to existing pet, or create new pet |
