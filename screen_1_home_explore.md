@@ -41,7 +41,7 @@ Default active filter tab: **Latest**.
 
 | Button | Logged-in | Not logged-in |
 |--------|-----------|---------------|
-| Search | Opens search screen | Opens search screen (no auth needed) |
+| Search | Opens search screen | Tapping redirects to Login (auth required — see screen_11) |
 | Messages | Opens the **Notifications screen** (screen_10); shows a **red dot** when there is any unread — combined across Chats + general Notifications | Tapping redirects to Login; **no red dot shown** |
 | Profile | Shows user's avatar; tapping opens profile screen | Shows default placeholder avatar; tapping redirects to Login |
 
