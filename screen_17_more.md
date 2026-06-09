@@ -44,7 +44,19 @@ The whole screen is scoped to a **selected city** shown in the location bar at t
   └────────────────────────────────────────────────────────┘
   (max 3 rows; "View All →" only shown when total > 0)
 
-[PET FRIENDLY section]   ← placeholder this phase (see Edge Cases)
+[PET FRIENDLY section]
+  "PET FRIENDLY"                                 [View All →]
+  ┌────────────────────────────────────────────────────────┐
+  │ [photo]   Lava Cat Coffee  ★4.8                3.4km    │
+  │           Cat · Carriers OK                             │
+  │           HCMC, VN · open until 22:00                   │
+  ├────────────────────────────────────────────────────────┤
+  │ [photo]   Ailu Cat Café  ★4.7                  4.2km    │
+  │           Cat · Resident cats                           │
+  │           HCMC, VN · play with 12 cats                  │
+  └────────────────────────────────────────────────────────┘
+  (max 3 rows — nearest in the selected city; "View All →" only when ≥ 1 item)
+
 [EVENTS section]         ← placeholder this phase
 [RESCUE section]         ← placeholder this phase
 
@@ -139,7 +151,7 @@ Choose Your City                                    [× close]
 | Button | Icon | Tap action (this phase) |
 |--------|------|-------------------------|
 | Lost Pets | ⚠️ triangle | Navigate to **Lost Pets screen** (full list + map) — same destination as the section's "View All →" |
-| Pet Friendly | 📍 | "Coming Soon" placeholder screen |
+| Pet Friendly | 📍 | Navigate to **Pet Friendly screen** (`screen_20`) — same as the section's "View All →" |
 | Events | 🗓️ | "Coming Soon" placeholder screen |
 | Rescue | ♡ | "Coming Soon" placeholder screen |
 
@@ -170,9 +182,40 @@ Shows missing pets **in the selected city** (decision: scoped to the selected ci
 
 ---
 
-### 6. Other Category Sections (placeholder this phase)
+### 6. Pet Friendly Section
 
-`Pet Friendly`, `Events`, `Rescue` sections are **out of scope** for this phase. The mockup shows a Pet Friendly section for layout reference only. For now:
+Shows pet-friendly places **in the selected city**, the **3 nearest** to the user.
+
+- Section header: **"PET FRIENDLY"** + **"View All →"** link → **Pet Friendly screen** (`screen_20`).
+- **Max 3 rows** (preview), sorted by **distance asc** (nearest first) from the user's origin (GPS if available, else the selected city's centre).
+- **Empty state** (no places in the selected city): hide the section (or show a compact "No pet-friendly places yet"); **hide "View All →"**.
+
+**Each row (Pet Friendly item)** — canonical layout, reused on `screen_20` and `screen_21`:
+
+```
+[photo]   {name}  ★{avgRating}                 {distanceKm}km
+          {suitable} · {tagText}
+          {cityShortName}, {countryCode} · {highlightText}
+```
+
+| Element | Source | Notes |
+|---------|--------|-------|
+| Thumbnail | `thumbnailUrl` | first photo of the place |
+| `name` + `★avgRating` | `name`, `avgRating` | rating sits next to the name (line 1) |
+| `distanceKm` | computed per request | top-right; `< 10` → 1 decimal (`3.4km`), `≥ 10` → integer (`120km`) |
+| `suitable` | `suitableFor[]` | `CAT`→"Cat", `DOG`→"Dog", `OTHER`→"Pet friendly"; multiple joined by ` · ` |
+| `tagText` | admin free text, **≤ 18 chars** | line-2 flair after suitable; single line, `…` if overflow |
+| `cityShortName`, `countryCode` | place location | e.g. `"HCMC, VN"` |
+| `highlightText` | admin free text, **≤ 20 chars** | line-3 flair after city-country; single line, `…` if overflow |
+
+- **Tap a row** → **Pet Friendly Place Detail** (`screen_21`).
+- Data source: `PetFriendlyPlaces query (CD)` `{ cityCode, countryCode, originLat?, originLng?, limit: 3 }`.
+
+---
+
+### 7. Other Category Sections (placeholder this phase)
+
+`Events` and `Rescue` sections are **out of scope** for this phase. For now:
 - Either hide these sections entirely, OR render the section header with a "Coming soon" inline state.
 - No API, no data binding. Final behaviour defined in a later phase.
 
@@ -388,6 +431,116 @@ query LostPets(
 
 ---
 
+### CD. Query: `PetFriendlyPlaces`
+
+Returns pet-friendly places for a city, sorted by distance from the user. Used by both the **More → Pet Friendly section** (`limit: 3`) and the full **Pet Friendly screen** (`screen_20`, paginated + filtered).
+
+**Auth:** Required.
+
+**Operation:**
+```graphql
+query PetFriendlyPlaces(
+  $cityCode: String!
+  $countryCode: String!
+  $filter: PetFriendlyFilter
+  $originLat: Float
+  $originLng: Float
+  $cursor: String
+  $limit: Int
+) {
+  petFriendlyPlaces(
+    cityCode: $cityCode
+    countryCode: $countryCode
+    filter: $filter
+    originLat: $originLat
+    originLng: $originLng
+    cursor: $cursor
+    limit: $limit
+  ) {
+    items {
+      id
+      name
+      category
+      thumbnailUrl
+      suitableFor
+      tagText
+      highlightText
+      avgRating
+      reviewCount
+      cityShortName
+      countryCode
+      lat
+      lng
+      distanceKm
+    }
+    nextCursor
+    hasMore
+    totalCount
+  }
+}
+```
+
+**`PetFriendlyFilter`** (single active chip on the full screen; omit for "All"):
+```json
+{ "suitableFor": "CAT" }      // Cat-friendly / Dog-friendly chips
+// or
+{ "category": "CAFE" }        // Cafés / Restaurants / Hotels / … chips
+```
+
+**Variables (More section — preview):**
+```json
+{ "cityCode": "HCM", "countryCode": "VN", "originLat": 10.78, "originLng": 106.70, "limit": 3 }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "petFriendlyPlaces": {
+      "items": [
+        {
+          "id": "place_001",
+          "name": "Lava Cat Coffee",
+          "category": "CAFE",
+          "thumbnailUrl": "https://cdn.petapp.com/places/place_001/1.jpg",
+          "suitableFor": ["CAT"],
+          "tagText": "Carriers OK",
+          "highlightText": "open until 22:00",
+          "avgRating": 4.8,
+          "reviewCount": 126,
+          "cityShortName": "HCMC",
+          "countryCode": "VN",
+          "lat": 10.7731,
+          "lng": 106.7042,
+          "distanceKm": 3.4
+        }
+      ],
+      "nextCursor": "eyJpZCI6InBsYWNlXzAwMSJ9",
+      "hasMore": true,
+      "totalCount": 12
+    }
+  }
+}
+```
+
+**Notes:**
+- City-scoped (`cityCode` + `countryCode`); sorted by `distanceKm` asc.
+- `distanceKm` from `originLat`/`originLng` (user GPS). When GPS is absent, the server uses the **city centre** as origin (distance still returned, relative to centre).
+- Distance display rule (client): `< 10` → 1 decimal (`3.4km`); `≥ 10` → integer (`120km`).
+- `avgRating` / `reviewCount` are aggregated from user reviews (see `screen_21`); not admin-entered.
+- `tagText` ≤ 18, `highlightText` ≤ 20 chars (admin-entered, see `screen_21` field model); render single-line + `…`.
+- Only `isPublished = true` places are returned.
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `CITY_NOT_FOUND` | Unknown `cityCode` / `countryCode` |
+| `CITY_NOT_AVAILABLE` | City has `status = COMING_SOON` (render locked state instead) |
+
+---
+
 ## User Flow Diagrams
 
 ### Open More tab
@@ -442,7 +595,9 @@ User taps a Lost Pet row (section)
 | Pet has no breed | Show species only on the 2nd line |
 | GPS available | `distanceKm` populated → distance chips usable on full screen |
 | GPS unavailable | `distanceKm` null → `Within 1km/5km` chips disabled on full screen |
-| Pet Friendly / Events / Rescue | Out of scope this phase — placeholder / hidden |
+| Pet Friendly section: 0 places in city | Hide section + "View All →" (or compact empty message) |
+| Pet Friendly section: 1–3 places | Show all; "View All →" still shown |
+| Events / Rescue | Out of scope this phase — placeholder / hidden |
 | City list fetch fails | Fall back to HCMC default; allow retry on Change |
 
 ---
@@ -458,7 +613,7 @@ User taps a Lost Pet row (section)
 | 5 | Lost Pets section scope | Scoped to the **selected city** (not cross-city nearest); mockup showing Đà Lạt under HCMC is demo data only |
 | 6 | Distance chips (`1km/5km`) | Filter **within** the selected city; require real GPS (`distanceKm`); disabled without GPS |
 | 7 | Reporting entry point | Not in the More hub section — reports filed from `screen_9` (Pet Detail → Report Missing button, below the category tabs) or the Lost Pets screen banner (`screen_18`) |
-| 8 | Pet Friendly / Events / Rescue | Out of scope this phase |
+| 8 | Pet Friendly | Active this phase — section (max 3 nearest in city) + full screen (`screen_20`) + place detail with reviews (`screen_21`). Events / Rescue still out of scope |
 | 9 | City display label | Add `cityShortName` (curated short label, e.g. `HCMC` / `Đà Lạt` / `HN`) used in the location bar + lost-pet rows + Lost Pet Detail; `cityCode` stays for keys/logic, full `city` shown in the picker |
 | 10 | "Other" species filter | `LostPetsFilter.species` accepts an `OTHER` sentinel = any species not `CAT`/`DOG` |
 
@@ -466,7 +621,7 @@ User taps a Lost Pet row (section)
 
 ## Open Items (next steps)
 
-- **Pet Friendly / Events / Rescue** categories — future phases (placeholders this phase).
-- **Full-screen map** (`Open map` on `screen_18`) — pan/zoom/cluster; optional pins-only query if volume grows.
+- **Events / Rescue** categories — future phases (placeholders this phase).
+- **Full-screen map** (`Open map` on `screen_18` / `screen_20`) — pan/zoom/cluster; optional pins-only query if volume grows.
 
-> Done: Lost Pets screen (`screen_18`), Lost Pet Detail (`screen_19`), and the Report Missing form upgrade (`screen_9` §8 + `BE`) are specified.
+> Done: Lost Pets (`screen_18`) + Lost Pet Detail (`screen_19`) + Report Missing upgrade (`screen_9`); Pet Friendly (`screen_20`) + Place Detail/reviews (`screen_21`).
