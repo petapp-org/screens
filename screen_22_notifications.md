@@ -56,8 +56,11 @@ Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, opt
 | `MISSING_NEARBY` | A pet is reported missing near the user's location | "A missing `{species}` was reported near you" | Lost Pet Detail (`screen_19`), via `target.type = MISSING_REPORT` |
 | `PET_MISSING` | The user's own pet is marked missing (status confirmation) | "`{pet}` was marked as missing" | Pet Detail (`screen_9`) |
 | `PET_FOUND` | A previously-missing pet (own, or one the user reported/follows) is marked found | "`{pet}` was marked as found" | Pet Detail (`screen_9`) |
+| `RESCUE_INQUIRY` | Someone taps **Inquire to Adopt** on a rescue listing the user's **charity family** posted | "`{actor}` is interested in adopting `{petName}`" | Rescue Detail (`screen_26`), via `target.type = RESCUE_LISTING` |
 
 **Grouping:** `POST_LOVES` collapses multiple lovers of the **same post** into one row (`{actor} and {N} others`). Other types are one row per event.
+
+> **`RESCUE_INQUIRY`** is sent to the **charity family's members** (like other family-directed events) and fires only on a user's **first** inquiry for that listing (idempotent — re-inquiring doesn't re-notify). The adoption conversation itself lands in **Messages** (`screen_10`); this notification is the heads-up. Tapping opens the Rescue Detail in manage context.
 
 > **Not included:** "Parent invite **received**" is intentionally **not** a notification type — there's no reliable way to surface an incoming invite as a noti in this model. Only `INVITE_ACCEPTED` (the outbound invite being accepted) is notified.
 
@@ -82,14 +85,14 @@ query Notifications($cursor: String, $limit: Int) {
       id
       type          # NEW_COMMENT | NEW_REPLY | POST_LOVES | FAMILY_NEW_POST |
                     # NEW_FOLLOWER | INVITE_ACCEPTED | HEALTH_ALERT |
-                    # MISSING_NEARBY | PET_MISSING | PET_FOUND
+                    # MISSING_NEARBY | PET_MISSING | PET_FOUND | RESCUE_INQUIRY
       actor {       # who triggered it; null for system/AI events
         id
         name
         avatarUrl
       }
       target {      # what the row deep-links to
-        type        # POST | COMMENT | PET | FAMILY | USER | MISSING_REPORT
+        type        # POST | COMMENT | PET | FAMILY | USER | MISSING_REPORT | RESCUE_LISTING
         id
       }
       preview       # snippet/text shown under the title (nullable)

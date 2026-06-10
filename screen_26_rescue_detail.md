@@ -343,6 +343,8 @@ mutation CreateRescue($input: RescueInput!) {
 
 Register the caller's interest to adopt **and** create/return the message thread to the charity. **Auth:** Required.
 
+> **Triggers notification:** on the caller's **first** inquiry for this listing, fires a `RESCUE_INQUIRY` notification to the posting charity's members (see `screen_22`). Idempotent — re-inquiring does not re-notify.
+
 **Operation:**
 ```graphql
 mutation InquireRescue($input: InquireRescueInput!) {
