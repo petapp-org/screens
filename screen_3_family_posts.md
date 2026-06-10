@@ -25,18 +25,18 @@ Accessible without login — unauthenticated users can view everything. Actions 
   │     └── [Follow button]  [Message button]
   │
   ├── Charity Section  ← only shown when type = charity
-  │     ├── [♡ icon]  short_description
+  │     ├── [♡ icon]  shortDescription
   │     ├── [♡ icon]  "N people have helped"
   │     └── [Donate button — full width]
   │
-  ├── Pets List  ← horizontal scroll when pet_count > 5
+  ├── Pets List  ← horizontal scroll when petCount > 5
   │     Column 1 (pets 1–5)    Column 2 (pets 6–10)    ...
   │     ├── Pet row 1           ├── Pet row 6
   │     ├── Pet row 2           ├── Pet row 7
   │     ├── Pet row 3           ├── Pet row 8
   │     ├── Pet row 4           ├── Pet row 9
   │     └── Pet row 5           └── Pet row 10
-  │     [Random Pets row — only if random_count > 0, always in last column]
+  │     [Random Pets row — only if randomCount > 0, always in last column]
   │
   ├── Parents row
   │     └── "Parents"  [count badge]  [>]  → opens bottom sheet popup
@@ -61,17 +61,17 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `tag` | Unique identifier, prefixed with `@` (e.g. `@minhfamily`) |
 | `city` | City name |
 | `country` | Country code or name (e.g. `VN`) |
-| `avatar_url` | Used as fallback / single avatar |
-| `pet_avatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
-| `pet_count` | Number of actual pets in the family |
-| `random_count` | Number of media items where `media_tag.type = "random" AND breed IS NOT NULL` — AI detected a breed but could not match to a named pet. Does NOT count media with no breed detected. Hidden from stats line when `0`. |
-| `random_post_count` | Total posts linked to random pets in this family. Used in the Random Pets row. |
+| `avatarUrl` | Used as fallback / single avatar |
+| `petAvatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
+| `petCount` | Number of actual pets in the family |
+| `randomCount` | Number of media items where `mediaTag.type = "random" AND breed IS NOT NULL` — AI detected a breed but could not match to a named pet. Does NOT count media with no breed detected. Hidden from stats line when `0`. |
+| `randomPostCount` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
 | `type` | `standard` \| `charity` |
 | `social.isFollowedByMe` | Boolean (false when unauthenticated) |
 | `about` | Free-text description |
-| `short_description` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
-| `donor_count` | Number of people who have donated. Only meaningful when `type = charity`; `null` for standard families. |
+| `shortDescription` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
+| `donorCount` | Number of people who have donated. Only meaningful when `type = charity`; `null` for standard families. |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
@@ -79,10 +79,10 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 **Avatar display rules:**
 - Family avatar can be explicitly set by the owner (via Screen 6 Update Family); if not set, falls back to stacked pet avatars
-- `pet_count = 0` (public pets) → show single default family avatar
-- `pet_count = 1` (public pet) → show that pet's avatar
-- `pet_count ≥ 2` (public pets) → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
-- Only **public pets** (`is_public = true`) are included in the stacked display — private pets are never shown to non-members
+- `petCount = 0` (public pets) → show single default family avatar
+- `petCount = 1` (public pet) → show that pet's avatar
+- `petCount ≥ 2` (public pets) → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
+- Only **public pets** (`isPublic = true`) are included in the stacked display — private pets are never shown to non-members
 - `type = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**
@@ -102,22 +102,22 @@ Displayed between the Family Info Card and the Pets List.
 
 | Element | Description |
 |---------|-------------|
-| `short_description` | Displayed with a ♡ icon prefix, e.g. `"♡ Home-based cat rescue"` |
-| `donor_count` | Displayed as `"♡ 184 people have helped"` |
+| `shortDescription` | Displayed with a ♡ icon prefix, e.g. `"♡ Home-based cat rescue"` |
+| `donorCount` | Displayed as `"♡ 184 people have helped"` |
 | Donate button | Full-width button; tap → in-app Donate screen (currently "Coming Soon") |
 
 - The entire section is hidden for `standard` families.
-- `donor_count` label updates after a successful donation (handled by Donate screen, not this screen).
+- `donorCount` label updates after a successful donation (handled by Donate screen, not this screen).
 
 ---
 
 ### 3. Pets List
 
-**Only public pets shown** (`is_public = true`). Private pets are hidden from this screen entirely — Family Posts is viewed by non-members only; members see all pets (including private) in My Pets (screen_8).
+**Only public pets shown** (`isPublic = true`). Private pets are hidden from this screen entirely — Family Posts is viewed by non-members only; members see all pets (including private) in My Pets (screen_8).
 
 **Layout rules:**
-- `pet_count ≤ 5` → single vertical column (current behaviour)
-- `pet_count > 5` → **horizontal scroll**, 5 rows per column; swipe left to reveal more columns
+- `petCount ≤ 5` → single vertical column (current behaviour)
+- `petCount > 5` → **horizontal scroll**, 5 rows per column; swipe left to reveal more columns
   - Column 1: pets 1–5, Column 2: pets 6–10, etc.
   - Next column's avatars peek slightly on the right edge to indicate scrollability
   - Random Pets row (if applicable) always appears as the last item in the final column
@@ -127,12 +127,12 @@ Each pet row:
 | Field | Description |
 |-------|-------------|
 | `id` | Pet ID |
-| `avatar_url` | Pet avatar |
+| `avatarUrl` | Pet avatar |
 | `name` | Pet name |
 | `breed` | Breed name (may be truncated with `...` if long) |
 | `gender` | `male` \| `female` \| `unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
-| `post_count` | Total posts linked to this pet |
+| `postCount` | Total posts linked to this pet |
 
 > Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
@@ -140,12 +140,12 @@ Each pet row:
 - Tap anywhere on the row (except Story button) → navigates to **Pet Posts screen** for that pet (viewer is always unauth/non-member on this screen)
 - **Story button** → disabled for now (render as disabled state, no action)
 
-**Random Pets row** (shown only when `random_count > 0`):
+**Random Pets row** (shown only when `randomCount > 0`):
 
 | Field | Description |
 |-------|-------------|
 | Label | "Random Pets" |
-| `random_post_count` | Total posts linked to random pets in this family |
+| `randomPostCount` | Total posts linked to random pets in this family |
 
 - Tap → navigates to **Random Pet Posts screen** for this family (all posts tagged to random pets)
 - No avatar, no breed, no Story button
@@ -158,7 +158,7 @@ Each pet row:
 Parents    [2]  >
 ```
 
-- Shows label "Parents" + `parent_count` badge
+- Shows label "Parents" + `parentCount` badge
 - Tap → opens **Parents bottom sheet** (slides up from bottom, overlays the screen)
 - No login required to view
 
@@ -203,7 +203,7 @@ The selected view persists for the session (client-side state).
 #### 5a. List View
 
 - Post cards follow the canonical definition in `screen_1_home_explore.md` → **Section: Post Card** — same fields, layout, interactions, and `...` menu logic
-- Sorted by `created_at` desc (newest first)
+- Sorted by `createdAt` desc (newest first)
 - Paginated: 10 posts per page, infinite scroll loads more
 
 ---
@@ -213,8 +213,8 @@ The selected view persists for the session (client-side state).
 - 3-column equal-width grid, no gaps (or minimal gap)
 - Each cell shows the **thumbnail of the first media item** of the post:
   - `uploaded` image → `media[0].url`
-  - `uploaded` video → `media[0].thumbnail_url`
-  - `embedded` → `media[0].thumbnail_url`
+  - `uploaded` video → `media[0].thumbnailUrl`
+  - `embedded` → `media[0].thumbnailUrl`
 - If a post has multiple media items, show a small multi-media indicator icon on the cell (top-right corner)
 - Tap on any cell → navigates to **Post Detail screen** for that post
 - Same pagination as list view (load more on scroll)
@@ -564,8 +564,8 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
 
 **Notes:**
 - `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
-- Server filters: only posts where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
-- `media_tag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
+- Server filters: only posts where at least one media has `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
+- `mediaTag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
 
 **Errors:**
 
@@ -643,21 +643,21 @@ User taps family name on a post
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → FamilyPosts query (R) { familyId, cursor: <next_cursor> }
+        └─> Scroll to load more → FamilyPosts query (R) { familyId, cursor: <nextCursor> }
 ```
 
 ### Tap Pet row
 
 ```
 User taps a pet row
-  └─> Navigate to Pet Posts screen for that pet (pet_id from row data)
+  └─> Navigate to Pet Posts screen for that pet (petId from row data)
 ```
 
 ### Tap Random Pets row
 
 ```
-User taps Random Pets row  (only visible when random_count > 0)
-  └─> Navigate to Random Pet Posts screen for this family (family_id)
+User taps Random Pets row  (only visible when randomCount > 0)
+  └─> Navigate to Random Pet Posts screen for this family (familyId)
 ```
 
 ### Tap Parents row → bottom sheet
@@ -667,7 +667,7 @@ User taps Parents row
   └─> Family query (Q) (parents already loaded)
         └─> Open Parents bottom sheet with list of parents
               └─> User taps a parent row
-                    └─> Close bottom sheet → Navigate to User Posts screen (user_id)
+                    └─> Close bottom sheet → Navigate to User Posts screen (userId)
 ```
 
 ---
@@ -676,16 +676,16 @@ User taps Parents row
 
 | Case | Expected Behaviour |
 |------|--------------------|
-| `pet_count = 0` | Show default family avatar; no pets list section |
-| `pet_count = 1` | Show single pet avatar (no stacking animation) |
-| `pet_count ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
-| `type = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (short_description, donor_count, Donate button) |
+| `petCount = 0` | Show default family avatar; no pets list section |
+| `petCount = 1` | Show single pet avatar (no stacking animation) |
+| `petCount ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
+| `type = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
 | `type = standard` | No ribbon; no Charity Section |
-| `pet_count ≤ 5` | Pets list: single vertical column |
-| `pet_count > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
+| `petCount ≤ 5` | Pets list: single vertical column |
+| `petCount > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
 | `about` is null or empty | Hide About section entirely |
-| `random_count = 0` | Hide "randoms" from stats line; hide Random Pets row from pets list |
-| `random_count > 0` | Show "N randoms" in stats line; show Random Pets row at bottom of pets list |
+| `randomCount = 0` | Hide "randoms" from stats line; hide Random Pets row from pets list |
+| `randomCount > 0` | Show "N randoms" in stats line; show Random Pets row at bottom of pets list |
 | Story button | Render as disabled (greyed out); no tap action |
 | Follow button — not logged in | Tap → redirect to Login |
 | Message button — not logged in | Tap → redirect to Login |
@@ -717,13 +717,13 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 
 | Field | Display |
 |-------|---------|
-| `avatar_url` | Pet avatar |
+| `avatarUrl` | Pet avatar |
 | `name` | Pet name |
 | `breed` | Breed name |
 
 **Posts:**
 - No filter tabs; no Suggested Families widget
-- Sorted `created_at` desc (newest first)
+- Sorted `createdAt` desc (newest first)
 - 10 posts per page, infinite scroll
 - Privacy rules: same server-side enforcement as Explore — unauthenticated sees `public` posts only; authenticated sees `public` + `followers` (if following) + `private` (if family member)
 - Empty state: possible if pet has no posts visible to this viewer (e.g. all posts are private) — show message "No posts yet"
@@ -735,7 +735,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 ### Random Pet Posts Screen
 
 **Triggered from:**
-- Tap **Random Pets row** in Family Posts (only when `random_count > 0`)
+- Tap **Random Pets row** in Family Posts (only when `randomCount > 0`)
 - Tap **"View All →"** in Random Pets section in My Pets (screen_8; only shown when random posts exist)
 
 **Header:**
@@ -744,16 +744,16 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 |-------|---------|
 | Family avatar | Family avatar |
 | Label | `"Random Pets"` |
-| `random_count` | e.g. `"10 randoms"` |
+| `randomCount` | e.g. `"10 randoms"` |
 
 **Posts:**
-- Scope: per-family only — all posts from this family where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`
+- Scope: per-family only — all posts from this family where at least one media has `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`
 - No filter tabs; no Suggested Families widget
-- Sorted `created_at` desc (newest first)
+- Sorted `createdAt` desc (newest first)
 - 10 posts per page, infinite scroll
 - Privacy rules: same server-side enforcement as Explore
-- Empty state: not applicable — both entry points are guarded (`random_count > 0` / section hidden when 0 posts)
-- Post card follows canonical format (see `screen_1_home_explore.md` → Post Card); `media_tag.type = "random"` → no pet badge shown on any media frame → no link to Pet Posts screen from within this screen
+- Empty state: not applicable — both entry points are guarded (`randomCount > 0` / section hidden when 0 posts)
+- Post card follows canonical format (see `screen_1_home_explore.md` → Post Card); `mediaTag.type = "random"` → no pet badge shown on any media frame → no link to Pet Posts screen from within this screen
 - API: Query `RandomPetPosts` (endpoint U above)
 
 ---
@@ -768,13 +768,13 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 
 | Field | Display |
 |-------|---------|
-| `avatar_url` | User avatar |
-| `display_name` | User's display name |
+| `avatarUrl` | User avatar |
+| `displayName` | User's display name |
 | `tag` | `@tag` |
 
 **Posts:**
 - No filter tabs; no Suggested Families widget
-- Sorted `created_at` desc (newest first)
+- Sorted `createdAt` desc (newest first)
 - 10 posts per page, infinite scroll
 - Privacy rules: same server-side enforcement as Explore — unauthenticated sees `public` posts only; authenticated sees `public` + `followers` (if following the post's family) + `private` (if family member). Viewer always sees at least the post they tapped from.
 - Empty state: not applicable — screen is only reachable by tapping a post card, so at least 1 post is always visible
@@ -791,7 +791,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 | 2 | Pet list pagination | None — all pets shown at once |
 | 3 | Default post view | List view |
 | 4 | Story button | Disabled (coming later) |
-| 5 | `random_count = 0` display | Hide from stats line and hide Random Pets row |
+| 5 | `randomCount = 0` display | Hide from stats line and hide Random Pets row |
 | 6 | Parents navigation | Bottom sheet popup (not a separate screen) |
 | 7 | Random pets navigation | Separate Random Pet Posts screen |
 | 8 | Donate button destination | In-app Donate screen (currently "Coming Soon") |

@@ -19,7 +19,7 @@ If logged in but no active family → show empty state with prompt to create or 
   ├── Family Info Card (active family)
   │     ├── Avatar (stacked pet photos, rotates)
   │     ├── Family name
-  │     ├── @tag  ·  📍 city_code, country_code
+  │     ├── @tag  ·  📍 cityCode, countryCode
   │     ├── N pets · N randoms · N followers
   │     └── [Post button]  [Edit button]
   │
@@ -59,12 +59,12 @@ Displays the user's **active family**. Same data as Screen 3 (Family Posts) info
 
 | Field | Display |
 |-------|---------|
-| `avatar_url` / `pet_avatars` | Stacked pet avatars — same rules as Screen 3: 0 public pet = default family avatar, 1 = single pet avatar, ≥2 = stacked rotating (up to 5). Only **public pets** shown in stacked display; family avatar (if explicitly set) takes precedence over stacked pets |
+| `avatarUrl` / `petAvatars` | Stacked pet avatars — same rules as Screen 3: 0 public pet = default family avatar, 1 = single pet avatar, ≥2 = stacked rotating (up to 5). Only **public pets** shown in stacked display; family avatar (if explicitly set) takes precedence over stacked pets |
 | `name` | Family display name |
 | `tag` | `@tag` |
-| `city_code`, `country_code` | Displayed as `📍 HCM, VN` |
-| `pet_count` | `N pets` |
-| `random_count` | `N randoms` — hidden if 0 |
+| `cityCode`, `countryCode` | Displayed as `📍 HCM, VN` |
+| `petCount` | `N pets` |
+| `randomCount` | `N randoms` — hidden if 0 |
 | `social.followersCount` | `N followers` |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
@@ -89,14 +89,14 @@ Each row:
 
 | Field | Display |
 |-------|---------|
-| `avatar_url` | Pet avatar |
-| `is_public` | 🔒 lock icon shown on row if `is_public = false` (private pet) |
+| `avatarUrl` | Pet avatar |
+| `isPublic` | 🔒 lock icon shown on row if `isPublic = false` (private pet) |
 | `name` | Pet name |
 | `breed` | Breed name (truncated with `...` if long) |
 | `gender` | `Male` / `Female` / `Unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
-| `post_count` | `N posts` |
-| `health_status` | Badge — see Health Status below |
+| `postCount` | `N posts` |
+| `healthStatus` | Badge — see Health Status below |
 
 > Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
@@ -185,23 +185,23 @@ Parents                                    [× close]
 
 ### 4. Random Pets Section
 
-Displays posts where at least one media has `media_tag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected an animal but no named pet was matched.
+Displays posts where at least one media has `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected an animal but no named pet was matched.
 
 **Preview grid (2×2, max 4 cells):**
 
 Each cell shows:
 - Media thumbnail (top)
 - `breed` name if available, otherwise `species` name — in bold (below thumbnail)
-- `📍 city_code, country_code · time` — time follows the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"HCMC, VN · 3h"`, `"HCMC, VN · 2d"`, `"HCMC, VN · 28 May"`
+- `📍 cityCode, countryCode · time` — time follows the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"HCMC, VN · 3h"`, `"HCMC, VN · 2d"`, `"HCMC, VN · 28 May"`
 
 - Tap any cell → **Post Detail screen** for that post
 - If total breed-tagged posts > 4: show **"View All →"** link below grid
-- **"View All →"** → **Random Pet Posts screen** (same pattern as Pet Posts screen in Screen 3, but filtered to posts with `media_tag.type = "random" AND breed IS NOT NULL`; header title: "Random Pets")
+- **"View All →"** → **Random Pet Posts screen** (same pattern as Pet Posts screen in Screen 3, but filtered to posts with `mediaTag.type = "random" AND breed IS NOT NULL`; header title: "Random Pets")
 - If 0 breed-tagged posts → hide section entirely
 
 **`[+]` button:**
 - Tap → **Create Post screen** (Screen 7)
-- In this context, AI scan **skips the family pet matching step** — result can only be `breed` or `random`, never `pet`. This means the scan API is called without `family_id` (or with a flag `skip_pet_match: true`)
+- In this context, AI scan **skips the family pet matching step** — result can only be `breed` or `random`, never `pet`. This means the scan API is called without `familyId` (or with a flag `skipPetMatch: true`)
 
 ---
 
@@ -212,7 +212,7 @@ All posts belonging to the active family, same as Family Posts screen (Screen 3)
 - Section header: **"MY PET POSTS"** + list/grid view toggle
 - Default: list view — canonical post card (Screen 1); all canonical tap interactions apply: tap **family name** → Family Posts, tap **author name** → User Posts, tap **pet badge** → Pet Posts
 - Grid view: same 3-column thumbnail grid as Screen 3
-- Sorted `created_at` desc (newest first)
+- Sorted `createdAt` desc (newest first)
 - 10 posts per page, infinite scroll
 - API: `FamilyPosts query (R)` (endpoint R from Screen 3)
 
@@ -446,8 +446,8 @@ User taps Manage Parents
 | Case | Expected Behaviour |
 |------|--------------------|
 | No active family | Empty state: family card area shows "No active family" + "Go to Settings" button |
-| `random_count = 0` | Hide "randoms" from stats line; RANDOM PETS section shows empty state |
-| `viewer_role = parent` (not owner) | Edit button hidden; Parents popup is read-only (no Remove/Cancel/Invite actions) |
+| `randomCount = 0` | Hide "randoms" from stats line; RANDOM PETS section shows empty state |
+| `viewerRole = parent` (not owner) | Edit button hidden; Parents popup is read-only (no Remove/Cancel/Invite actions) |
 | `healthStatus = CONCERN` | Amber `CONCERN` badge on pet row |
 | Story button | Disabled (greyed out, no action) |
 | No pets in family | Pet rows section shows empty state: "No pets yet — create a post to add pets" |

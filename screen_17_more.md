@@ -507,7 +507,7 @@ query LostPets(
 - `cityCode` + `countryCode` scope results to the selected city (decision #4).
 - `distanceKm` is populated only when `originLat`/`originLng` are supplied (user's real GPS) — it powers the `Within 1km / 5km` chips on the full screen. `null` when GPS is unavailable → those chips are disabled on the full screen.
 - `lastSeen.at` = when the pet was last seen (user-entered). `reportedAt` = when the report was filed. They can differ.
-- Server only returns **active** missing reports (pet `missing_status != null` and not yet marked found).
+- Server only returns **active** missing reports (pet `missingStatus != null` and not yet marked found).
 
 **Errors:**
 

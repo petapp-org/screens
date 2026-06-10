@@ -43,8 +43,8 @@ Navigated to from: Explore feed (tap post body/media), inline comment panel ("Vi
 ### 1. Post Card
 
 Identical to the canonical post card defined in `screen_1_home_explore.md` → **Section: Post Card**. All fields, layout rules, and interactions apply including:
-- Header: family avatar · family name (top-left) | `author_name · time` (top-right) | pets subtitle (bottom-left) | location (bottom-right, if set)
-- Media carousel with `N/Total` badge and per-frame pet badge (`media_tag.type = "pet"` only)
+- Header: family avatar · family name (top-left) | `authorName · time` (top-right) | pets subtitle (bottom-left) | location (bottom-right, if set)
+- Media carousel with `N/Total` badge and per-frame pet badge (`mediaTag.type = "pet"` only)
 - Tap **pet badge** → Pet Posts screen
 - Tap **family name** → Family Posts screen
 - Tap **author name** → User Posts screen
@@ -56,16 +56,16 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 ### 2. Comments Section
 
 **Top-level comments:**
-- Sorted by `created_at` asc (oldest first)
+- Sorted by `createdAt` asc (oldest first)
 - Paginated: 20 per page, "Load more" button at bottom of list
 - Each comment shows:
 
 | Field | Description |
 |-------|-------------|
-| `author.avatar_url` | Commenter's avatar |
-| `author.display_name` | Commenter's name — tappable → User Profile screen |
+| `author.avatarUrl` | Commenter's avatar |
+| `author.displayName` | Commenter's name — tappable → User Profile screen |
 | `body` | Comment text |
-| `created_at` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"5m"`, `"3h"`, `"2d"`, `"28 May"` |
+| `createdAt` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"5m"`, `"3h"`, `"2d"`, `"28 May"` |
 | `replyCount` | Total number of replies to this comment |
 | `isOwn` | Boolean — whether the current viewer authored this comment |
 | `isDeletable` | Boolean — server-computed; `true` only when `isOwn=true` AND `replyCount=0` AND comment was created within the last 10 minutes |
@@ -87,11 +87,11 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 Replies are nested under their parent comment. Multi-level nesting is supported (reply to a reply, and so on).
 
 **Initial state:**
-- If `reply_count > 0`: show a collapsed "View N replies ▾" link under the comment
+- If `replyCount > 0`: show a collapsed "View N replies ▾" link under the comment
 - Tapping expands and loads the first 5 replies
 
 **Loaded reply:**
-- Same display fields as a top-level comment (`author`, `body`, `created_at`, `isOwn`, `isDeletable`)
+- Same display fields as a top-level comment (`author`, `body`, `createdAt`, `isOwn`, `isDeletable`)
 - Has its own **Reply** and **Delete** buttons (same rules — `isDeletable` applies identically)
 - If a reply itself has replies, show "View N replies ▾" beneath it (same expand behaviour, recursively)
 
@@ -459,7 +459,7 @@ mutation DeleteComment($input: DeleteCommentInput!) {
 
 ```
 User taps post in Explore feed
-  └─> Post query (M) { id: post_id }
+  └─> Post query (M) { id: postId }
         ├─ POST_NOT_FOUND → show "Post not found" error screen
         ├─ FORBIDDEN → show "You don't have permission to view this post"
         └─ 200 → render post card

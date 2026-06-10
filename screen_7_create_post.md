@@ -43,7 +43,7 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
   │
   ├── Privacy field
   │     └── [🔒 icon]  dropdown: Public | Followers only | Family only
-  │         Pre-filled from family's default_privacy
+  │         Pre-filled from family's defaultPrivacy
   │
   └── (spacer)
 
@@ -110,7 +110,7 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 ```
 User taps [AI Scan] on a media item
-  └─> ScanMedia mutation (AT)  { media_url, family_id }
+  └─> ScanMedia mutation (AT)  { mediaUrl, familyId }
         └─> (loading state on thumbnail)
               ├─ Pet detected + match found in family
               │     └─> tag: { type=pet, id=pet_xxx, species="cat", breed="British Shorthair" }
@@ -176,7 +176,7 @@ Actions available depend on the current tag state:
 | Weight | No | Number + unit (kg) |
 | Avatar | No | Upload photo or use a frame from this media |
 
-  Submit → `CreatePet mutation (AU)` → tag set to `{ type=pet, id=new_pet_id, species=..., breed=... }`
+  Submit → `CreatePet mutation (AU)` → tag set to `{ type=pet, id=newPetId, species=..., breed=... }`
 
 **When `type=random, breed=null, species != null` (AI detected species only, no breed, no match):**
 - Keep as random (close sheet)
@@ -206,7 +206,7 @@ Actions available depend on the current tag state:
 
 - Optional
 - Tap → opens city/country picker (searchable dropdown or device location)
-- Returns: `{ city, city_code, country, country_code }`
+- Returns: `{ city, cityCode, country, countryCode }`
 - Displayed on field as `"HCM - VN"` once set
 - Tap × to clear
 
@@ -215,7 +215,7 @@ Actions available depend on the current tag state:
 ### 7. Privacy Field
 
 - Dropdown: **Public** | **Followers only** | **Family only**
-- Default: loaded from active family's `default_privacy`
+- Default: loaded from active family's `defaultPrivacy`
 - Applies to this post only; does not change the family's default
 
 ---
@@ -245,7 +245,7 @@ Actions available depend on the current tag state:
 ## API Endpoints Required
 
 ### AT. Mutation: `ScanMedia`
-Scan an **already-uploaded** media item for pet detection. The media is first uploaded via `RequestMediaUpload (BV)` (screen_4) — `media_url` here is the `publicUrl` it returned. **Pet detection runs on uploaded photos only** — **videos and embeds are never scanned** (videos are tagged manually, embeds are auto-`random`); avatars (user/family/pet) are uploaded the same way but never scanned.
+Scan an **already-uploaded** media item for pet detection. The media is first uploaded via `RequestMediaUpload (BV)` (screen_4) — `mediaUrl` here is the `publicUrl` it returned. **Pet detection runs on uploaded photos only** — **videos and embeds are never scanned** (videos are tagged manually, embeds are auto-`random`); avatars (user/family/pet) are uploaded the same way but never scanned.
 **Auth:** Required
 
 **Operation:**
@@ -328,8 +328,8 @@ No pet detected:
 ```
 
 **Notes:**
-- `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `media_tag`.
-- Resulting `media_tag` written to the post uses `{ type, id, species, breed }` (Screen 1 canonical structure).
+- `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `mediaTag`.
+- Resulting `mediaTag` written to the post uses `{ type, id, species, breed }` (Screen 1 canonical structure).
 - In Random Pets context (`[+]` from Screen 8), call with `familyId` omitted or `skipPetMatch: true` — `matchedPet` is always `null`.
 
 **Errors:**

@@ -75,8 +75,8 @@ Which pet is missing?
 ```
 
 - Lists the pets of the user's **active family** only (the family currently active in Profile Settings, `screen_5`). Reporting is scoped to the active family — to report a pet in another family, switch the active family first.
-- **Includes private pets** (`is_public = false`) — reporting a pet as missing **ignores the pet's privacy setting** (a private pet can still be reported and surfaced publicly in Lost Pets). Show the 🔒 marker for awareness, but it is selectable.
-- **Excludes**: soft-deleted pets (`is_deleted = true`) and pets already missing (`missing_status != null`).
+- **Includes private pets** (`isPublic = false`) — reporting a pet as missing **ignores the pet's privacy setting** (a private pet can still be reported and surfaced publicly in Lost Pets). Show the 🔒 marker for awareness, but it is selectable.
+- **Excludes**: soft-deleted pets (`isDeleted = true`) and pets already missing (`missingStatus != null`).
 - Each item shows pet avatar + name.
 - After picking a pet, the rest of the form is the **upgraded Report Missing form** — see `screen_9` Section 8.
 - Data source: `FamilyPets query (BB)` for the active family; the client filters out already-missing pets.

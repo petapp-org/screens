@@ -84,7 +84,7 @@ Search by: `breed`, `species`
               [Family avatar]  Family name   ← the family this pet belongs to
 ```
 
-- Only shows pets where `is_public = true` AND the pet has at least 1 post visible to the viewer (server-side filtered)
+- Only shows pets where `isPublic = true` AND the pet has at least 1 post visible to the viewer (server-side filtered)
 - Tap row → **Pet Posts screen** for that pet
 
 ---
@@ -231,4 +231,4 @@ query SearchPets($q: String!, $cursor: String, $limit: Int) {
 | 3 | Search scope | Families, Users, Pets only — no post search (caption full-text search too broad to index) |
 | 4 | Search criteria | Families: name/@tag; Users: name/@tag; Pets: breed/species |
 | 5 | Result display | Tabbed — one tab per entity type |
-| 6 | Pet privacy | Only pets with `is_public = true` AND at least 1 visible post returned |
+| 6 | Pet privacy | Only pets with `isPublic = true` AND at least 1 visible post returned |

@@ -56,7 +56,7 @@ The unread state is fetched separately (not bundled in the feed response) — th
 
 | Tab | Description | Auth required |
 |-----|-------------|---------------|
-| Latest | Newest posts across all families, sorted by `created_at` desc | No |
+| Latest | Newest posts across all families, sorted by `createdAt` desc | No |
 | Follow | Posts from families the current user follows | Yes — redirect to Login if not authenticated |
 | Rescue | Posts from families with `type = charity` | No |
 
@@ -75,17 +75,17 @@ Each post card displays:
 
 | Field | Description |
 |-------|-------------|
-| `avatar_url` | Display avatar: always use family avatar |
-| `family_name` | Name of the family that created the post |
-| `author_name` | Display name of the user who created the post. Shown top-right: `"author_name · time"` |
-| `pets` | List of **named pets** linked across all media in this post (only media with `media_tag.type = "pet"`). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatar_url }`. Can be empty. |
+| `avatarUrl` | Display avatar: always use family avatar |
+| `familyName` | Name of the family that created the post |
+| `authorName` | Display name of the user who created the post. Shown top-right: `"authorName · time"` |
+| `pets` | List of **named pets** linked across all media in this post (only media with `mediaTag.type = "pet"`). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatarUrl }`. Can be empty. |
 | `caption` | Post text / description |
-| `location` | Optional. `{ "city": "Hồ Chí Minh", "city_code": "HCM", "country": "Việt Nam", "country_code": "VN" }`. Shown bottom-right below author/time line: `"HCM - VN"`. Omitted if `null`. |
+| `location` | Optional. `{ "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" }`. Shown bottom-right below author/time line: `"HCM - VN"`. Omitted if `null`. |
 | `media` | List of media items (see Media Object below). **Minimum 1, maximum 10.** |
-| `love_count` | Total number of loves |
-| `comment_count` | Total number of comments |
-| `created_at` | ISO 8601 timestamp |
-| `is_loved` | Boolean — whether the current user has loved this post (false if not logged in) |
+| `loveCount` | Total number of loves |
+| `commentCount` | Total number of comments |
+| `createdAt` | ISO 8601 timestamp |
+| `isLoved` | Boolean — whether the current user has loved this post (false if not logged in) |
 | `privacy` | `public` \| `followers` \| `private` — see visibility rules below |
 
 **Media Object:**
@@ -95,13 +95,13 @@ Each post card displays:
   "id": "string",
   "type": "uploaded" | "embedded",
   "url": "string",
-  "thumbnail_url": "string | null",
-  "mime_type": "string | null",
+  "thumbnailUrl": "string | null",
+  "mimeType": "string | null",
   "width": "int | null",
   "height": "int | null",
-  "duration_seconds": "float | null",
+  "durationSeconds": "float | null",
   "provider": "youtube | vimeo | null",
-  "media_tag": {
+  "mediaTag": {
     "type": "pet" | "random",
     "id": "string | null",
     "species": "string | null",
@@ -110,24 +110,24 @@ Each post card displays:
 }
 ```
 
-**`media_tag` types:**
+**`mediaTag` types:**
 | Type | Meaning | `id` | `species` | `breed` |
 |------|---------|------|-----------|---------|
-| `pet` | AI matched to a named pet in the family | `pet_id` — matches an entry in `post.pets` | species of the matched pet | breed of the matched pet |
+| `pet` | AI matched to a named pet in the family | `petId` — matches an entry in `post.pets` | species of the matched pet | breed of the matched pet |
 | `random` | AI detected no named pet match, or media is `embedded` | `null` | species string if AI detected an animal (e.g. `"cat"`), or `null` | breed string if AI identified a specific breed, or `null` |
 
 **Rendering rules:**
 - `uploaded` → display the file stored on platform (image or video player)
-- `embedded` → display embed player (YouTube/Vimeo); use `thumbnail_url` as poster image; `url` is the external video URL
+- `embedded` → display embed player (YouTube/Vimeo); use `thumbnailUrl` as poster image; `url` is the external video URL
 - Multiple media items → swipeable carousel with `N/Total` indicator (e.g. `1/3`) in the top-right corner of the media area
 
 **Pet badge (bottom-left of media):**
-- `media_tag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; look up display info using `media_tag.id` against `post.pets` (where `pets[].id = media_tag.id`); tappable → Pet Posts screen
-- `media_tag.type = "random"` → **no badge shown** (regardless of whether `breed`/`species` is populated; breed/species shown in Random Pets section context only)
+- `mediaTag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; look up display info using `mediaTag.id` against `post.pets` (where `pets[].id = mediaTag.id`); tappable → Pet Posts screen
+- `mediaTag.type = "random"` → **no badge shown** (regardless of whether `breed`/`species` is populated; breed/species shown in Random Pets section context only)
 - Each media item in the carousel evaluates independently
 
 **Private pet enforcement (server-side):**
-- If `pet.is_public = false` AND viewer is not a family member → server returns `media_tag` as `{ type: "random", species: ..., breed: ... }` instead of `{ type: "pet", id: ..., ... }`
+- If `pet.isPublic = false` AND viewer is not a family member → server returns `mediaTag` as `{ type: "random", species: ..., breed: ... }` instead of `{ type: "pet", id: ..., ... }`
 - Client applies existing rules: `type = "random"` → no badge; no special client logic needed
 
 **Post Card Footer:**
@@ -138,15 +138,15 @@ Each post card displays:
 
 - **Love button:**
   - Tapping toggles love state (requires login — redirect to Login if not authenticated)
-  - **Optimistic update**: `love_count` and `is_loved` are updated immediately in the UI before the API response returns
-  - On API error: revert `love_count` and `is_loved` back to previous values and show error toast
+  - **Optimistic update**: `loveCount` and `isLoved` are updated immediately in the UI before the API response returns
+  - On API error: revert `loveCount` and `isLoved` back to previous values and show error toast
   - `287 loves` text is tappable → same behaviour as Love button
 
 - **Comment button / count:**
   - `34 comments` text and Comment button are both tappable
   - Tapping opens an **inline comment panel** (expands below the post card, does not navigate away)
-  - Inline panel shows the **last 10 comments**, sorted by `created_at` asc (oldest first within the set); panel **auto-scrolls to bottom** on open so the newest comment is visible
-  - If `comment_count > 10`: show a "View all N comments" link → navigates to Post Detail screen
+  - Inline panel shows the **last 10 comments**, sorted by `createdAt` asc (oldest first within the set); panel **auto-scrolls to bottom** on open so the newest comment is visible
+  - If `commentCount > 10`: show a "View all N comments" link → navigates to Post Detail screen
   - User can submit a new comment directly from the inline panel (requires login)
   - **Close:** tap anywhere outside the panel (on the feed) to collapse it
 
@@ -190,12 +190,12 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 
 | Field | Description | Displayed for |
 |-------|-------------|---------------|
-| `family_id` | Unique ID | all |
-| `family_name` | Display name | all |
-| `avatar_url` | Family avatar | all |
+| `familyId` | Unique ID | all |
+| `familyName` | Display name | all |
+| `avatarUrl` | Family avatar | all |
 | `social.followersCount` | Raw number | all |
-| `short_description` | Free-text description set by the family | **charity only** — hidden for standard families |
-| `family_type` | `standard` \| `charity` | all (drives UI logic) |
+| `shortDescription` | Free-text description set by the family | **charity only** — hidden for standard families |
+| `familyType` | `standard` \| `charity` | all (drives UI logic) |
 | `social.isFollowedByMe` | Boolean | all |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
@@ -219,8 +219,8 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 
 **Inputs (API):**
 - `limit`: `5` (fixed)
-- `exclude_ids`: list of family IDs to exclude (previously dismissed)
-- `seed` or `session_id`: for randomisation so that refresh returns a new set
+- `excludeIds`: list of family IDs to exclude (previously dismissed)
+- `seed` or `sessionId`: for randomisation so that refresh returns a new set
 
 ---
 
@@ -419,7 +419,7 @@ query Feed($filter: FeedFilter, $cursor: String, $limit: Int) {
   - Bottom-left: pet names joined by ` · ` (omit row if `pets` is empty)
   - Top-right: `displayName · time` (e.g. `"Mochi · 3h"`) — time format follows the rules below:
 
-**Time display rules (based on `created_at`):**
+**Time display rules (based on `createdAt`):**
 
 | Condition | Format | Example |
 |-----------|--------|---------|
@@ -1052,7 +1052,7 @@ User opens app
 
 ```
 User scrolls to bottom
-  └─> Feed query (A) { filter: LATEST, cursor: <next_cursor>, limit: 10 }
+  └─> Feed query (A) { filter: LATEST, cursor: <nextCursor>, limit: 10 }
         └─> Append new posts to list
               └─> hasMore=false → show "You're all caught up" state
 ```
@@ -1100,13 +1100,13 @@ User taps "..." on a post
 |------|--------------------|
 | No posts for selected filter | Show empty state: illustration + message e.g. "No posts yet" |
 | `filter=following` and user is not logged in | Show login prompt / redirect to Login |
-| Post `pets` list is empty | Use `family.avatar_url` for post avatar; no subtitle shown |
-| Post `pets` list has 1+ items | Still use `family.avatar_url` for post avatar; subtitle = pet names joined by ` · ` |
+| Post `pets` list is empty | Use `family.avatarUrl` for post avatar; no subtitle shown |
+| Post `pets` list has 1+ items | Still use `family.avatarUrl` for post avatar; subtitle = pet names joined by ` · ` |
 | Post has multiple media (>1) | Show carousel with `N/Total` badge in top-right corner; swipeable |
-| `media_tag.type = "pet"` | Show floating badge bottom-left: look up pet name + avatar in `post.pets` by `media_tag.id`; tap → Pet Posts screen |
-| `media_tag.type = "random"` | No badge shown on that media frame, regardless of whether `breed` is populated |
+| `mediaTag.type = "pet"` | Show floating badge bottom-left: look up pet name + avatar in `post.pets` by `mediaTag.id`; tap → Pet Posts screen |
+| `mediaTag.type = "random"` | No badge shown on that media frame, regardless of whether `breed` is populated |
 | Different media frames link to different pets | Each frame shows its own pet badge independently |
-| Post media type is `embedded` | Show video embed player (YouTube iframe / native player); `thumbnail_url` as poster |
+| Post media type is `embedded` | Show video embed player (YouTube iframe / native player); `thumbnailUrl` as poster |
 | Suggested widget — 0 families returned | Widget is hidden entirely; not shown at all |
 | Family type is `charity` | Show both **Follow** and **Donate** buttons |
 | Family type is `standard` | Show **Follow** button only |
@@ -1119,7 +1119,7 @@ User taps "..." on a post
 | Messages red dot source | Unread chats (`UnreadMessageCount BL`); dot only, no number |
 | Notifications red dot source | Unread activity (`NotificationUnreadCount BU`); dot only, no number |
 | Profile button — not logged in | Default placeholder avatar shown; tapping redirects to Login |
-| Love — optimistic update fails (API error) | Revert `love_count` and `is_loved` to previous state; show error toast |
+| Love — optimistic update fails (API error) | Revert `loveCount` and `isLoved` to previous state; show error toast |
 | Comment count = 0 | Comment button still tappable; inline panel opens showing empty state |
 | Comment count ≤ 10 | Show all comments inline (oldest first); no "View all" link needed |
 | Comment count > 10 | Show last 10 comments (oldest first within set) + "View all N comments" link → Post Detail screen; auto-scroll to bottom |
@@ -1139,4 +1139,4 @@ All questions resolved. No open items.
 | 2 | Donate button destination | In-app screen; currently shows "Coming Soon" page |
 | 3 | Header unread counts | Fetched separately (not bundled in feed response); **two independent dots** — Messages dot = unread chats (`BL`), Notifications dot = unread activity (`BU`) |
 | 4 | Post privacy enforcement | Server-side only — unauthenticated → public only; `followers` → family members + followers; `private` → family members only |
-| 5 | `short_description` source | Free-text field filled manually by charity family admin in profile settings |
+| 5 | `shortDescription` source | Free-text field filled manually by charity family admin in profile settings |
