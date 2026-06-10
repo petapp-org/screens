@@ -193,11 +193,12 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 | `family_id` | Unique ID | all |
 | `family_name` | Display name | all |
 | `avatar_url` | Family avatar | all |
-| `follower_count` | Raw number | all |
-| `follower_count_display` | Formatted string, e.g. `"3.6k"` | all |
+| `social.followersCount` | Raw number | all |
 | `short_description` | Free-text description set by the family | **charity only** — hidden for standard families |
 | `family_type` | `standard` \| `charity` | all (drives UI logic) |
-| `is_following` | Boolean | all |
+| `social.isFollowedByMe` | Boolean | all |
+
+> followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
 **Buttons per family:**
 - `standard` type → **Follow** button only
@@ -459,11 +460,12 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
     id
     name
     avatarUrl
-    followerCount
-    followerCountDisplay
+    social {
+      followersCount
+      isFollowedByMe
+    }
     shortDescription
     type
-    isFollowing
   }
 }
 ```
@@ -482,21 +484,23 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
         "id": "fam_cat_house",
         "name": "My's Cat House",
         "avatarUrl": "https://cdn.petapp.com/families/fam_cat_house/avatar.jpg",
-        "followerCount": 3600,
-        "followerCountDisplay": "3.6k",
+        "social": {
+          "followersCount": 3600,
+          "isFollowedByMe": false
+        },
         "shortDescription": "Rescue & rehome cats in HCM City",
-        "type": "CHARITY",
-        "isFollowing": false
+        "type": "CHARITY"
       },
       {
         "id": "fam_normal_001",
         "name": "Mochi's Family",
         "avatarUrl": "https://cdn.petapp.com/families/fam_normal_001/avatar.jpg",
-        "followerCount": 420,
-        "followerCountDisplay": "420",
+        "social": {
+          "followersCount": 420,
+          "isFollowedByMe": false
+        },
         "shortDescription": null,
-        "type": "STANDARD",
-        "isFollowing": false
+        "type": "STANDARD"
       }
     ]
   }
@@ -557,8 +561,10 @@ Follow a family.
 ```graphql
 mutation FollowFamily($familyId: ID!) {
   followFamily(familyId: $familyId) {
-    isFollowing
-    followerCount
+    social {
+      isFollowedByMe
+      followersCount
+    }
   }
 }
 ```
@@ -573,8 +579,10 @@ mutation FollowFamily($familyId: ID!) {
 {
   "data": {
     "followFamily": {
-      "isFollowing": true,
-      "followerCount": 3601
+      "social": {
+        "isFollowedByMe": true,
+        "followersCount": 3601
+      }
     }
   }
 }
@@ -600,8 +608,10 @@ Unfollow a family.
 ```graphql
 mutation UnfollowFamily($familyId: ID!) {
   unfollowFamily(familyId: $familyId) {
-    isFollowing
-    followerCount
+    social {
+      isFollowedByMe
+      followersCount
+    }
   }
 }
 ```
@@ -616,8 +626,10 @@ mutation UnfollowFamily($familyId: ID!) {
 {
   "data": {
     "unfollowFamily": {
-      "isFollowing": false,
-      "followerCount": 3600
+      "social": {
+        "isFollowedByMe": false,
+        "followersCount": 3600
+      }
     }
   }
 }

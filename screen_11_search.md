@@ -49,6 +49,8 @@ Search by: `name`, `@tag`
                  [Follow button]  [Donate button — charity only]
 ```
 
+> followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
+
 - Tap row → **Family Posts screen** (or My Pets if own family)
 - Follow button: same behaviour as Suggested Families widget (screen_1)
 - **Unfollow Undo**: tapping "Following" → unfollow optimistically + show 5s toast *"Unfollowed [Family Name]"* + **[Undo]** → if Undo tapped: re-follow silently
@@ -122,9 +124,10 @@ query SearchFamilies($q: String!, $cursor: String, $limit: Int) {
         country
         countryCode
       }
-      followerCount
-      followerCountDisplay
-      isFollowing
+      social {
+        followersCount
+        isFollowedByMe
+      }
     }
     nextCursor
     hasMore

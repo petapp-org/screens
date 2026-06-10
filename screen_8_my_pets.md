@@ -65,7 +65,11 @@ Displays the user's **active family**. Same data as Screen 3 (Family Posts) info
 | `city_code`, `country_code` | Displayed as `📍 HCM, VN` |
 | `pet_count` | `N pets` |
 | `random_count` | `N randoms` — hidden if 0 |
-| `follower_count` | `N followers` |
+| `social.followersCount` | `N followers` |
+
+> followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
+
+> PR #882: `viewerRole` (FamilyRole) và `isPrimary` (Boolean) nay khả dụng trên family object — có thể dùng cho UI logic quyền hạn thành viên nếu cần.
 
 **Post button:**
 - Tap → navigate to **Create Post screen** (Screen 7) with this family pre-selected
@@ -238,7 +242,9 @@ query ActiveFamily {
     petAvatars
     petCount
     randomCount
-    followerCount
+    social {
+      followersCount
+    }
     viewerRole
     pets {
       id
@@ -284,7 +290,9 @@ query ActiveFamily {
       "petAvatars": ["..."],
       "petCount": 3,
       "randomCount": 10,
-      "followerCount": 287,
+      "social": {
+        "followersCount": 287
+      },
       "viewerRole": "OWNER",
       "pets": [
         {
