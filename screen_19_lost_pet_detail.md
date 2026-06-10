@@ -322,4 +322,4 @@ Tap [I saw {pet}]
 ## Open Items (next steps)
 
 - **Full-screen map** (`[Open map]` on `screen_18`) — shared pan/zoom/cluster behaviour; not specific to this screen.
-- Other More categories (Pet Friendly / Events / Rescue) — future phases.
+- Other More categories: **Rescue** — future phase (Pet Friendly `screen_20`/`21` and Events `screen_23`/`24` are done).

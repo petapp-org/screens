@@ -4,7 +4,7 @@
 
 The **"More" tab** — last tab in the bottom navigation. A location-aware hub for community/discovery features grouped into categories: **Lost Pets**, **Pet Friendly**, **Events**, **Rescue**.
 
-This phase ships **Lost Pets only**; the other three categories are placeholders (see Edge Cases).
+This phase ships **Lost Pets**, **Pet Friendly**, and **Events**; only **Rescue** is still a placeholder (see Edge Cases).
 
 Requires login. If not logged in → tapping the More tab redirects to Login (same rule as My Pets / Shops / Services — see `screen_1_home_explore.md` → Bottom Navigation auth rules).
 
@@ -57,7 +57,21 @@ The whole screen is scoped to a **selected city** shown in the location bar at t
   └────────────────────────────────────────────────────────┘
   (max 3 rows — nearest in the selected city; "View All →" only when ≥ 1 item)
 
-[EVENTS section]         ← placeholder this phase
+[EVENTS section]
+  "EVENTS"                                        [View All →]
+  ┌────────────────────────────────────────────────────────┐
+  │ ┌─────┐  Cat Adoption Day                      2.1km    │
+  │ │ JUN │  Sat · 9:00–12:00                               │
+  │ │ 15  │  Lava Cat Coffee · HCMC                         │
+  │ └─────┘  Free · ⏳ Starts in 2d                         │
+  ├────────────────────────────────────────────────────────┤
+  │ ┌─────┐  Dog Run Meetup                        5.4km    │
+  │ │ JUN │  Tue · 17:30–19:00                              │
+  │ │ 18  │  Tao Đàn Park · HCMC                            │
+  │ └─────┘  Free · ⏳ Starts in 5d                         │
+  └────────────────────────────────────────────────────────┘
+  (max 3 — soonest upcoming in the selected city; "View All →" only when ≥ 1 item)
+
 [RESCUE section]         ← placeholder this phase
 
 [Bottom Navigation]
@@ -146,13 +160,13 @@ Choose Your City                                    [× close]
 
 ### 4. Categories Row
 
-4 fixed icon buttons. Only **Lost Pets** is functional this phase.
+4 fixed icon buttons. **Lost Pets**, **Pet Friendly**, and **Events** are functional this phase; **Rescue** is a placeholder.
 
 | Button | Icon | Tap action (this phase) |
 |--------|------|-------------------------|
-| Lost Pets | ⚠️ triangle | Navigate to **Lost Pets screen** (full list + map) — same destination as the section's "View All →" |
+| Lost Pets | ⚠️ triangle | Navigate to **Lost Pets screen** (`screen_18`, full list + map) — same destination as the section's "View All →" |
 | Pet Friendly | 📍 | Navigate to **Pet Friendly screen** (`screen_20`) — same as the section's "View All →" |
-| Events | 🗓️ | "Coming Soon" placeholder screen |
+| Events | 🗓️ | Navigate to **Events screen** (`screen_23`) — same as the section's "View All →" |
 | Rescue | ♡ | "Coming Soon" placeholder screen |
 
 ---
@@ -213,10 +227,50 @@ Shows pet-friendly places **in the selected city**, the **3 nearest** to the use
 
 ---
 
-### 7. Other Category Sections (placeholder this phase)
+### 7. Events Section
 
-`Events` and `Rescue` sections are **out of scope** for this phase. For now:
-- Either hide these sections entirely, OR render the section header with a "Coming soon" inline state.
+Shows **upcoming events in the selected city**, the **3 soonest** to start.
+
+- Section header: **"EVENTS"** + **"View All →"** link → **Events screen** (`screen_23`).
+- **Max 3 rows** (preview), only events that have **not ended** (`endAt >= now`), sorted by **`startAt` asc** (soonest first).
+- **Empty state** (no upcoming events in the selected city): hide the section (or show a compact "No upcoming events"); **hide "View All →"**.
+
+**Each row (Event item)** — canonical layout, reused on `screen_23`:
+
+```
+[date-chip]   {title}                            {distanceKm}km
+              {weekday} · {startTime}–{endTime}
+              {venueName} · {cityShortName}
+              {price} · {countdown}
+```
+
+| Element | Source | Notes |
+|---------|--------|-------|
+| date-chip | `startAt` | Calendar-style chip: short month + day (e.g. `JUN 15`) |
+| `title` | `title` | Event name (bold, line 1) |
+| `distanceKm` | computed per request | top-right; `< 10` → 1 decimal (`2.1km`), `≥ 10` → integer (`120km`) |
+| weekday · time | `startAt`, `endAt` | Line 2: `"Sat · 9:00–12:00"` |
+| `venueName` · `cityShortName` | event location | Line 3: `"Lava Cat Coffee · HCMC"` (short venue + city; full address only on detail) |
+| `price` | `price` | Line 4; empty/zero → `"Free"` |
+| `countdown` | `startAt` / `endAt` | Line 4 after price — see **Countdown rule** below |
+
+**Countdown rule** (shared by the section, `screen_23`, and `screen_24`):
+
+| State | Condition | Label |
+|-------|-----------|-------|
+| Upcoming | `now < startAt` | `Starts in {N}d` (≥ 24h) / `Starts in {N}h` (< 24h) |
+| Ongoing | `startAt ≤ now ≤ endAt` | `Ends in {N}h` / `Happening now` |
+| Ended | `now > endAt` | *(not shown — filtered out of all listings)* |
+
+- **Tap a row** → **Event Detail** (`screen_24`).
+- Data source: `Events query (CI)` `{ cityCode, countryCode, originLat?, originLng?, limit: 3 }`.
+
+---
+
+### 8. Rescue Section (placeholder this phase)
+
+The `Rescue` section is **out of scope** for this phase. For now:
+- Either hide the section entirely, OR render the section header with a "Coming soon" inline state.
 - No API, no data binding. Final behaviour defined in a later phase.
 
 ---
@@ -541,6 +595,115 @@ query PetFriendlyPlaces(
 
 ---
 
+### CI. Query: `Events`
+
+Returns **upcoming** events for a city, sorted soonest-first. Used by both the **More → Events section** (`limit: 3`) and the full **Events screen** (`screen_23`, paginated + time/price filters). All events are **admin-entered** (no AI, no charity/family hosting).
+
+**Auth:** Required.
+
+**Operation:**
+```graphql
+query Events(
+  $cityCode: String!
+  $countryCode: String!
+  $filter: EventsFilter
+  $originLat: Float
+  $originLng: Float
+  $cursor: String
+  $limit: Int
+) {
+  events(
+    cityCode: $cityCode
+    countryCode: $countryCode
+    filter: $filter
+    originLat: $originLat
+    originLng: $originLng
+    cursor: $cursor
+    limit: $limit
+  ) {
+    items {
+      id
+      title
+      thumbnailUrl
+      startAt
+      endAt
+      price
+      isFree
+      venueName
+      cityShortName
+      countryCode
+      lat
+      lng
+      distanceKm
+      interestedCount
+    }
+    nextCursor
+    hasMore
+    totalCount
+  }
+}
+```
+
+**`EventsFilter`** (used by the full Events screen; single active chip — omit for "All"):
+```json
+{ "timeWindow": "THIS_WEEK" }   // THIS_WEEK | THIS_WEEKEND
+// or
+{ "isFree": true }              // Free chip
+```
+
+**Variables (More section — preview):**
+```json
+{ "cityCode": "HCM", "countryCode": "VN", "originLat": 10.78, "originLng": 106.70, "limit": 3 }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "events": {
+      "items": [
+        {
+          "id": "event_001",
+          "title": "Cat Adoption Day",
+          "thumbnailUrl": "https://cdn.petapp.com/events/event_001/1.jpg",
+          "startAt": "2026-06-15T02:00:00Z",
+          "endAt": "2026-06-15T05:00:00Z",
+          "price": "Free",
+          "isFree": true,
+          "venueName": "Lava Cat Coffee",
+          "cityShortName": "HCMC",
+          "countryCode": "VN",
+          "lat": 10.7731,
+          "lng": 106.7042,
+          "distanceKm": 2.1,
+          "interestedCount": 48
+        }
+      ],
+      "nextCursor": "eyJpZCI6ImV2ZW50XzAwMSJ9",
+      "hasMore": true,
+      "totalCount": 8
+    }
+  }
+}
+```
+
+**Notes:**
+- City-scoped (`cityCode` + `countryCode`); returns only **upcoming/ongoing** events (`endAt >= now`), sorted by `startAt` asc.
+- `distanceKm` from `originLat`/`originLng` (user GPS); when GPS is absent, the server uses the **city centre** as origin. Distance is **display-only** (rows show it) — events are **not** sorted by distance.
+- `price` is admin free text shown verbatim; `isFree = true` → render `"Free"` and power the **Free** filter chip.
+- `interestedCount` = number of users who marked Interested (see `screen_24` → `SetEventInterest (CK)`).
+- Only `isPublished = true` events are returned.
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `CITY_NOT_FOUND` | Unknown `cityCode` / `countryCode` |
+| `CITY_NOT_AVAILABLE` | City has `status = COMING_SOON` (render locked state instead) |
+
+---
+
 ## User Flow Diagrams
 
 ### Open More tab
@@ -579,6 +742,16 @@ User taps a Lost Pet row (section)
   └─> Lost Pet Detail screen for that reportId
 ```
 
+### Enter Events
+
+```
+User taps "Events" category icon  OR  "View All →" in the section
+  └─> Events screen (screen_23), scoped to selected city → Events (CI)
+
+User taps an Event row (section)
+  └─> Event Detail (screen_24) for that eventId
+```
+
 ---
 
 ## Edge Cases & Notes
@@ -597,7 +770,10 @@ User taps a Lost Pet row (section)
 | GPS unavailable | `distanceKm` null → `Within 1km/5km` chips disabled on full screen |
 | Pet Friendly section: 0 places in city | Hide section + "View All →" (or compact empty message) |
 | Pet Friendly section: 1–3 places | Show all; "View All →" still shown |
-| Events / Rescue | Out of scope this phase — placeholder / hidden |
+| Events section: 0 upcoming events in city | Hide section + "View All →" (or compact empty message) |
+| Events section: 1–3 upcoming events | Show all; "View All →" still shown |
+| Event has ended (`endAt < now`) | Dropped from the section/list/detail listings (only upcoming/ongoing returned) |
+| Rescue | Out of scope this phase — placeholder / hidden |
 | City list fetch fails | Fall back to HCMC default; allow retry on Change |
 
 ---
@@ -613,15 +789,17 @@ User taps a Lost Pet row (section)
 | 5 | Lost Pets section scope | Scoped to the **selected city** (not cross-city nearest); mockup showing Đà Lạt under HCMC is demo data only |
 | 6 | Distance chips (`1km/5km`) | Filter **within** the selected city; require real GPS (`distanceKm`); disabled without GPS |
 | 7 | Reporting entry point | Not in the More hub section — reports filed from `screen_9` (Pet Detail → Report Missing button, below the category tabs) or the Lost Pets screen banner (`screen_18`) |
-| 8 | Pet Friendly | Active this phase — section (max 3 nearest in city) + full screen (`screen_20`) + place detail with reviews (`screen_21`). Events / Rescue still out of scope |
+| 8 | Pet Friendly | Active this phase — section (max 3 nearest in city) + full screen (`screen_20`) + place detail with reviews (`screen_21`). |
 | 9 | City display label | Add `cityShortName` (curated short label, e.g. `HCMC` / `Đà Lạt` / `HN`) used in the location bar + lost-pet rows + Lost Pet Detail; `cityCode` stays for keys/logic, full `city` shown in the picker |
 | 10 | "Other" species filter | `LostPetsFilter.species` accepts an `OTHER` sentinel = any species not `CAT`/`DOG` |
+| 11 | Events | Active this phase — section (max 3 soonest in city) + full screen (`screen_23`) + event detail (`screen_24`). **Admin-entered**, not charity/family-hosted. Sorted by `startAt` asc (upcoming only); distance is display-only, not a sort key. Only **Rescue** remains a placeholder. |
+| 12 | Event countdown | `now < startAt` → `Starts in {N}d/{N}h`; `startAt ≤ now ≤ endAt` → `Ends in {N}h` / `Happening now`; ended events are filtered out |
 
 ---
 
 ## Open Items (next steps)
 
-- **Events / Rescue** categories — future phases (placeholders this phase).
+- **Rescue** category — future phase (placeholder this phase).
 - **Full-screen map** (`Open map` on `screen_18` / `screen_20`) — pan/zoom/cluster; optional pins-only query if volume grows.
 
-> Done: Lost Pets (`screen_18`) + Lost Pet Detail (`screen_19`) + Report Missing upgrade (`screen_9`); Pet Friendly (`screen_20`) + Place Detail/reviews (`screen_21`).
+> Done: Lost Pets (`screen_18`) + Lost Pet Detail (`screen_19`) + Report Missing upgrade (`screen_9`); Pet Friendly (`screen_20`) + Place Detail/reviews (`screen_21`); Events (`screen_23`) + Event Detail (`screen_24`).
