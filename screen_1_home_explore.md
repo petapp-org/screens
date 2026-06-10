@@ -637,7 +637,7 @@ mutation UnfollowFamily($familyId: ID!) {
 
 Love a post.
 
-> **Triggers notification:** fires a `POST_LOVES` notification to the post author — **grouped** per post (`{actor} and {N} others loved your post`); see screen_22 (Notifications screen). Un-loving (G) does not notify.
+> **Triggers notification:** fires a `POST_LOVES` notification to the post author — **grouped** per post (`{actor} and {N} others loved your post`) (see screen_22 — Notifications screen). Un-loving (G) does not notify.
 
 **Auth:** Required → redirect to login if not authenticated
 
