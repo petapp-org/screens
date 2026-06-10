@@ -46,7 +46,7 @@ Default active filter tab: **Latest**.
 | Notifications `🔔` | Opens the **Notifications screen** (screen_22); shows a **red dot** when there is any unread activity | Tapping redirects to Login; **no red dot shown** |
 | Profile | Shows user's avatar; tapping opens profile screen | Shows default placeholder avatar; tapping redirects to Login |
 
-The unread state is fetched separately (not bundled in the feed response) — the Messages dot from `UnreadMessageCount (BL)` (see screen_10), the Notifications dot from `NotificationUnreadCount (BU)` (see screen_22); each delivered via WebSocket push, falling back to polling. Each dot shows whenever its own count `> 0` (no number).
+The unread state is fetched separately (not bundled in the feed response) — the Messages dot from `UnreadMessageCount (BL)` (see screen_10), the Notifications dot from `UnreadNotificationCount (BU)` (see screen_22); each delivered via WebSocket push, falling back to polling. Each dot shows whenever its own count `> 0` (no number).
 
 ---
 
@@ -1117,7 +1117,7 @@ User taps "..." on a post
 | Post with `privacy=private` | Only visible to family members of the authoring family |
 | Messages / Notifications button — not logged in | No red dot; tapping redirects to Login |
 | Messages red dot source | Unread chats (`UnreadMessageCount BL`); dot only, no number |
-| Notifications red dot source | Unread activity (`NotificationUnreadCount BU`); dot only, no number |
+| Notifications red dot source | Unread activity (`UnreadNotificationCount BU`); dot only, no number |
 | Profile button — not logged in | Default placeholder avatar shown; tapping redirects to Login |
 | Love — optimistic update fails (API error) | Revert `loveCount` and `isLoved` to previous state; show error toast |
 | Comment count = 0 | Comment button still tappable; inline panel opens showing empty state |

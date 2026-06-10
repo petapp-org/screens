@@ -79,7 +79,7 @@ Which pet is missing?
 - **Excludes**: soft-deleted pets (`isDeleted = true`) and pets already missing (`missingStatus != null`).
 - Each item shows pet avatar + name.
 - After picking a pet, the rest of the form is the **upgraded Report Missing form** — see `screen_9` Section 8.
-- Data source: `FamilyPets query (BB)` for the active family; the client filters out already-missing pets.
+- Data source: `PetsByFamily query (BB)` for the active family; the client filters out already-missing pets.
 
 **No reportable pet:**
 - If the user has **no active family**, or the active family has no eligible pet, tapping Report shows a prompt: *"You don't have a pet to report yet."* with a link to set/create an active family (Profile Settings → Family Pages, `screen_5`).
@@ -155,7 +155,7 @@ Full, paginated list of missing reports in the selected city (after filters).
 > All calls go to `POST /graphql`. **Auth:** Required.
 > **No new query for this screen** — everything is reused:
 > - `LostPets (CB)` + `Cities (CA)` from `screen_17` — list, map pins, filters, pagination.
-> - `FamilyPets (BB)` from `screen_9` — the **active family's** pets for the report pet selector (includes private; client filters out already-missing pets).
+> - `PetsByFamily (BB)` from `screen_9` — the **active family's** pets for the report pet selector (includes private; client filters out already-missing pets).
 > - `ReportMissing (BE)` from `screen_9` — submit the report (upgraded form).
 
 ---
@@ -179,7 +179,7 @@ More tab → "Lost Pets" icon  OR  "View All →"
 User taps [Report]
   └─> active family?
         ├─ none → "no reportable pet" prompt → set/create active family
-        └─ yes → FamilyPets (BB) { active familyId }, filter out already-missing
+        └─ yes → PetsByFamily (BB) { active familyId }, filter out already-missing
               ├─ no eligible pet → "no reportable pet" prompt
               └─ has pets → open Report Missing form (screen_9 §8) in pet-selector mode
                     └─> pick pet (incl. private) → fill the form → Submit

@@ -475,15 +475,15 @@ query Pet($id: ID!) {
 
 ---
 
-### BB. Query: `FamilyPets`
+### BB. Query: `PetsByFamily`
 
 Fetch all active (non-deleted) pets for the family — used to populate the pet switcher.
 **Auth:** Required (family member)
 
 **Operation:**
 ```graphql
-query FamilyPets($familyId: ID!) {
-  familyPets(familyId: $familyId) {
+query PetsByFamily($familyId: ID!) {
+  petsByFamily(familyId: $familyId) {
     id
     name
     avatarUrl
@@ -511,7 +511,7 @@ query FamilyPets($familyId: ID!) {
 ```json
 {
   "data": {
-    "familyPets": [
+    "petsByFamily": [
       {
         "id": "pet_111",
         "name": "Bụi",
@@ -844,7 +844,7 @@ mutation MarkPetFound($petId: ID!) {
 
 ```
 User taps pet row in My Pets
-  └─> Pet query (BA) + FamilyPets query (BB)
+  └─> Pet query (BA) + PetsByFamily query (BB)
         └─> Render pet identity + missing banner (if applicable)
               └─> Default tab: Health
                     ├─ status=checking → show spinner
