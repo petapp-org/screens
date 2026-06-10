@@ -317,6 +317,8 @@ Shows **open rescue listings in the selected city** — pets that **charity fami
 
 ### CA. Query: `Cities`
 
+> ⚠️ **GAP petapp-be#888:** backend has no `cities` query yet (type `City` exists, no list query). Kept as-is, pending backend.
+
 Returns the list of supported cities with coordinates and availability — powers the **Choose Your City** picker and the **client-side nearest-city** detection. Fetched once and cached.
 
 **Auth:** Optional (static reference data).
@@ -389,6 +391,8 @@ query Cities {
 ---
 
 ### CB. Query: `LostPets`
+
+> ⚠️ **GAP petapp-be#888:** backend has no browse-by-city lost-pets query (only `searchLostPets(q!, lat/lng)` text-search + `listLostPetReports(type, cursor)`). Kept as-is, pending backend `lostPetsByCity(... first, after)`.
 
 Returns missing-pet reports for a city. Used by both the **More → Lost Pets section** (`limit: 3`) and the full **Lost Pets screen** (paginated, with filters). Filter args beyond `cityCode` are consumed by the full screen — documented here for reuse; the More section passes only `cityCode` + `limit`.
 
@@ -521,6 +525,8 @@ query LostPets(
 
 ### CD. Query: `PetFriendlyPlaces`
 
+> ⚠️ **Partial GAP petapp-be#888:** backend `places(category, lat, lng, radiusM, sort, offset, limit)` is geo+offset, not cityCode+cursor. Kept as-is, pending backend cityCode/Relay support.
+
 Returns pet-friendly places for a city, sorted by distance from the user. Used by both the **More → Pet Friendly section** (`limit: 3`) and the full **Pet Friendly screen** (`screen_20`, paginated + filtered).
 
 **Auth:** Required.
@@ -630,6 +636,8 @@ query PetFriendlyPlaces(
 ---
 
 ### CI. Query: `Events`
+
+> ⚠️ **GAP petapp-be#888:** the Events domain does not exist on backend (no `Event` type, no query). Kept as-is, pending backend.
 
 Returns **upcoming** events for a city, sorted soonest-first. Used by both the **More → Events section** (`limit: 3`) and the full **Events screen** (`screen_23`, paginated + time/price filters). All events are **admin-entered** (no AI, no charity/family hosting).
 
@@ -742,6 +750,8 @@ query Events(
 ---
 
 ### CL. Query: `Rescues`
+
+> ⚠️ **GAP petapp-be#888:** backend has no browse-by-city rescue query (only `searchRescueCases(q!, lat/lng)`). Kept as-is, pending backend `rescuesByCity(... first, after)`.
 
 Returns **open** rescue listings for a city (pets posted for adoption by **charity families**). Used by both the **More → Rescue section** (`limit: 3`) and the full **Rescue screen** (`screen_25`, paginated + species filter + sort). All listings are created by charity families (`family.type = charity`).
 

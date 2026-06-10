@@ -72,16 +72,16 @@ All calls go to `POST /graphql`.
 
 ---
 
-### BS. Query: `Notifications`
+### BS. Query: `MyNotifications`
 
 General-notification feed (paginated, newest first).
 
 **Auth:** Required
 
 ```graphql
-query Notifications($cursor: String, $limit: Int) {
-  notifications(cursor: $cursor, limit: $limit) {
-    items {
+query MyNotifications($cursor: String, $limit: Int = 50) {
+  myNotifications(limit: $limit, cursor: $cursor) {
+    notifications {
       id
       type          # NEW_COMMENT | NEW_REPLY | POST_LOVES | FAMILY_NEW_POST |
                     # NEW_FOLLOWER | INVITE_ACCEPTED | HEALTH_ALERT |
@@ -102,7 +102,6 @@ query Notifications($cursor: String, $limit: Int) {
       createdAt
     }
     nextCursor
-    hasMore
   }
 }
 ```
@@ -113,8 +112,8 @@ query Notifications($cursor: String, $limit: Int) {
 ```json
 {
   "data": {
-    "notifications": {
-      "items": [
+    "myNotifications": {
+      "notifications": [
         {
           "id": "noti_001",
           "type": "NEW_COMMENT",
@@ -146,8 +145,7 @@ query Notifications($cursor: String, $limit: Int) {
           "createdAt": "2026-06-07T07:10:00Z"
         }
       ],
-      "nextCursor": "cursor_abc",
-      "hasMore": true
+      "nextCursor": "cursor_abc"
     }
   }
 }
@@ -211,7 +209,7 @@ query UnreadNotificationCount {
 ```
 User taps Notifications icon (🔔 — Explore / My Pets / More header)
   └─> [not authenticated] → redirect to Login
-  └─> [authenticated] → Notifications (BS) → activity feed
+  └─> [authenticated] → MyNotifications (BS) → activity feed
 ```
 
 ### Open a notification

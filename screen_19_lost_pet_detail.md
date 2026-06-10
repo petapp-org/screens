@@ -138,6 +138,8 @@ Source: `reportedBy` on the report — returned by the API **only** to family me
 
 ### CC. Query: `LostPet`
 
+> ⚠️ **GAP petapp-be#888:** `getLostPetReport(id)` exists but returns a flat legacy `LostPetReportGQL` (petName/species/breed as strings, `area`, single `photoUrl`) — not the structured shape here (nested pet/family/reportedBy, geo `lastSeen`, `photos[]`). Kept as-is, pending backend enrichment.
+
 Fetch a single missing-pet report for the detail screen.
 
 **Auth:** Optional — the report is public/web-viewable. When a valid token is present and the caller is a family member, `reportedBy` and `viewerIsFamilyMember` are populated.
