@@ -143,9 +143,9 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 Bottom sheet or full-screen modal.
 
 ```
-[Search input: "Search by name, @tag, or phone number"]
+[Search input: "Search by name, @username, or phone number"]
 [Results list]
-  └── Each result: avatar + name + @tag → tap to select → invite
+  └── Each result: avatar + name + @username → tap to select → invite
 [No results: "No user found"]
 ```
 
@@ -156,7 +156,7 @@ Bottom sheet or full-screen modal.
 - Results exclude: current user (owner), already-added parents, already-invited users
 
 **Select a user:**
-- Tap result → `InviteParent mutation (AQ)` `{ userId }`
+- Tap result → `InviteFamilyMember mutation (AQ)` `{ familyId, phoneOrEmail, role }`
 - Close modal → new row appears in Parents list with INVITED status
 
 **No match:**
@@ -361,7 +361,7 @@ query SearchUsers($q: String!, $limit: Int) {
   searchUsers(q: $q, limit: $limit) {
     id
     displayName
-    tag
+    username
     avatarUrl
   }
 }
@@ -383,7 +383,7 @@ query SearchUsers($q: String!, $limit: Int) {
       {
         "id": "user_002",
         "displayName": "Minh Dang",
-        "tag": "minhdang",
+        "username": "minhdang",
         "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
       }
     ]
@@ -399,23 +399,22 @@ query SearchUsers($q: String!, $limit: Int) {
 
 ---
 
-### AQ. Mutation: `InviteParent`
-Send a parent invite to a user.
+### AQ. Mutation: `InviteFamilyMember`
+Send a parent invite to a user by phone or email.
 **Auth:** Required (owner only)
 
 > **Triggers notification:** when the invited user later **accepts**, an `INVITE_ACCEPTED` notification fires to the **inviter** (see screen_22 — Notifications screen). Note: the incoming invite itself is intentionally **not** surfaced as a notification (`parent invite received` is excluded — see screen_22).
 
 **Operation:**
 ```graphql
-mutation InviteParent($familyId: ID!, $userId: ID!) {
-  inviteParent(familyId: $familyId, userId: $userId) {
+mutation InviteFamilyMember($familyId: ID!, $phoneOrEmail: String!, $role: FamilyRole!) {
+  inviteFamilyMember(familyId: $familyId, phoneOrEmail: $phoneOrEmail, role: $role) {
+    id
+    familyId
+    invitedUserId
+    role
     status
-    user {
-      id
-      displayName
-      tag
-      avatarUrl
-    }
+    createdAt
   }
 }
 ```
@@ -424,7 +423,8 @@ mutation InviteParent($familyId: ID!, $userId: ID!) {
 ```json
 {
   "familyId": "fam_001",
-  "userId": "user_002"
+  "phoneOrEmail": "minh@example.com",
+  "role": "PARENT"
 }
 ```
 
@@ -432,14 +432,13 @@ mutation InviteParent($familyId: ID!, $userId: ID!) {
 ```json
 {
   "data": {
-    "inviteParent": {
+    "inviteFamilyMember": {
+      "id": "inv_001",
+      "familyId": "fam_001",
+      "invitedUserId": "user_002",
+      "role": "PARENT",
       "status": "INVITED",
-      "user": {
-        "id": "user_002",
-        "displayName": "Minh Dang",
-        "tag": "minhdang",
-        "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
-      }
+      "createdAt": "2026-01-01T00:00:00Z"
     }
   }
 }
@@ -558,7 +557,7 @@ User taps "Create Family Page" in Profile Settings
   └─> Navigate to Create Family screen
         └─> Fill in name, tag (real-time check), about, privacy
               └─> Optionally upload avatar (media upload endpoint)
-                    └─> Optionally invite parents → SearchUsers query (AP) → InviteParent mutation (AQ)
+                    └─> Optionally invite parents → SearchUsers query (AP) → InviteFamilyMember mutation (AQ)
                           └─> Tap "Create Family"
                                 └─> CreateFamily mutation (AM)
                                       ├─ TAG_TAKEN → show error on tag field
@@ -572,7 +571,7 @@ User taps "Create Family Page" in Profile Settings
 Tap "Invite Another Parent"
   └─> Open Invite Search Modal
         └─> Type ≥2 chars → SearchUsers query (AP)
-              ├─ Results shown → tap user → InviteParent mutation (AQ)
+              ├─ Results shown → tap user → InviteFamilyMember mutation (AQ)
               │     └─ Close modal → INVITED row added to Parents list
               └─ No results → "No user found" — cannot invite
 ```

@@ -18,7 +18,7 @@ Requires login. Not related to the "More" tab in the bottom navigation.
   ├── User Header
   │     ├── Avatar (tappable → Edit Profile)
   │     ├── Display name
-  │     └── @tag
+  │     └── @username
   │
   ├── FAMILY PAGES section
   │     ├── [Create Family Page row] — shown only if user has no owned family
@@ -47,7 +47,7 @@ Requires login. Not related to the "More" tab in the bottom navigation.
 |-------|-------------|
 | `avatarUrl` | User avatar — tappable, opens Edit Profile screen |
 | `name` | Display name |
-| `tag` | Unique tag, displayed as `@tag` |
+| `username` | Unique username, displayed as `@username` |
 
 ---
 
@@ -75,7 +75,7 @@ Active family is used for: receiving push notifications directed at the family; 
 - Toggling ON a family → sets it as active; all other families toggle OFF automatically
 - Only 1 can be ON at a time across owned + joined families
 - Creating a new family → auto-activates it (all others deactivated)
-- `SetActiveFamily mutation (AG)` `{ familyId }` → `200 OK`
+- `MarkFamilyPrimary mutation (AG)` `{ familyId }` → `200 OK`
 
 ---
 
@@ -133,7 +133,7 @@ Sub-screen containing:
 
 ```
 PROFILE
-  Edit Profile  [>]       ← avatar, name (tag is read-only after setup)
+  Edit Profile  [>]       ← avatar, name (username is read-only after setup)
   Phone & Email  [>]      ← view/update phone number and linked email
 
 PREFERENCES
@@ -148,9 +148,9 @@ DANGER ZONE
 
 **Edit Profile:**
 - Editable: avatar, name
-- Read-only: `tag` (shown greyed out with note "Tag cannot be changed")
+- Read-only: `username` (shown greyed out with note "Username cannot be changed")
 - Changing the avatar: upload via `RequestMediaUpload (BV)` `{ purpose: "USER_AVATAR" }` (screen_4) → use returned `publicUrl`; no AI scan
-- `UpdateMe mutation (AK)` `{ name, avatarUrl }`
+- `UpdateMyProfile mutation (AK)` `{ displayName, avatarUrl }`
 
 **Phone & Email:**
 - Shows current phone number (masked, e.g. `+84 *** *** 567`)
@@ -159,7 +159,7 @@ DANGER ZONE
 
 **Push Notifications:**
 - Toggle stored locally + synced to server
-- `UpdateMe mutation (AK)` `{ pushNotificationsEnabled: true|false }`
+- `UpdateUserPreferences mutation` `{ pushEnabled: true|false }`
 
 **Language:**
 - Picker for app display language
@@ -200,7 +200,7 @@ query Me {
   me {
     id
     displayName
-    tag
+    username
     avatarUrl
     families {
       id
@@ -227,7 +227,7 @@ query Me {
     "me": {
       "id": "user_001",
       "displayName": "Minh Dang",
-      "tag": "minhdang",
+      "username": "minhdang",
       "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
       "families": [
         {
@@ -262,17 +262,18 @@ query Me {
 
 ---
 
-### AG. Mutation: `SetActiveFamily`
-Set the active family for the current user. All other families are deactivated automatically.  
+### AG. Mutation: `MarkFamilyPrimary`
+Set the primary (active) family for the current user. All other families are deactivated automatically.  
 **Auth:** Required
 
-**Side effects (see screen_10):** Switching the active family re-scopes the Chats inbox — threads received by the previous active family disappear, threads received by the new active family appear (DMs and own-sent threads are unaffected). The server records the activation moment; a family-received message counts as **unread only if** `sentAt > activation time`, so messages that arrived while the family was inactive are not marked unread.
+**Side effects (see screen_10):** Switching the family được đánh primary re-scopes the Chats inbox — threads received by the previous active family disappear, threads received by the new active family appear (DMs and own-sent threads are unaffected). The server records the activation moment; a family-received message counts as **unread only if** `sentAt > activation time`, so messages that arrived while the family was inactive are not marked unread.
 
 **Operation:**
 ```graphql
-mutation SetActiveFamily($input: SetActiveFamilyInput!) {
-  setActiveFamily(input: $input) {
-    activeFamilyId
+mutation MarkFamilyPrimary($familyId: ID!) {
+  markFamilyPrimary(familyId: $familyId) {
+    id
+    isPrimary
   }
 }
 ```
@@ -280,9 +281,7 @@ mutation SetActiveFamily($input: SetActiveFamilyInput!) {
 **Variables:**
 ```json
 {
-  "input": {
-    "familyId": "fam_xyz"
-  }
+  "familyId": "fam_xyz"
 }
 ```
 
@@ -290,8 +289,9 @@ mutation SetActiveFamily($input: SetActiveFamilyInput!) {
 ```json
 {
   "data": {
-    "setActiveFamily": {
-      "activeFamilyId": "fam_xyz"
+    "markFamilyPrimary": {
+      "id": "fam_xyz",
+      "isPrimary": true
     }
   }
 }
@@ -476,18 +476,17 @@ query MyContactInfo {
 
 ---
 
-### AK. Mutation: `UpdateMe`
-Update the current user's editable profile fields and/or preferences. All fields are optional; only provided fields are updated.  
+### AK. Mutation: `UpdateMyProfile`
+Update the current user's editable profile fields. All fields are optional; only provided fields are updated.  
 **Auth:** Required
 
 **Operation:**
 ```graphql
-mutation UpdateMe($input: UpdateMeInput!) {
-  updateMe(input: $input) {
+mutation UpdateMyProfile($displayName: String, $avatarUrl: String) {
+  updateMyProfile(displayName: $displayName, avatarUrl: $avatarUrl) {
     id
     displayName
     avatarUrl
-    pushNotificationsEnabled
   }
 }
 ```
@@ -495,11 +494,8 @@ mutation UpdateMe($input: UpdateMeInput!) {
 **Variables:**
 ```json
 {
-  "input": {
-    "displayName": "Minh Dang",
-    "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
-    "pushNotificationsEnabled": true
-  }
+  "displayName": "Minh Dang",
+  "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
 }
 ```
 
@@ -507,11 +503,10 @@ mutation UpdateMe($input: UpdateMeInput!) {
 ```json
 {
   "data": {
-    "updateMe": {
+    "updateMyProfile": {
       "id": "user_001",
       "displayName": "Minh Dang",
-      "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
-      "pushNotificationsEnabled": true
+      "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
     }
   }
 }
@@ -523,6 +518,18 @@ mutation UpdateMe($input: UpdateMeInput!) {
 |------|----------|
 | `UNAUTHENTICATED` | Caller is not logged in |
 | `DISPLAY_NAME_TOO_LONG` | `displayName` exceeds 50 characters |
+
+> Toggle push notification dùng op riêng `updateUserPreferences`:
+
+```graphql
+mutation UpdateUserPreferences($pushEnabled: Boolean) {
+  updateUserPreferences(pushEnabled: $pushEnabled) {
+    pushEnabled
+  }
+}
+```
+
+(`pushEnabled` thay thế field `pushNotificationsEnabled` cũ.)
 
 ---
 
@@ -618,7 +625,7 @@ mutation RequestAccountDeletion {
 | User has no owned family | Show "Create Family Page" row; no toggle shown |
 | User owns a family | Replace "Create Family Page" with owned family row (OWNER badge) |
 | User tries to create 2nd family | `CreateFamily mutation` returns `FAMILY_ALREADY_OWNED`; show error |
-| Toggle ON a family | All other toggles turn OFF immediately (optimistic); `SetActiveFamily mutation (AG)` |
+| Toggle ON a family | All other toggles turn OFF immediately (optimistic); `MarkFamilyPrimary mutation (AG)` |
 | Unfollow with Undo | Row removed immediately; toast with 5s Undo window; confirmed on timeout or close |
 | No loved posts | Empty state: "You haven't loved any posts yet" |
 | No followed families | Empty state: "You're not following any families yet" |
