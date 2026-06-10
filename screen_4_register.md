@@ -4,9 +4,9 @@
 
 Entry point for unauthenticated users. Supports two registration/login methods:
 1. **Phone number → OTP**
-2. **Google / Apple ID (OAuth)**
+2. **Google / Apple / Zalo ID (OAuth)**
 
-After first-time registration via any method, user is prompted to complete their profile (name, tag, avatar) before proceeding to the app.
+After first-time registration via any method, user is prompted to complete their profile (name, username, avatar) before proceeding to the app.
 
 ---
 
@@ -34,40 +34,42 @@ After first-time registration via any method, user is prompted to complete their
 
 ```
 1. User enters phone number → tap Continue
-     └─> RequestOtp mutation (AA) { phone: "+84901234567" }
+     └─> SendOtp mutation (AA) { phone: "+84901234567" }
            ├─ INVALID_PHONE → show inline error
            └─ 200 → navigate to OTP screen
 
 2. OTP screen: 6-digit input + countdown timer (60s resend)
-     └─> VerifyOtp mutation (AB) { phone, otp }
+     └─> VerifyOtp mutation (AB) { phone, code, deviceId }
            ├─ INVALID_OTP → show error, allow retry
            ├─ TOO_MANY_ATTEMPTS → show "Too many attempts, try again later"
-           └─ 200 → { accessToken, refreshToken, isNewUser, requiresProfileSetup }
-                 ├─ requiresProfileSetup=true  → navigate to Profile Setup screen
-                 └─ requiresProfileSetup=false → navigate to post-login target
-                                                  (the return target, else Explore)
+           └─ 200 → { accessToken, refreshToken, isNewUser, sessionId }
+                 ├─ isNewUser=true (or user.username==null) → navigate to Profile Setup screen
+                 └─ else → navigate to post-login target
+                                (the return target, else Explore)
 
 3. Resend OTP: available after 60s countdown
-     └─> RequestOtp mutation (AA) (same as step 1)
+     └─> SendOtp mutation (AA) (same as step 1)
 ```
 
-### Flow B — Google / Apple OAuth
+### Flow B — Google / Apple / Zalo OAuth
 
 ```
 1. User taps "Sign in with Google" / "Sign in with Apple"
      └─> Native OAuth flow (handled by SDK)
-           └─> AuthWithGoogle mutation (AC) / AuthWithApple mutation (AD) { idToken: "..." }
-                 └─ 200 → { accessToken, refreshToken, isNewUser, requiresProfileSetup }
-                       ├─ requiresProfileSetup=true  → navigate to Profile Setup screen
-                       └─ requiresProfileSetup=false → navigate to post-login target
-                                                        (the return target, else Explore)
+           └─> SocialLogin mutation (AC) { provider, token, deviceId }
+                 └─ 200 → { accessToken, refreshToken, isNewUser, sessionId }
+                       ├─ isNewUser=true (or user.username==null) → navigate to Profile Setup screen
+                       └─ else → navigate to post-login target
+                                      (the return target, else Explore)
 ```
 
 ---
 
-> **`isNewUser` vs `requiresProfileSetup`:** routing decisions use **`requiresProfileSetup`**, not `isNewUser`. `isNewUser` is just analytics (was the account created on this call). `requiresProfileSetup` is `true` until the user has a name **and** tag — so a user who registered but abandoned setup will have `isNewUser=false` yet still be routed back into Profile Setup on their next login.
+> **Routing on `isNewUser` and `username`:** After authentication, routing uses `isNewUser` (and `user.username == null` for users who abandoned setup). `isNewUser` is just analytics (was the account created on this call). A user who registered but abandoned setup still has `username=null` → routed back into Profile Setup (even when `isNewUser=false`).
 
-> **Return target (post-login redirect):** When the user reaches this screen because an auth-required action redirected them (e.g. tapped Follow / Message / My Pets), that origin is remembered as a **return target**. After successful auth — and after Profile Setup if `requiresProfileSetup=true` — the app navigates **back to the return target**. If there is no return target (app opened cold on Login), it lands on **Explore**.
+> **Return target (post-login redirect):** When the user reaches this screen because an auth-required action redirected them (e.g. tapped Follow / Message / My Pets), that origin is remembered as a **return target**. After successful auth — and after Profile Setup if `isNewUser=true` or `username==null` — the app navigates **back to the return target**. If there is no return target (app opened cold on Login), it lands on **Explore**.
+
+> Backend does not return `requiresProfileSetup`. The client derives "needs Profile Setup" from `isNewUser` (or `user.username == null`).
 
 ---
 
@@ -78,7 +80,7 @@ Shown once after a new account is created via any method.
 ```
 [Avatar picker — optional, can skip]
 [Name input — required]
-[Tag input — required, unique, format: letters/numbers/underscore only, no spaces]
+[Username input — required, unique, format: letters/numbers/underscore only, no spaces]
 [Continue button]
 ```
 
@@ -86,17 +88,17 @@ Shown once after a new account is created via any method.
 |-------|-------|
 | `avatar` | Optional; user can upload or skip (default avatar used) |
 | `name` | Required; max 50 chars |
-| `tag` | Required; unique across all users; only set once at creation — **cannot be changed after this step** |
+| `username` | Required; unique across all users; only set once at creation — **cannot be changed after this step** |
 
-**Tag validation:**
+**Username validation:**
 - Real-time uniqueness check as user types (debounced 500ms)
-- Uses `CheckUserTag` query (see endpoint AF below)
+- Uses `CheckUsername` query (see endpoint AF below)
 - Show green checkmark if available, red X if taken
-- Show a persistent helper text below the field: *"⚠️ Your tag cannot be changed after you create your account."*
+- Show a persistent helper text below the field: *"⚠️ Your username cannot be changed after you create your account."*
 
 **Submit:**
 - If an avatar was picked: upload it first via `RequestMediaUpload (BV)` `{ purpose: "USER_AVATAR" }` → use the returned `publicUrl` (no AI scan — avatars are never scanned)
-- `SetupProfile mutation (AE)` `{ name, tag, avatarUrl }`
+- `UpdateMyProfile mutation (AE)` `{ displayName, username, avatarUrl }`
 - On success → navigate to the **post-login target** (return target if redirected here, else Explore)
 
 ---
@@ -107,49 +109,56 @@ All operations use `POST /graphql`. Auth where required via `Authorization: Bear
 
 **Shared types:**
 ```graphql
-type AuthResult {
+type AuthTokens {
   accessToken: String!
   refreshToken: String!
+  accessTokenExpiresIn: Int!
+  sessionId: ID!
   user: User!
   isNewUser: Boolean!
-  requiresProfileSetup: Boolean!
 }
 
 type User {
   id: ID!
-  displayName: String
-  tag: String
-  avatarUrl: String
+  displayName: String!
+  username: String          # null until the user sets it during Profile Setup
+  avatarUrl: String!
 }
 ```
 
+> Backend does not return `requiresProfileSetup`. The client derives "needs Profile Setup" from `isNewUser` (or `user.username == null`).
+
 ---
 
-### AA. Mutation: `RequestOtp`
+### AA. Mutation: `SendOtp`
 
-Request an OTP be sent to the given phone number.
+Request an OTP be sent to the given phone number or email.
 **Auth:** Not required
 
 **Operation:**
 ```graphql
-mutation RequestOtp($input: RequestOtpInput!) {
-  requestOtp(input: $input) {
-    expiresIn
+mutation SendOtp($phone: String) {
+  sendOtp(phone: $phone) {
+    otpRequestId
+    expiresInSeconds
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "input": { "phone": "+84901234567" } }
+{ "phone": "+84901234567" }
 ```
+
+Note: pass either `phone` OR `email` — exactly one.
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "requestOtp": {
-      "expiresIn": 60
+    "sendOtp": {
+      "otpRequestId": "otpreq_abc123",
+      "expiresInSeconds": 60
     }
   }
 }
@@ -171,25 +180,21 @@ Verify the OTP and authenticate the user. Returns tokens and new-user flag.
 
 **Operation:**
 ```graphql
-mutation VerifyOtp($input: VerifyOtpInput!) {
-  verifyOtp(input: $input) {
+mutation VerifyOtp($code: String!, $deviceId: String!, $phone: String) {
+  verifyOtp(code: $code, deviceId: $deviceId, phone: $phone) {
     accessToken
     refreshToken
+    accessTokenExpiresIn
+    sessionId
     isNewUser
-    requiresProfileSetup
-    user {
-      id
-      displayName
-      tag
-      avatarUrl
-    }
+    user { id displayName username avatarUrl }
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "input": { "phone": "+84901234567", "otp": "123456" } }
+{ "code": "123456", "deviceId": "dev_ios_abc", "phone": "+84901234567" }
 ```
 
 **Response `200 OK`:**
@@ -199,13 +204,14 @@ mutation VerifyOtp($input: VerifyOtpInput!) {
     "verifyOtp": {
       "accessToken": "eyJ...",
       "refreshToken": "eyJ...",
+      "accessTokenExpiresIn": 900,
+      "sessionId": "sess_abc",
       "isNewUser": true,
-      "requiresProfileSetup": true,
       "user": {
         "id": "u_abc123",
-        "displayName": null,
-        "tag": null,
-        "avatarUrl": null
+        "displayName": "",
+        "username": null,
+        "avatarUrl": ""
       }
     }
   }
@@ -222,47 +228,52 @@ mutation VerifyOtp($input: VerifyOtpInput!) {
 
 ---
 
-### AC. Mutation: `AuthWithGoogle`
+### AC. Mutation: `SocialLogin`
 
-Authenticate via Google OAuth idToken. Returns same `AuthResult` shape.
+Authenticate via Google, Apple, or Zalo OAuth. Returns `AuthTokens`.
+_Thay cho AuthWithGoogle (AC) + AuthWithApple (AD)._
 **Auth:** Not required
 
 **Operation:**
 ```graphql
-mutation AuthWithGoogle($input: OAuthInput!) {
-  authWithGoogle(input: $input) {
+mutation SocialLogin($provider: AuthProvider!, $token: String!, $deviceId: String!) {
+  socialLogin(provider: $provider, token: $token, deviceId: $deviceId) {
     accessToken
     refreshToken
+    accessTokenExpiresIn
+    sessionId
     isNewUser
-    requiresProfileSetup
-    user {
-      id
-      displayName
-      tag
-      avatarUrl
-    }
+    user { id displayName username avatarUrl }
   }
 }
 ```
 
-**Variables:**
+`provider`: `GOOGLE` | `APPLE` | `ZALO`. `token` = OAuth idToken.
+
+**Variables (Google):**
 ```json
-{ "input": { "idToken": "eyJ..." } }
+{ "provider": "GOOGLE", "token": "eyJ...", "deviceId": "dev_ios_abc" }
+```
+
+**Variables (Apple):**
+```json
+{ "provider": "APPLE", "token": "eyJ...", "deviceId": "dev_ios_abc" }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "authWithGoogle": {
+    "socialLogin": {
       "accessToken": "eyJ...",
       "refreshToken": "eyJ...",
+      "accessTokenExpiresIn": 900,
+      "sessionId": "sess_abc",
       "isNewUser": false,
-      "requiresProfileSetup": false,
       "user": {
         "id": "u_abc123",
         "displayName": "Minh Dang",
-        "tag": "minhdang",
+        "username": "minhdang",
         "avatarUrl": "https://..."
       }
     }
@@ -272,68 +283,20 @@ mutation AuthWithGoogle($input: OAuthInput!) {
 
 ---
 
-### AD. Mutation: `AuthWithApple`
+### AE. Mutation: `UpdateMyProfile`
 
-Authenticate via Apple OAuth idToken. Returns same `AuthResult` shape.
-**Auth:** Not required
-
-**Operation:**
-```graphql
-mutation AuthWithApple($input: OAuthInput!) {
-  authWithApple(input: $input) {
-    accessToken
-    refreshToken
-    isNewUser
-    requiresProfileSetup
-    user {
-      id
-      displayName
-      tag
-      avatarUrl
-    }
-  }
-}
-```
-
-**Variables:**
-```json
-{ "input": { "idToken": "eyJ..." } }
-```
-
-**Response `200 OK`:**
-```json
-{
-  "data": {
-    "authWithApple": {
-      "accessToken": "eyJ...",
-      "refreshToken": "eyJ...",
-      "isNewUser": true,
-      "requiresProfileSetup": true,
-      "user": {
-        "id": "u_abc123",
-        "displayName": null,
-        "tag": null,
-        "avatarUrl": null
-      }
-    }
-  }
-}
-```
-
----
-
-### AE. Mutation: `SetupProfile`
-
-Update user profile (used for profile setup and future edits).
+Update user profile fields (used for Profile Setup after first registration and for later edits).
 **Auth:** Required
 
+Same backend op as UpdateMe (screen_5) — both first-time Profile Setup and later edits use `updateMyProfile`.
+
 **Operation:**
 ```graphql
-mutation SetupProfile($input: SetupProfileInput!) {
-  setupProfile(input: $input) {
+mutation UpdateMyProfile($displayName: String, $username: String, $avatarUrl: String) {
+  updateMyProfile(displayName: $displayName, username: $username, avatarUrl: $avatarUrl) {
     id
     displayName
-    tag
+    username
     avatarUrl
   }
 }
@@ -341,17 +304,17 @@ mutation SetupProfile($input: SetupProfileInput!) {
 
 **Variables:**
 ```json
-{ "input": { "displayName": "Minh Dang", "tag": "minhdang", "avatarUrl": "https://..." } }
+{ "displayName": "Minh Dang", "username": "minhdang", "avatarUrl": "https://..." }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "setupProfile": {
+    "updateMyProfile": {
       "id": "u_abc123",
       "displayName": "Minh Dang",
-      "tag": "minhdang",
+      "username": "minhdang",
       "avatarUrl": "https://..."
     }
   }
@@ -362,29 +325,28 @@ mutation SetupProfile($input: SetupProfileInput!) {
 
 | Code | Scenario |
 |------|----------|
-| `TAG_TAKEN` | Tag already in use by another user |
-| `TAG_ALREADY_SET` | User attempts to change tag after it was already set |
+| `USERNAME_TAKEN` | Username already in use by another user |
+| `USERNAME_ALREADY_SET` | User attempts to change username after it was already set |
+| `INVALID_USERNAME_FORMAT` | Username contains invalid characters |
 
 ---
 
-### AF. Query: `CheckUserTag`
+### AF. Query: `CheckUsername`
 
-Check tag availability during Profile Setup.  
+Check username availability during Profile Setup.
 **Auth:** Not required
 
 **Operation:**
 ```graphql
-query CheckUserTag($tag: String!) {
-  checkUserTag(tag: $tag) {
-    available
-  }
+query CheckUsername($username: String!) {
+  checkUsername(username: $username)
 }
 ```
 
 **Variables:**
 ```json
 {
-  "tag": "minhdang"
+  "username": "minhdang"
 }
 ```
 
@@ -392,18 +354,18 @@ query CheckUserTag($tag: String!) {
 ```json
 {
   "data": {
-    "checkUserTag": {
-      "available": true
-    }
+    "checkUsername": true
   }
 }
 ```
+
+Note: returns a Boolean scalar directly (no `{ available }` wrapper).
 
 **Errors:**
 
 | Status | Code | Scenario |
 |--------|------|----------|
-| `400` | `INVALID_TAG_FORMAT` | Tag contains invalid characters |
+| `400` | `INVALID_USERNAME_FORMAT` | Username contains invalid characters |
 
 ---
 
@@ -431,7 +393,7 @@ mutation RequestMediaUpload($input: MediaUploadInput!) {
 
 `purpose` enum: `USER_AVATAR` | `FAMILY_AVATAR` | `PET_AVATAR` | `POST_MEDIA`
 
-**Client flow:** call this → `PUT` the file bytes to `uploadUrl` → use `publicUrl` in the next mutation (`SetupProfile`, `UpdateMe`, family/pet update, or `CreatePost`). For **post media only**, pass `publicUrl` to `ScanMedia (AT)` to detect/match a pet.
+**Client flow:** call this → `PUT` the file bytes to `uploadUrl` → use `publicUrl` in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass `publicUrl` to `ScanMedia (AT)` to detect/match a pet.
 
 **Response `200 OK`:**
 ```json
@@ -464,18 +426,19 @@ Exchange a valid refresh token for a new access token (with a rotated refresh to
 
 **Operation:**
 ```graphql
-mutation RefreshToken($input: RefreshTokenInput!) {
-  refreshToken(input: $input) {
+mutation RefreshToken($sessionId: String!, $refreshToken: String!, $deviceId: String!) {
+  refreshToken(sessionId: $sessionId, refreshToken: $refreshToken, deviceId: $deviceId) {
     accessToken
     refreshToken   # rotated — replace the stored one
-    expiresIn
+    accessTokenExpiresIn
+    sessionId
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "input": { "refreshToken": "eyJ..." } }
+{ "sessionId": "sess_abc", "refreshToken": "eyJ...", "deviceId": "dev_ios_abc" }
 ```
 
 **Response `200 OK`:**
@@ -485,7 +448,8 @@ mutation RefreshToken($input: RefreshTokenInput!) {
     "refreshToken": {
       "accessToken": "eyJ...",
       "refreshToken": "eyJ...",
-      "expiresIn": 3600
+      "accessTokenExpiresIn": 900,
+      "sessionId": "sess_abc"
     }
   }
 }
@@ -506,9 +470,9 @@ mutation RefreshToken($input: RefreshTokenInput!) {
 |------|--------------------|
 | User closes app mid-OTP | Phone + OTP screen state is lost; user must restart from phone entry |
 | OTP expired before entry | Show "Code expired" with Resend button immediately active |
-| Tag already set, user tries to change | `400 TAG_ALREADY_SET`; hide tag field on Edit Profile for existing users |
-| OAuth account already registered | Treated as login (`isNewUser=false`); profile setup skipped only if `requiresProfileSetup=false` |
+| Username already set, user tries to change | `400 USERNAME_ALREADY_SET`; hide username field on Edit Profile for existing users |
+| OAuth account already registered | Treated as login (`isNewUser=false`); profile setup skipped only if `user.username != null` |
 | User skips avatar on profile setup | Default avatar (initials or placeholder) used until manually updated |
-| User abandons profile setup, logs in again | `isNewUser=false` but `requiresProfileSetup=true` → routed back into Profile Setup to finish name + tag before entering the app |
+| User abandons profile setup, logs in again | `isNewUser=false` but `user.username==null` → routed back into Profile Setup to finish name + username before entering the app |
 | Redirect to Login (from any auth-required action) | The originating action/screen is remembered as a **return target**; after successful login/signup (and Profile Setup if needed), navigate **back to that target**. No return target (cold open on Login) → land on Explore |
 | Access token expired during a session | Client calls `RefreshToken (BW)` with the stored refresh token; on `REFRESH_TOKEN_EXPIRED` → force a fresh login |
