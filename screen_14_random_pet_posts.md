@@ -69,6 +69,8 @@ Reuses endpoint defined in `screen_3_family_posts.md`.
 
 ### U. Query: `RandomPetPosts`
 
+> ⚠️ **GAP petapp-be#886:** `randomPetPosts` is a feed scoped by `familyId` (only random-pet posts within one family). Backend `exploreFeed` is global cross-family and takes no `familyId`, so mapping to it would lose the family scope entirely — kept as-is, pending backend `randomFeed(familyId)`.
+
 See full definition in `screen_3_family_posts.md` → **Section: U. Query: RandomPetPosts**.
 
 **Variables:** `{ "familyId": "<familyId>", "limit": 10 }`
