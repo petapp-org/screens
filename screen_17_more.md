@@ -4,7 +4,7 @@
 
 The **"More" tab** — last tab in the bottom navigation. A location-aware hub for community/discovery features grouped into categories: **Lost Pets**, **Pet Friendly**, **Events**, **Rescue**.
 
-This phase ships **Lost Pets**, **Pet Friendly**, and **Events**; only **Rescue** is still a placeholder (see Edge Cases).
+This phase ships **all four** categories: **Lost Pets**, **Pet Friendly**, **Events**, and **Rescue**.
 
 Requires login. If not logged in → tapping the More tab redirects to Login (same rule as My Pets / Shops / Services — see `screen_1_home_explore.md` → Bottom Navigation auth rules).
 
@@ -72,7 +72,18 @@ The whole screen is scoped to a **selected city** shown in the location bar at t
   └────────────────────────────────────────────────────────┘
   (max 3 — soonest upcoming in the selected city; "View All →" only when ≥ 1 item)
 
-[RESCUE section]         ← placeholder this phase
+[RESCUE section]
+  "RESCUE"                                        [View All →]
+  ┌────────────────────────────────────────────────────────┐
+  │ [photo]   Miu                                  2.3km    │
+  │           Cat · Domestic shorthair · ~4mo · ♀          │
+  │           Paws Rescue Saigon  🏷CHARITY                 │
+  ├────────────────────────────────────────────────────────┤
+  │ [photo]   Lucky                                3.1km    │
+  │           Dog · Mixed · ~1yr · ♂                       │
+  │           HCMC Animal Rescue  🏷CHARITY                 │
+  └────────────────────────────────────────────────────────┘
+  (max 3 — nearest open listings in the selected city; "View All →" only when ≥ 1 item)
 
 [Bottom Navigation]
   My Pets | Explore | Shops | Services | More (active)
@@ -160,14 +171,14 @@ Choose Your City                                    [× close]
 
 ### 4. Categories Row
 
-4 fixed icon buttons. **Lost Pets**, **Pet Friendly**, and **Events** are functional this phase; **Rescue** is a placeholder.
+4 fixed icon buttons — **all functional** this phase.
 
-| Button | Icon | Tap action (this phase) |
-|--------|------|-------------------------|
+| Button | Icon | Tap action |
+|--------|------|------------|
 | Lost Pets | ⚠️ triangle | Navigate to **Lost Pets screen** (`screen_18`, full list + map) — same destination as the section's "View All →" |
 | Pet Friendly | 📍 | Navigate to **Pet Friendly screen** (`screen_20`) — same as the section's "View All →" |
 | Events | 🗓️ | Navigate to **Events screen** (`screen_23`) — same as the section's "View All →" |
-| Rescue | ♡ | "Coming Soon" placeholder screen |
+| Rescue | ♡ | Navigate to **Rescue screen** (`screen_25`) — same as the section's "View All →" |
 
 ---
 
@@ -267,11 +278,34 @@ Shows **upcoming events in the selected city**, the **3 soonest** to start.
 
 ---
 
-### 8. Rescue Section (placeholder this phase)
+### 8. Rescue Section
 
-The `Rescue` section is **out of scope** for this phase. For now:
-- Either hide the section entirely, OR render the section header with a "Coming soon" inline state.
-- No API, no data binding. Final behaviour defined in a later phase.
+Shows **open rescue listings in the selected city** — pets that **charity families** have posted for adoption, the **3 nearest** to the user.
+
+- Section header: **"RESCUE"** + **"View All →"** link → **Rescue screen** (`screen_25`).
+- **Max 3 rows** (preview), only **open** listings (`status = OPEN`), sorted by **distance asc** (nearest first).
+- **Empty state** (no open listings in the selected city): hide the section (or show a compact "No rescues nearby yet"); **hide "View All →"**.
+
+**Each row (Rescue item)** — canonical layout, reused on `screen_25` / `screen_27`:
+
+```
+[photo]   {name}                                 {distanceKm}km
+          {species} · {breed} · {ageText} · {gender}
+          {charityName}  🏷CHARITY
+```
+
+| Element | Source | Notes |
+|---------|--------|-------|
+| Thumbnail | `photos[0]` | cover photo of the listing |
+| `name` | `name` | listing name (bold); `"Chưa đặt tên"` if blank |
+| `distanceKm` | computed per request | top-right; `< 10` → 1 decimal, `≥ 10` → integer |
+| species · breed · age · gender | `species`, `breed`, `ageText`, `gender` | line 2, ` · `-joined; skip any null part (breed/age optional) |
+| `charityName` + CHARITY badge | posting `family.name` | line 3 — the rescue org (charity family); badge always shown (only charity families can post) |
+
+- **Tap a row** → **Rescue Detail** (`screen_26`).
+- Data source: `Rescues query (CL)` `{ cityCode, countryCode, originLat?, originLng?, sort: NEAREST, limit: 3 }`.
+
+> **Posting a rescue is NOT done from the More hub section** — there is no Post button here. Charity families post from the **Rescue screen** banner (`screen_25`) or from **Manage Rescues** (`screen_27`).
 
 ---
 
@@ -704,6 +738,119 @@ query Events(
 
 ---
 
+### CL. Query: `Rescues`
+
+Returns **open** rescue listings for a city (pets posted for adoption by **charity families**). Used by both the **More → Rescue section** (`limit: 3`) and the full **Rescue screen** (`screen_25`, paginated + species filter + sort). All listings are created by charity families (`family.type = charity`).
+
+**Auth:** Required.
+
+**Operation:**
+```graphql
+query Rescues(
+  $cityCode: String!
+  $countryCode: String!
+  $filter: RescuesFilter
+  $sort: RescuesSort        # NEAREST | NEWEST  (default NEAREST)
+  $originLat: Float
+  $originLng: Float
+  $cursor: String
+  $limit: Int
+) {
+  rescues(
+    cityCode: $cityCode
+    countryCode: $countryCode
+    filter: $filter
+    sort: $sort
+    originLat: $originLat
+    originLng: $originLng
+    cursor: $cursor
+    limit: $limit
+  ) {
+    items {
+      id
+      name
+      species
+      breed
+      ageText
+      gender
+      thumbnailUrl
+      charity { id name avatarUrl }
+      cityShortName
+      countryCode
+      lat
+      lng
+      distanceKm
+      createdAt
+    }
+    nextCursor
+    hasMore
+    totalCount
+  }
+}
+```
+
+**`RescuesFilter`** (species chip on the full screen; omit for "All"):
+```json
+{ "species": "CAT" }     // CAT | DOG | OTHER  (OTHER = any species not CAT/DOG)
+```
+
+**Variables (More section — preview):**
+```json
+{ "cityCode": "HCM", "countryCode": "VN", "sort": "NEAREST", "originLat": 10.78, "originLng": 106.70, "limit": 3 }
+```
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "rescues": {
+      "items": [
+        {
+          "id": "rescue_001",
+          "name": "Miu",
+          "species": "Cat",
+          "breed": "Domestic shorthair",
+          "ageText": "~4 months",
+          "gender": "FEMALE",
+          "thumbnailUrl": "https://cdn.petapp.com/rescues/rescue_001/1.jpg",
+          "charity": {
+            "id": "fam_paws",
+            "name": "Paws Rescue Saigon",
+            "avatarUrl": "https://cdn.petapp.com/families/fam_paws/avatar.jpg"
+          },
+          "cityShortName": "HCMC",
+          "countryCode": "VN",
+          "lat": 10.7820,
+          "lng": 106.6960,
+          "distanceKm": 2.3,
+          "createdAt": "2026-06-07T09:00:00Z"
+        }
+      ],
+      "nextCursor": "eyJpZCI6InJlc2N1ZV8wMDEifQ==",
+      "hasMore": true,
+      "totalCount": 9
+    }
+  }
+}
+```
+
+**Notes:**
+- City-scoped (`cityCode` + `countryCode`); returns only `status = OPEN` listings (adopted/closed are excluded — like Lost Pets `found`).
+- `sort`: `NEAREST` (distance asc) or `NEWEST` (`createdAt` desc). The More section always passes `NEAREST, limit: 3`.
+- `distanceKm` from `originLat`/`originLng` (user GPS); absent → server uses city centre.
+- `breed` / `ageText` are optional (admin/charity entered) — skip null parts in the row's line 2.
+- `charity` is always a `family.type = charity` (only charity families can post) → CHARITY badge always shown.
+
+**Errors:**
+
+| Code | Scenario |
+|------|----------|
+| `UNAUTHENTICATED` | Caller is not logged in |
+| `CITY_NOT_FOUND` | Unknown `cityCode` / `countryCode` |
+| `CITY_NOT_AVAILABLE` | City has `status = COMING_SOON` (render locked state instead) |
+
+---
+
 ## User Flow Diagrams
 
 ### Open More tab
@@ -752,6 +899,16 @@ User taps an Event row (section)
   └─> Event Detail (screen_24) for that eventId
 ```
 
+### Enter Rescue
+
+```
+User taps "Rescue" category icon  OR  "View All →" in the section
+  └─> Rescue screen (screen_25), scoped to selected city → Rescues (CL)
+
+User taps a Rescue row (section)
+  └─> Rescue Detail (screen_26) for that rescueId
+```
+
 ---
 
 ## Edge Cases & Notes
@@ -773,7 +930,9 @@ User taps an Event row (section)
 | Events section: 0 upcoming events in city | Hide section + "View All →" (or compact empty message) |
 | Events section: 1–3 upcoming events | Show all; "View All →" still shown |
 | Event has ended (`endAt < now`) | Dropped from the section/list/detail listings (only upcoming/ongoing returned) |
-| Rescue | Out of scope this phase — placeholder / hidden |
+| Rescue section: 0 open listings in city | Hide section + "View All →" (or compact empty message) |
+| Rescue section: 1–3 open listings | Show all; "View All →" still shown |
+| Rescue marked adopted (`status != OPEN`) | Dropped from the section/list (only open listings returned) |
 | City list fetch fails | Fall back to HCMC default; allow retry on Change |
 
 ---
@@ -792,14 +951,14 @@ User taps an Event row (section)
 | 8 | Pet Friendly | Active this phase — section (max 3 nearest in city) + full screen (`screen_20`) + place detail with reviews (`screen_21`). |
 | 9 | City display label | Add `cityShortName` (curated short label, e.g. `HCMC` / `Đà Lạt` / `HN`) used in the location bar + lost-pet rows + Lost Pet Detail; `cityCode` stays for keys/logic, full `city` shown in the picker |
 | 10 | "Other" species filter | `LostPetsFilter.species` accepts an `OTHER` sentinel = any species not `CAT`/`DOG` |
-| 11 | Events | Active this phase — section (max 3 soonest in city) + full screen (`screen_23`) + event detail (`screen_24`). **Admin-entered**, not charity/family-hosted. Sorted by `startAt` asc (upcoming only); distance is display-only, not a sort key. Only **Rescue** remains a placeholder. |
+| 11 | Events | Active this phase — section (max 3 soonest in city) + full screen (`screen_23`) + event detail (`screen_24`). **Admin-entered**, not charity/family-hosted. Sorted by `startAt` asc (upcoming only); distance is display-only, not a sort key. |
 | 12 | Event countdown | `now < startAt` → `Starts in {N}d/{N}h`; `startAt ≤ now ≤ endAt` → `Ends in {N}h` / `Happening now`; ended events are filtered out |
+| 13 | Rescue | Active this phase — section (max 3 nearest open in city) + full screen (`screen_25`) + detail/create (`screen_26`) + charity management (`screen_27`). Posted by **charity families** only; standalone listings (not named pets); closed when adopted (drops from listings, share link still resolves). All four More categories now ship. |
 
 ---
 
 ## Open Items (next steps)
 
-- **Rescue** category — future phase (placeholder this phase).
-- **Full-screen map** (`Open map` on `screen_18` / `screen_20`) — pan/zoom/cluster; optional pins-only query if volume grows.
+- **Full-screen map** (`Open map` on `screen_18` / `screen_20` / `screen_25`) — pan/zoom/cluster; optional pins-only query if volume grows.
 
-> Done: Lost Pets (`screen_18`) + Lost Pet Detail (`screen_19`) + Report Missing upgrade (`screen_9`); Pet Friendly (`screen_20`) + Place Detail/reviews (`screen_21`); Events (`screen_23`) + Event Detail (`screen_24`).
+> Done — all four categories ship: Lost Pets (`screen_18`/`19`) + Report Missing upgrade (`screen_9`); Pet Friendly (`screen_20`/`21`); Events (`screen_23`/`24`); Rescue (`screen_25`/`26`/`27`).
