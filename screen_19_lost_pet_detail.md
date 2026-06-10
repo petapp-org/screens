@@ -321,5 +321,5 @@ Tap [I saw {pet}]
 
 ## Open Items (next steps)
 
-- **Full-screen map** (`[Open map]` on `screen_18`) — shared pan/zoom/cluster behaviour; not specific to this screen.
+- **Full-screen map** — shared **Map View** (`screen_28`), opened via `[Open map]` on the Lost Pets list (`screen_18`); not specific to this screen.
 - Other More categories: **Rescue** — future phase (Pet Friendly `screen_20`/`21` and Events `screen_23`/`24` are done).

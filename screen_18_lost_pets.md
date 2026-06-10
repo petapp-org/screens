@@ -95,7 +95,7 @@ A compact map showing the last-seen location of each missing report in the selec
 | Element | Description |
 |---------|-------------|
 | Pins | One pin per report, placed at `lastSeen.lat` / `lastSeen.lng` |
-| `[Open map]` button | Top-right — opens a **full-screen map** view of the same pins (clustered when dense) |
+| `[Open map]` button | Top-right — opens the shared **Map View** (`screen_28`) of the same pins (clustered when dense) |
 | "N missing nearby" chip | Bottom-left — count of reports currently plotted |
 
 **Centring:**
@@ -105,7 +105,7 @@ A compact map showing the last-seen location of each missing report in the selec
 **Pin interaction:**
 - Tap a pin → mini card (pet avatar + name + family + last-seen) → tap card → **Lost Pet Detail** (`screen_19`).
 
-**Full-screen map (`[Open map]`):** same pin set, pan/zoom, clustering; tapping a pin/cluster behaves the same. (Detailed map-screen interactions can be split into a follow-up; data is identical to this screen.)
+**Full-screen map (`[Open map]`):** opens the shared **Map View** (`screen_28`) with `category: LOST_PETS`, the current city + filter, and the same pin set (themed pins + synced card carousel). Data identical to this screen.
 
 **Map pin data:** reuse `LostPets (CB)` requesting the full set for the city (high `limit`, the list already returns `lastSeen.lat/lng`). If report volume per city grows large, switch the map to a lightweight pins-only query — flagged in Open Items.
 
@@ -231,6 +231,6 @@ User taps a list row  OR  a map pin's card
 
 ## Open Items (next steps)
 
-- **Full-screen map** (`[Open map]`) — detailed pan/zoom/cluster interactions; optional pins-only query if volume grows.
+- **Full-screen map** (`[Open map]`) — done: shared **Map View** (`screen_28`). Optional pins-only query if volume grows.
 
 > Done: Lost Pet Detail is specified in `screen_19`.

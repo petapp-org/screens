@@ -965,6 +965,6 @@ User taps a Rescue row (section)
 
 ## Open Items (next steps)
 
-- **Full-screen map** (`Open map` on `screen_18` / `screen_20` / `screen_25`) — pan/zoom/cluster; optional pins-only query if volume grows.
+- **Pins-only lightweight query** — optimisation for the shared Map View (`screen_28`) if a city's pin volume grows large.
 
-> Done — all four categories ship: Lost Pets (`screen_18`/`19`) + Report Missing upgrade (`screen_9`); Pet Friendly (`screen_20`/`21`); Events (`screen_23`/`24`); Rescue (`screen_25`/`26`/`27`).
+> Done — all four categories ship, plus the shared full-screen map: Lost Pets (`screen_18`/`19`) + Report Missing upgrade (`screen_9`); Pet Friendly (`screen_20`/`21`); Events (`screen_23`/`24`); Rescue (`screen_25`/`26`/`27`); **Map View** (`screen_28`).

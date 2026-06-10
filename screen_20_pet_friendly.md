@@ -78,14 +78,14 @@ A compact map showing each place in the selected city (after the active filter).
 | Element | Description |
 |---------|-------------|
 | Pins | One pin per place, at `lat` / `lng` |
-| `[Open map]` button | Top-right — opens a **full-screen map** of the same pins (clustered when dense) |
+| `[Open map]` button | Top-right — opens the shared **Map View** (`screen_28`) of the same pins (clustered when dense) |
 | "N places near you" chip | Bottom-left — count of places currently plotted |
 
 **Centring:** GPS granted → centre on the user; GPS unavailable → centre on the selected city's centre (`Cities (CA)` lat/lng).
 
 **Pin interaction:** tap a pin → mini card (thumbnail + name + ★rating + distance) → tap card → **Pet Friendly Place Detail** (`screen_21`).
 
-**Full-screen map (`[Open map]`):** same pin set, pan/zoom/cluster; data identical to this screen. (Detailed map interactions = shared follow-up with `screen_18`'s map — see Open Items.)
+**Full-screen map (`[Open map]`):** opens the shared **Map View** (`screen_28`) with `category: PET_FRIENDLY`, the current city + filter, and the same pin set (themed pins + synced card carousel). Data identical to this screen.
 
 ---
 
@@ -175,5 +175,5 @@ Tap a list row  OR  a map pin's card
 
 ## Open Items (next steps)
 
-- **Full-screen map** (`[Open map]`) — shared pan/zoom/cluster behaviour with `screen_18`; optional pins-only query if volume grows.
+- **Full-screen map** (`[Open map]`) — done: shared **Map View** (`screen_28`). Optional pins-only query if volume grows.
 - **Combined filters** (suitability + category together) — possible later enhancement.

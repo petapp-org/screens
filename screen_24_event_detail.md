@@ -349,5 +349,5 @@ Tap [ ♡ Interested · N ]
 
 - **Ticketing / RSVP "Going"** — only a single **Interested** signal this phase; richer RSVP or paid ticketing could come later.
 - **Share / web-viewable event page** — removed this phase; could mirror `screen_19` if needed later.
-- **Full-screen map** — the detail shows a single-pin map; a shared full-screen map lives on `screen_23`.
+- **Full-screen map** — the detail shows a single-pin map; the shared **Map View** (`screen_28`) is opened via `[Open map]` on the Events list (`screen_23`).
 - **Admin CMS** for event create/edit — out of scope of these client specs.

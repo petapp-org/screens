@@ -86,14 +86,14 @@ A compact map showing each event's venue in the selected city (after the active 
 | Element | Description |
 |---------|-------------|
 | Pins | One pin per event, at `lat` / `lng` (from `Events (CI)`) |
-| `[Open map]` button | Top-right — opens a **full-screen map** of the same pins (clustered when dense) |
+| `[Open map]` button | Top-right — opens the shared **Map View** (`screen_28`) of the same pins (clustered when dense) |
 | "N events near you" chip | Bottom-left — count of events currently plotted |
 
 **Centring:** GPS granted → centre on the user; GPS unavailable → centre on the selected city's centre (`Cities (CA)` lat/lng).
 
 **Pin interaction:** tap a pin → mini card (date-chip + title + time + distance) → tap card → **Event Detail** (`screen_24`).
 
-**Full-screen map (`[Open map]`):** same pin set, pan/zoom/cluster; data identical to this screen (shared follow-up with the `screen_18` / `screen_20` / `screen_25` maps — see Open Items).
+**Full-screen map (`[Open map]`):** opens the shared **Map View** (`screen_28`) with `category: EVENTS`, the current city + filter, and the same pin set (themed pins + synced card carousel). Data identical to this screen.
 
 > The map is an orientation aid only — the list stays **time-sorted** (`startAt` asc), never reordered by distance.
 
@@ -217,4 +217,4 @@ Tap an event row (outside the Interested button)  OR  a map pin's card
 
 - **Category filter / structured event types** — possible later enhancement (deliberately omitted this phase).
 - **Calendar / agenda view toggle** — list-only this phase.
-- **Full-screen map** (`[Open map]`) — shared pan/zoom/cluster behaviour with `screen_18` / `screen_20` / `screen_25`.
+- **Full-screen map** (`[Open map]`) — done: shared **Map View** (`screen_28`).

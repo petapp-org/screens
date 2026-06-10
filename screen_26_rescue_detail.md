@@ -463,6 +463,6 @@ Tap [Inquire to Adopt]
 
 ## Open Items (next steps)
 
-- **Full-screen map** — the detail shows a single-pin map; the shared full-screen map lives on `screen_25`.
+- **Full-screen map** — the detail shows a single-pin map; the shared **Map View** (`screen_28`) is opened via `[Open map]` on the Rescue list (`screen_25`).
 - **Adoption application / structured form** — only free-text Inquire (message) this phase.
 - **Admin moderation** of charity-posted listings — out of scope of these client specs.
