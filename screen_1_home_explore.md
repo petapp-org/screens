@@ -54,16 +54,16 @@ The unread state is fetched separately (not bundled in the feed response) — th
 
 3 fixed tabs — no dynamic categories.
 
-| Tab | Description | Auth required |
-|-----|-------------|---------------|
-| Latest | Newest posts across all families, sorted by `createdAt` desc | No |
-| Follow | Posts from families the current user follows | Yes — redirect to Login if not authenticated |
-| Rescue | Posts from families with `type = charity` | No |
+| Tab | `filter` (ExploreFilter) | Description | Auth required |
+|-----|-------------------------|-------------|---------------|
+| Latest | `ALL` | Newest posts across all families, sorted by `createdAt` desc | No |
+| Follow | `FOLLOW` | Posts from families the current user follows | Yes — redirect to Login if not authenticated |
+| Rescue | `RESCUE` | Posts from families with `type = charity` | No |
 
 **Inputs:**
-- `filter`: `latest` | `following` | `rescue`
-- `cursor`: opaque pagination cursor (absent on first load)
-- `limit`: default `10`
+- `filter`: `ExploreFilter` — `ALL` | `FOLLOW` | `RESCUE` (tab mapping above; `sort` defaults to `LATEST`)
+- `after`: opaque pagination cursor — `pageInfo.endCursor` of the previous page (absent on first load)
+- `first`: page size, default `20`
 
 ---
 
@@ -231,7 +231,7 @@ All API calls go to a single `POST /graphql` endpoint.
 
 ---
 
-### A. Query: `Feed`
+### A. Query: `ExploreFeed`
 
 Fetches the paginated post feed for the Explore screen.
 
@@ -239,166 +239,174 @@ Fetches the paginated post feed for the Explore screen.
 
 **Operation:**
 ```graphql
-query Feed($filter: FeedFilter, $cursor: String, $limit: Int) {
-  feed(filter: $filter, cursor: $cursor, limit: $limit) {
-    posts {
-      id
-      family {
+query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String) {
+  exploreFeed(filter: $filter, first: $first, after: $after) {
+    edges {
+      node {
         id
-        name
-        avatarUrl
-        type
-      }
-      author {
-        id
-        displayName
-        avatarUrl
-      }
-      pets {
-        id
-        name
-        avatarUrl
-      }
-      caption
-      location {
-        city
-        cityCode
-        country
-        countryCode
-      }
-      media {
-        id
-        type
-        url
-        thumbnailUrl
-        mimeType
-        width
-        height
-        durationSeconds
-        provider
-        mediaTag {
-          type
+        family {
           id
-          species
-          breed
+          name
+          avatarUrl
+          type
         }
+        author {
+          id
+          displayName
+          avatarUrl
+        }
+        pets {
+          id
+          name
+          avatarUrl
+        }
+        caption
+        location {
+          city
+          cityCode
+          country
+          countryCode
+        }
+        media {
+          id
+          type
+          url
+          thumbnailUrl
+          mimeType
+          width
+          height
+          durationSeconds
+          provider
+          mediaTag {
+            type
+            id
+            species
+            breed
+          }
+        }
+        loveCount
+        commentCount
+        isLoved
+        privacy
+        createdAt
       }
-      loveCount
-      commentCount
-      isLoved
-      privacy
-      createdAt
     }
-    nextCursor
-    hasMore
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "filter": "LATEST", "cursor": null, "limit": 10 }
+{ "filter": "ALL", "first": 10, "after": null }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "feed": {
-      "posts": [
+    "exploreFeed": {
+      "edges": [
         {
-          "id": "post_abc123",
-          "family": {
-            "id": "fam_xyz",
-            "name": "Pudding's Family",
-            "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-            "type": "STANDARD"
-          },
-          "author": {
-            "id": "user_001",
-            "displayName": "Mochi",
-            "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
-          },
-          "pets": [
-            {
-              "id": "pet_111",
-              "name": "Pudding",
-              "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
+          "node": {
+            "id": "post_abc123",
+            "family": {
+              "id": "fam_xyz",
+              "name": "Pudding's Family",
+              "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+              "type": "STANDARD"
             },
-            {
-              "id": "pet_222",
-              "name": "Mochi",
-              "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
-            }
-          ],
-          "caption": "Pudding nằm chờ mama nấu cơm 🌕 Q7 cat life",
-          "location": {
-            "city": "Hồ Chí Minh",
-            "cityCode": "HCM",
-            "country": "Việt Nam",
-            "countryCode": "VN"
-          },
-          "media": [
-            {
-              "id": "media_001",
-              "type": "UPLOADED",
-              "url": "https://cdn.petapp.com/media/001.jpg",
-              "thumbnailUrl": null,
-              "mimeType": "image/jpeg",
-              "width": 1080,
-              "height": 1080,
-              "durationSeconds": null,
-              "provider": null,
-              "mediaTag": {
-                "type": "PET",
+            "author": {
+              "id": "user_001",
+              "displayName": "Mochi",
+              "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+            },
+            "pets": [
+              {
                 "id": "pet_111",
-                "species": "Cat",
-                "breed": "Orange Tabby Cat"
+                "name": "Pudding",
+                "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
+              },
+              {
+                "id": "pet_222",
+                "name": "Mochi",
+                "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
               }
+            ],
+            "caption": "Pudding nằm chờ mama nấu cơm 🌕 Q7 cat life",
+            "location": {
+              "city": "Hồ Chí Minh",
+              "cityCode": "HCM",
+              "country": "Việt Nam",
+              "countryCode": "VN"
             },
-            {
-              "id": "media_002",
-              "type": "EMBEDDED",
-              "url": "https://www.youtube.com/watch?v=abc123",
-              "thumbnailUrl": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
-              "mimeType": null,
-              "width": null,
-              "height": null,
-              "durationSeconds": 62.0,
-              "provider": "YOUTUBE",
-              "mediaTag": {
-                "type": "RANDOM",
-                "id": null,
-                "species": null,
-                "breed": null
+            "media": [
+              {
+                "id": "media_001",
+                "type": "UPLOADED",
+                "url": "https://cdn.petapp.com/media/001.jpg",
+                "thumbnailUrl": null,
+                "mimeType": "image/jpeg",
+                "width": 1080,
+                "height": 1080,
+                "durationSeconds": null,
+                "provider": null,
+                "mediaTag": {
+                  "type": "PET",
+                  "id": "pet_111",
+                  "species": "Cat",
+                  "breed": "Orange Tabby Cat"
+                }
+              },
+              {
+                "id": "media_002",
+                "type": "EMBEDDED",
+                "url": "https://www.youtube.com/watch?v=abc123",
+                "thumbnailUrl": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
+                "mimeType": null,
+                "width": null,
+                "height": null,
+                "durationSeconds": 62.0,
+                "provider": "YOUTUBE",
+                "mediaTag": {
+                  "type": "RANDOM",
+                  "id": null,
+                  "species": null,
+                  "breed": null
+                }
+              },
+              {
+                "id": "media_003",
+                "type": "UPLOADED",
+                "url": "https://cdn.petapp.com/media/003.jpg",
+                "thumbnailUrl": null,
+                "mimeType": "image/jpeg",
+                "width": 1080,
+                "height": 1080,
+                "durationSeconds": null,
+                "provider": null,
+                "mediaTag": {
+                  "type": "RANDOM",
+                  "id": null,
+                  "breed": "British Shorthair"
+                }
               }
-            },
-            {
-              "id": "media_003",
-              "type": "UPLOADED",
-              "url": "https://cdn.petapp.com/media/003.jpg",
-              "thumbnailUrl": null,
-              "mimeType": "image/jpeg",
-              "width": 1080,
-              "height": 1080,
-              "durationSeconds": null,
-              "provider": null,
-              "mediaTag": {
-                "type": "RANDOM",
-                "id": null,
-                "breed": "British Shorthair"
-              }
-            }
-          ],
-          "loveCount": 287,
-          "commentCount": 34,
-          "isLoved": false,
-          "privacy": "PUBLIC",
-          "createdAt": "2026-06-06T06:00:00Z"
+            ],
+            "loveCount": 287,
+            "commentCount": 34,
+            "isLoved": false,
+            "privacy": "PUBLIC",
+            "createdAt": "2026-06-06T06:00:00Z"
+          }
         }
       ],
-      "nextCursor": "eyJpZCI6InBvc3RfYWJjMTIzIn0=",
-      "hasMore": true
+      "pageInfo": {
+        "endCursor": "eyJpZCI6InBvc3RfYWJjMTIzIn0=",
+        "hasNextPage": true
+      }
     }
   }
 }
@@ -1040,7 +1048,7 @@ mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
 
 ```
 User opens app
-  └─> Feed query (A) { filter: LATEST, limit: 10 }
+  └─> ExploreFeed query (A) { filter: ALL, first: 10 }
         ├─ [unauthenticated] → returns posts with isLoved=false
         └─ [authenticated]   → returns posts with isLoved populated
              └─> Render first 10 posts
@@ -1052,9 +1060,9 @@ User opens app
 
 ```
 User scrolls to bottom
-  └─> Feed query (A) { filter: LATEST, cursor: <nextCursor>, limit: 10 }
+  └─> ExploreFeed query (A) { filter: ALL, after: <pageInfo.endCursor>, first: 10 }
         └─> Append new posts to list
-              └─> hasMore=false → show "You're all caught up" state
+              └─> pageInfo.hasNextPage=false → show "You're all caught up" state
 ```
 
 ### Suggested Families — Dismiss & Refresh
