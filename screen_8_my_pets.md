@@ -90,9 +90,11 @@ Each row:
 | `name` | Pet name |
 | `breed` | Breed name (truncated with `...` if long) |
 | `gender` | `Male` / `Female` / `Unknown` |
-| `age_display` | e.g. `"3 years"`, `"5 months"` |
+| `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `post_count` | `N posts` |
 | `health_status` | Badge — see Health Status below |
+
+> Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
 **Health Status badge** (simplified aggregate shown on row — matches Screen 9 values):
 
@@ -245,7 +247,7 @@ query ActiveFamily {
       breed
       isPublic
       gender
-      ageDisplay
+      ageMonths
       postCount
       healthStatus
     }
@@ -292,7 +294,7 @@ query ActiveFamily {
           "breed": "Orange Tabby Cat",
           "isPublic": true,
           "gender": "MALE",
-          "ageDisplay": "3 years",
+          "ageMonths": 36,
           "postCount": 47,
           "healthStatus": "NORMAL"
         },
@@ -302,7 +304,7 @@ query ActiveFamily {
           "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
           "breed": "Buckskin Pony",
           "gender": "FEMALE",
-          "ageDisplay": "5 years",
+          "ageMonths": 60,
           "postCount": 24,
           "healthStatus": "CONCERN"
         }
