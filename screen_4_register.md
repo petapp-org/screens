@@ -43,8 +43,8 @@ After first-time registration via any method, user is prompted to complete their
            ├─ INVALID_OTP → show error, allow retry
            ├─ TOO_MANY_ATTEMPTS → show "Too many attempts, try again later"
            └─ 200 → { accessToken, refreshToken, isNewUser, sessionId }
-                 ├─ isNewUser=true (hoặc user.username==null) → navigate to Profile Setup screen
-                 └─ ngược lại → navigate to post-login target
+                 ├─ isNewUser=true (or user.username==null) → navigate to Profile Setup screen
+                 └─ else → navigate to post-login target
                                 (the return target, else Explore)
 
 3. Resend OTP: available after 60s countdown
@@ -58,18 +58,18 @@ After first-time registration via any method, user is prompted to complete their
      └─> Native OAuth flow (handled by SDK)
            └─> SocialLogin mutation (AC) { provider, token, deviceId }
                  └─ 200 → { accessToken, refreshToken, isNewUser, sessionId }
-                       ├─ isNewUser=true (hoặc user.username==null) → navigate to Profile Setup screen
-                       └─ ngược lại → navigate to post-login target
+                       ├─ isNewUser=true (or user.username==null) → navigate to Profile Setup screen
+                       └─ else → navigate to post-login target
                                       (the return target, else Explore)
 ```
 
 ---
 
-> **Routing dựa trên `isNewUser` và `username`:** Sau khi xác thực, routing dùng `isNewUser` (và `user.username == null` cho user bỏ dở setup). `isNewUser` là analytics (account vừa được tạo trong call này). User đã đăng ký nhưng bỏ dở setup vẫn còn `username=null` → route lại Profile Setup (ngay cả khi `isNewUser=false`).
+> **Routing on `isNewUser` and `username`:** After authentication, routing uses `isNewUser` (and `user.username == null` for users who abandoned setup). `isNewUser` is just analytics (was the account created on this call). A user who registered but abandoned setup still has `username=null` → routed back into Profile Setup (even when `isNewUser=false`).
 
 > **Return target (post-login redirect):** When the user reaches this screen because an auth-required action redirected them (e.g. tapped Follow / Message / My Pets), that origin is remembered as a **return target**. After successful auth — and after Profile Setup if `isNewUser=true` or `username==null` — the app navigates **back to the return target**. If there is no return target (app opened cold on Login), it lands on **Explore**.
 
-> Backend không trả `requiresProfileSetup`. Client suy "cần Profile Setup" từ `isNewUser` (hoặc `user.username == null`).
+> Backend does not return `requiresProfileSetup`. The client derives "needs Profile Setup" from `isNewUser` (or `user.username == null`).
 
 ---
 
@@ -121,12 +121,12 @@ type AuthTokens {
 type User {
   id: ID!
   displayName: String!
-  username: String          # null cho tới khi user set ở Profile Setup
+  username: String          # null until the user sets it during Profile Setup
   avatarUrl: String!
 }
 ```
 
-> Backend không trả `requiresProfileSetup`. Client suy "cần Profile Setup" từ `isNewUser` (hoặc `user.username == null`).
+> Backend does not return `requiresProfileSetup`. The client derives "needs Profile Setup" from `isNewUser` (or `user.username == null`).
 
 ---
 
@@ -150,7 +150,7 @@ mutation SendOtp($phone: String) {
 { "phone": "+84901234567" }
 ```
 
-Note: truyền `phone` HOẶC `email`, đúng 1 cái.
+Note: pass either `phone` OR `email` — exactly one.
 
 **Response `200 OK`:**
 ```json
@@ -209,9 +209,9 @@ mutation VerifyOtp($code: String!, $deviceId: String!, $phone: String) {
       "isNewUser": true,
       "user": {
         "id": "u_abc123",
-        "displayName": null,
+        "displayName": "",
         "username": null,
-        "avatarUrl": null
+        "avatarUrl": ""
       }
     }
   }
@@ -288,7 +288,7 @@ mutation SocialLogin($provider: AuthProvider!, $token: String!, $deviceId: Strin
 Update user profile fields (used for Profile Setup after first registration and for later edits).
 **Auth:** Required
 
-Dùng chung backend op với UpdateMe (screen_5) — lần đầu (Profile Setup) và sửa sau đều là `updateMyProfile`.
+Same backend op as UpdateMe (screen_5) — both first-time Profile Setup and later edits use `updateMyProfile`.
 
 **Operation:**
 ```graphql
@@ -359,7 +359,7 @@ query CheckUsername($username: String!) {
 }
 ```
 
-Note: trả Boolean scalar trực tiếp (không có `{ available }`).
+Note: returns a Boolean scalar directly (no `{ available }` wrapper).
 
 **Errors:**
 

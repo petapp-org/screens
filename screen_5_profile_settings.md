@@ -266,7 +266,7 @@ query Me {
 Set the primary (active) family for the current user. All other families are deactivated automatically.  
 **Auth:** Required
 
-**Side effects (see screen_10):** Switching the family được đánh primary re-scopes the Chats inbox — threads received by the previous active family disappear, threads received by the new active family appear (DMs and own-sent threads are unaffected). The server records the activation moment; a family-received message counts as **unread only if** `sentAt > activation time`, so messages that arrived while the family was inactive are not marked unread.
+**Side effects (see screen_10):** Switching the primary family re-scopes the Chats inbox — threads received by the previous active family disappear, threads received by the new active family appear (DMs and own-sent threads are unaffected). The server records the activation moment; a family-received message counts as **unread only if** `sentAt > activation time`, so messages that arrived while the family was inactive are not marked unread.
 
 **Operation:**
 ```graphql
@@ -519,7 +519,7 @@ mutation UpdateMyProfile($displayName: String, $avatarUrl: String) {
 | `UNAUTHENTICATED` | Caller is not logged in |
 | `DISPLAY_NAME_TOO_LONG` | `displayName` exceeds 50 characters |
 
-> Toggle push notification dùng op riêng `updateUserPreferences`:
+> The push-notification toggle uses a separate op, `updateUserPreferences`:
 
 ```graphql
 mutation UpdateUserPreferences($pushEnabled: Boolean) {
@@ -529,7 +529,7 @@ mutation UpdateUserPreferences($pushEnabled: Boolean) {
 }
 ```
 
-(`pushEnabled` thay thế field `pushNotificationsEnabled` cũ.)
+(`pushEnabled` replaces the old `pushNotificationsEnabled` field.)
 
 ---
 
