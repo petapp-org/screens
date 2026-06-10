@@ -8,7 +8,7 @@ Navigated to from:
 - More tab → **Events** category icon, or
 - More tab → Events section → **"View All →"**.
 
-Both pass the **selected city** from the More tab's location bar. The list is **city-scoped** and **time-sorted** (`startAt` asc); only **upcoming/ongoing** events (`endAt >= now`) are shown. Distance is **display-only** — events are never sorted by distance (unlike Pet Friendly), and there is **no map** on this screen (Events are organised around *when*, not *where*).
+Both pass the **selected city** from the More tab's location bar. The list is **city-scoped** and **time-sorted** (`startAt` asc); only **upcoming/ongoing** events (`endAt >= now`) are shown. A **map preview** shows each event's venue (consistent with the other More screens). Distance is **display-only** — events are still **sorted by time**, never by distance (unlike Pet Friendly); the map and distance are just orientation aids.
 
 All events are **admin-entered** (no AI, no charity/family hosting — see `screen_24` field model).
 
@@ -25,6 +25,15 @@ Requires login. Keeps the bottom navigation (More tab stays active) — it's a s
 
 [Filter chips — horizontal scroll]
   [All]  [This week]  [This weekend]  [Free]
+
+[Map preview]
+  ┌──────────────────────────────────────────────┐
+  │  (map with pins at each event's venue)        │
+  │                                  [Open map]   │
+  │  ┌──────────────────────┐                     │
+  │  │ 🗓️ 8 events near you  │                     │
+  │  └──────────────────────┘                     │
+  └──────────────────────────────────────────────┘
 
 [List — grouped by time window, soonest first, infinite scroll]
   ─── This weekend ───
@@ -70,7 +79,27 @@ Horizontal scrollable row. **Single-select** — exactly one chip active at a ti
 
 ---
 
-### 2. Events List
+### 2. Map Preview
+
+A compact map showing each event's venue in the selected city (after the active filter).
+
+| Element | Description |
+|---------|-------------|
+| Pins | One pin per event, at `lat` / `lng` (from `Events (CI)`) |
+| `[Open map]` button | Top-right — opens a **full-screen map** of the same pins (clustered when dense) |
+| "N events near you" chip | Bottom-left — count of events currently plotted |
+
+**Centring:** GPS granted → centre on the user; GPS unavailable → centre on the selected city's centre (`Cities (CA)` lat/lng).
+
+**Pin interaction:** tap a pin → mini card (date-chip + title + time + distance) → tap card → **Event Detail** (`screen_24`).
+
+**Full-screen map (`[Open map]`):** same pin set, pan/zoom/cluster; data identical to this screen (shared follow-up with the `screen_18` / `screen_20` / `screen_25` maps — see Open Items).
+
+> The map is an orientation aid only — the list stays **time-sorted** (`startAt` asc), never reordered by distance.
+
+---
+
+### 3. Events List
 
 Full, paginated list of upcoming events in the selected city (after the active filter), **grouped by time window** with sticky-ish group headers.
 
@@ -104,7 +133,7 @@ Full, paginated list of upcoming events in the selected city (after the active f
 
 - **Pagination:** infinite scroll via `Events (CI)` `cursor`.
 - **Tap a row** (anywhere except the Interested button) → **Event Detail** (`screen_24`).
-- **Empty state** (filter matches nothing): *"No events match this filter."* (chips stay visible).
+- **Empty state** (filter matches nothing): *"No events match this filter."* (map + chips stay visible).
 
 ---
 
@@ -123,7 +152,7 @@ Full, paginated list of upcoming events in the selected city (after the active f
 More tab → "Events" icon  OR  "View All →"
   └─> Events screen (selected city passed in)
         └─> Events (CI) { cityCode, countryCode, originLat?, originLng?, [filter] }
-              ├─ items → grouped list (startAt asc)
+              ├─ items → grouped list (startAt asc) + map pins
               └─ empty → empty state
 ```
 
@@ -147,7 +176,7 @@ Tap [ ♡ Interested ] on a row
 ### Open an event
 
 ```
-Tap an event row (outside the Interested button)
+Tap an event row (outside the Interested button)  OR  a map pin's card
   └─> Event Detail (screen_24) { eventId }
 ```
 
@@ -160,8 +189,8 @@ Tap an event row (outside the Interested button)
 | Not logged in | More tab (and this screen) redirect to Login |
 | Selected city has 0 upcoming events | List empty state |
 | Event ends while list is open | On refresh it drops out (`endAt >= now` only) |
-| GPS denied | Distance computed from city centre (still shown); no map either way |
-| GPS granted | Distance from user (display-only); ordering unchanged (always `startAt` asc) |
+| GPS denied | Distance from city centre (still shown); map centres on the city centre |
+| GPS granted | Distance from user (display-only); map centres on the user; ordering unchanged (always `startAt` asc) |
 | Filter matches nothing | "No events match this filter."; chips remain |
 | Distance ≥ 10km | Integer format (`120km`); `< 10km` → 1 decimal (`2.1km`) |
 | Event unpublished | Excluded from results (`isPublished = false`) |
@@ -177,7 +206,7 @@ Tap an event row (outside the Interested button)
 | 2 | Sort | `startAt` asc (soonest first); **not** distance-sorted |
 | 3 | Grouping | List grouped by time window (Today / This weekend / Next week / {Month}); headers derived client-side from `startAt` |
 | 4 | Filter chips | Single-select; time (`This week` / `This weekend`) + price (`Free`); **no category chips** this phase; `All` resets |
-| 5 | Map | **No map** on this screen — Events are organised by time, not location |
+| 5 | Map | **Map preview kept** (consistent with all other More screens) — pins at each venue; orientation aid only, list stays time-sorted (not distance-sorted) |
 | 6 | Distance | Display-only on rows; never a sort key |
 | 7 | Row Interested | Quick toggle on the row (heart only, no count); first-time On triggers the Add-to-calendar prompt (shared with `screen_24`) |
 | 8 | Row layout | Canonical Event item (`screen_17` §7): date-chip + title + distance / time / venue·city / price · countdown |
@@ -188,4 +217,4 @@ Tap an event row (outside the Interested button)
 
 - **Category filter / structured event types** — possible later enhancement (deliberately omitted this phase).
 - **Calendar / agenda view toggle** — list-only this phase.
-- **Rescue** category (`screen_17`) — future phase.
+- **Full-screen map** (`[Open map]`) — shared pan/zoom/cluster behaviour with `screen_18` / `screen_20` / `screen_25`.

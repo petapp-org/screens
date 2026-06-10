@@ -61,13 +61,16 @@ A rescue listing is a **standalone entity** created by a charity family — **no
 
 [RESCUE BY]
   [avatar]  Paws Rescue Saigon  🏷CHARITY        ← tap → Family Posts (screen_3)
-  📍 Quận 3, HCMC                                  ← cityShortName (no full map)
+  📍 Quận 3, HCMC
+  ┌──────────────────────────────────┐
+  │     (map, pin tại lat/lng)        │   2.3km        ← tap → open device map
+  └──────────────────────────────────┘
 
 [Fixed bottom action bar]   ← varies by viewer (see Section 7)
   [ Donate ]                 [ ✓ Inquire to Adopt ]
 ```
 
-> **No map / no directions** on this screen (consistent with the lean rescue model); location is the charity's city label only. Distance is shown on the rows, not here.
+> The location is the charity's **city label + a map pin** at `lat`/`lng` (consistent with all other More screens). There is no street address field for rescues — the pin marks the pickup/charity location; tapping the map opens the device map app.
 
 ---
 
@@ -102,7 +105,8 @@ A rescue listing is a **standalone entity** created by a charity family — **no
 | Element | Display |
 |---------|---------|
 | `charity.avatarUrl` + `charity.name` | The posting charity family, with **CHARITY** badge; **tap name → Family Posts** (`screen_3`) |
-| `cityShortName` | `📍 {cityShortName}` (e.g. `"Quận 3, HCMC"` style city label) — **no map** |
+| `cityShortName` | `📍 {cityShortName}` (e.g. `"Quận 3, HCMC"` style city label) |
+| Map | A map with a pin at `lat` / `lng`; **tap → open the device map app**. `distanceKm` shown by the map |
 
 ---
 
@@ -450,7 +454,7 @@ Tap [Inquire to Adopt]
 | 4 | Acting requires login | Inquire / Donate → redirect to Login when logged out |
 | 5 | Inquire | `InquireRescue (CR)` — records an idempotent inquiry (feeds `inquiriesCount`) **and** opens a thread to the charity (`screen_10`), pre-filled; hidden for own-charity members |
 | 6 | Donate | Reuses the charity's Donate screen (currently "Coming Soon") |
-| 7 | Map / directions | **Removed** — location shown as the charity's city label only; distance lives on the rows |
+| 7 | Map | **Map with a pin** at `lat`/`lng` (consistent with all other More screens); tap → open device map. No street-address field (city label + pin only); no separate Directions button |
 | 8 | goodToKnow | **Free text ≤ 60** with admin hint + counter (not a fixed checklist); single-line `…` |
 | 9 | Adopted | `status = ADOPTED` removes it from all in-app entry points; reachable only via shared/deep link; never hard-deleted; renders adopted state |
 | 10 | Location default | Defaults to the charity family's city + location; editable (city + draggable pin) |
@@ -459,6 +463,6 @@ Tap [Inquire to Adopt]
 
 ## Open Items (next steps)
 
-- **Full-screen map** — not on this screen (no map here); see `screen_25` map.
+- **Full-screen map** — the detail shows a single-pin map; the shared full-screen map lives on `screen_25`.
 - **Adoption application / structured form** — only free-text Inquire (message) this phase.
 - **Admin moderation** of charity-posted listings — out of scope of these client specs.

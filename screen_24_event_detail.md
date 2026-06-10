@@ -10,7 +10,7 @@ Navigated to from:
 
 Requires login (it lives under the More tab). The only interactive element is **Interested** (toggle + optional add-to-calendar).
 
-> **No map, no directions, no share** this phase (decision) — the screen focuses on showing the event info, including the **full address** (which the rows only abbreviate to `venueName · city`).
+> **No share** this phase (decision). The screen shows the event info, the **full address** (which the rows only abbreviate to `venueName · city`), and a **map** with a pin at the venue (consistent with all other More screens).
 
 ---
 
@@ -30,7 +30,7 @@ Events are **created/edited by admins** (no AI generation, no external import, n
 | **Location** | `venueName` | ✅ | e.g. `"Lava Cat Coffee"` |
 | | `address` | ✅ | **Full address** (e.g. `"12 Nguyễn Huệ, Bến Nghé, Quận 1, HCMC"`) — shown only on this detail screen |
 | | `city` | ✅ | Picked from supported Cities (`CA`) → derives `cityShortName` / `cityCode` / `country` / `countryCode` |
-| | `lat` / `lng` | ✅ | Used for distance computation on rows (no map rendered) |
+| | `lat` / `lng` | ✅ | Map pin (detail) + distance computation |
 | **Status** | `isPublished` | ✅ | Hidden from all listings when `false` |
 | **Computed** | `distanceKm` | — | From the caller's origin (GPS or city centre); display-only |
 | | `interestedCount` | — | Number of users who marked Interested |
@@ -56,7 +56,9 @@ Events are **created/edited by admins** (no AI generation, no external import, n
 [LOCATION]
   📍 Lava Cat Coffee
      12 Nguyễn Huệ, Bến Nghé, Quận 1, HCMC          ← full address (admin)
-                                              3.0km   ← distance, display-only
+  ┌──────────────────────────────────┐
+  │     (map, pin tại lat/lng)        │   3.0km        ← tap → open device map
+  └──────────────────────────────────┘
 
 [ABOUT]
   Ngày hội nhận nuôi mèo do PetApp tổ chức.
@@ -95,9 +97,8 @@ Events are **created/edited by admins** (no AI generation, no external import, n
 |---------|---------|
 | `venueName` | `📍 {venueName}` (bold) |
 | `address` | **Full address** on its own line (the rows only show `venueName · city`; the detail is where the complete address appears) |
-| `distanceKm` | Right-aligned; `< 10` → 1 decimal, `≥ 10` → integer; **display-only** |
-
-> **No map and no Directions button** this phase (decision) — location is text-only (venue + full address + distance).
+| Map | A map with a pin at `lat` / `lng`; **tap → open the device map app** at the venue |
+| `distanceKm` | Shown by the map; `< 10` → 1 decimal, `≥ 10` → integer; **display-only** |
 
 ---
 
@@ -334,7 +335,7 @@ Tap [ ♡ Interested · N ]
 |---|----------|----------|
 | 1 | Event source | Admin-entered (no AI, no external import, **not** charity/family-hosted) |
 | 2 | Screen purpose | Read-only display; the only interaction is Interested |
-| 3 | Map / Directions | **Removed** this phase — location is text-only (venue + full address + distance) |
+| 3 | Map | **Map with a pin** at the venue (consistent with all other More screens); tap → open device map. No separate Directions button (tapping the map covers it) |
 | 4 | Share | **Removed** this phase |
 | 5 | Full address | Shown only on this detail screen; rows abbreviate to `venueName · city` |
 | 6 | Interested | Single action with inline count; toggle via `SetEventInterest (CK)` |
@@ -348,5 +349,5 @@ Tap [ ♡ Interested · N ]
 
 - **Ticketing / RSVP "Going"** — only a single **Interested** signal this phase; richer RSVP or paid ticketing could come later.
 - **Share / web-viewable event page** — removed this phase; could mirror `screen_19` if needed later.
-- **Map / Directions** — removed this phase; could be added back if events become more location-driven.
+- **Full-screen map** — the detail shows a single-pin map; a shared full-screen map lives on `screen_23`.
 - **Admin CMS** for event create/edit — out of scope of these client specs.
