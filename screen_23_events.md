@@ -96,6 +96,7 @@ Full, paginated list of upcoming events in the selected city (after the active f
 | `countdown` | `startAt` / `endAt` | See **Countdown rule** (`screen_17` §7) — `Starts in …` / `Ends in …` / `Happening now` |
 
 **Quick Interested toggle (`[ ♡ Interested ]` on the row):**
+- Initial heart state comes from `viewerInterested` on each `Events (CI)` item (filled `♥` when true, outline `♡` when false).
 - Tap → toggles the viewer's interest via `SetEventInterest (CK)` (optimistic; `interestedCount` updates).
 - Off → On: fills the heart (`♥`) and shows the **Add-to-calendar prompt** (same as `screen_24`); see `screen_24` → Interested interaction.
 - On → Off: un-fills; **no prompt**, no change to any calendar entry already added.

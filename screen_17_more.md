@@ -670,6 +670,7 @@ query Events(
       lng
       distanceKm
       interestedCount
+      viewerInterested
     }
     nextCursor
     hasMore
@@ -710,7 +711,8 @@ query Events(
           "lat": 10.7731,
           "lng": 106.7042,
           "distanceKm": 2.1,
-          "interestedCount": 48
+          "interestedCount": 48,
+          "viewerInterested": false
         }
       ],
       "nextCursor": "eyJpZCI6ImV2ZW50XzAwMSJ9",
@@ -726,6 +728,7 @@ query Events(
 - `distanceKm` from `originLat`/`originLng` (user GPS); when GPS is absent, the server uses the **city centre** as origin. Distance is **display-only** (rows show it) — events are **not** sorted by distance.
 - `price` is admin free text shown verbatim; `isFree = true` → render `"Free"` and power the **Free** filter chip.
 - `interestedCount` = number of users who marked Interested (see `screen_24` → `SetEventInterest (CK)`).
+- `viewerInterested` = whether the current viewer has marked Interested — drives the filled/outline heart on the `screen_23` row quick-toggle. (The More section row doesn't render the toggle, so it ignores this field.)
 - Only `isPublished = true` events are returned.
 
 **Errors:**
@@ -866,9 +869,12 @@ User taps More tab
                     │      ├─ AVAILABLE   → set + fetch sections
                     │      └─ COMING_SOON → set + show LOCKED state
                     └─ denied/fail → default HCMC, VN → fetch sections
-                          └─> LostPets (CB) { cityCode, countryCode, limit: 3 }
-                                ├─ items → render up to 3 rows + "View All →"
-                                └─ empty → empty message, hide "View All →"
+                          └─> fetch all 4 sections in parallel (each limit: 3):
+                                ├─ LostPets (CB)          { cityCode, countryCode }            (sorted reportedAt desc)
+                                ├─ PetFriendlyPlaces (CD) { cityCode, countryCode, originLat?, originLng? }  (nearest)
+                                ├─ Events (CI)            { cityCode, countryCode, originLat?, originLng? }  (soonest)
+                                └─ Rescues (CL)           { cityCode, countryCode, originLat?, originLng?, sort: NEAREST }
+                                   └─ each: items → up to 3 rows + "View All →"; empty → hide section/link
 ```
 
 ### Change city
