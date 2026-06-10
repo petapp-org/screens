@@ -356,11 +356,13 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
     breed
     isPublic
     gender
-    ageDisplay
+    ageMonths
     avatarUrl
   }
 }
 ```
+
+> Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
 **Variables:**
 ```json
@@ -390,7 +392,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
       "breed": "British Shorthair",
       "isPublic": true,
       "gender": "FEMALE",
-      "ageDisplay": "1 year old",
+      "ageMonths": 12,
       "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
     }
   }

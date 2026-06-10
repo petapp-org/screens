@@ -127,8 +127,10 @@ Each pet row:
 | `name` | Pet name |
 | `breed` | Breed name (may be truncated with `...` if long) |
 | `gender` | `male` \| `female` \| `unknown` |
-| `age_display` | Human-readable age string, e.g. `"3 years"`, `"5 months"` |
+| `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `post_count` | Total posts linked to this pet |
+
+> Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
 **Interactions:**
 - Tap anywhere on the row (except Story button) → navigates to **Pet Posts screen** for that pet (viewer is always unauth/non-member on this screen)
@@ -258,7 +260,7 @@ query Family($id: ID!) {
       avatarUrl
       breed
       gender
-      ageDisplay
+      ageMonths
       postCount
     }
   }
@@ -306,7 +308,7 @@ query Family($id: ID!) {
           "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
           "breed": "Orange Tabby Cat",
           "gender": "MALE",
-          "ageDisplay": "3 years",
+          "ageMonths": 36,
           "postCount": 47
         },
         {
@@ -315,7 +317,7 @@ query Family($id: ID!) {
           "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
           "breed": "Vietnamese Native",
           "gender": "FEMALE",
-          "ageDisplay": "2 years",
+          "ageMonths": 24,
           "postCount": 38
         }
       ]

@@ -65,8 +65,10 @@ Male · 3 years · 47 posts
 | `breed` | Breed name, e.g. `"British Shorthair"` — `null` if unknown |
 | `is_public` | `true` / `false` — shown as a 🔒 lock badge next to pet name when `false` |
 | `gender` | `Male` / `Female` / `Unknown` |
-| `age_display` | e.g. `"3 years"`, `"5 months"` |
+| `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `post_count` | Total posts linked to this pet |
+
+> Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
 **`[...]` action menu:**
 - "Edit Pet" → opens Edit Pet bottom sheet (see Section 7)
@@ -338,7 +340,7 @@ query Pet($id: ID!) {
     breedId
     isPublic
     gender
-    ageDisplay
+    ageMonths
     birthday
     weightKg
     avatarUrl
@@ -415,7 +417,7 @@ query Pet($id: ID!) {
       "breedId": "breed_orange_tabby_cat",
       "isPublic": true,
       "gender": "MALE",
-      "ageDisplay": "3 years",
+      "ageMonths": 36,
       "birthday": "2023-01-15",
       "weightKg": 4.2,
       "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
@@ -541,7 +543,7 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
     breedId
     isPublic
     gender
-    ageDisplay
+    ageMonths
     birthday
     weightKg
     avatarUrl
@@ -592,7 +594,7 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
       "breedId": "breed_orange_tabby_cat",
       "isPublic": true,
       "gender": "MALE",
-      "ageDisplay": "3 years",
+      "ageMonths": 36,
       "birthday": "2023-01-15",
       "weightKg": 4.5,
       "avatarUrl": "https://cdn.petapp.com/media/new_avatar.jpg",
