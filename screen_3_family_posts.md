@@ -493,7 +493,7 @@ query FamilyParents($familyId: ID!) {
 
 ### T. Query: `PetPosts`
 
-> ⚠️ Backend chưa có petFeed (GAP petapp-be#884) — giữ nguyên, chờ backend.
+> ⚠️ Backend has no petFeed yet (GAP petapp-be#884) — kept as-is, pending backend.
 
 Fetch posts for a specific named pet.  
 **Auth:** Optional — bearer token enables `followers` + `private` posts for eligible viewers.
@@ -547,7 +547,7 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 
 ### U. Query: `RandomPetPosts`
 
-> ⚠️ **Mapping review cần thiết:** `randomPetPosts` là feed scoped theo `familyId` (chỉ posts trong 1 family có random pets). Backend `exploreFeed` là global cross-family và không nhận `familyId`. Mapping sang `exploreFeed` sẽ mất hoàn toàn scope family — giữ nguyên query cũ, chờ backend expose `randomFeed(familyId)` hoặc xác nhận design intent.
+> ⚠️ **GAP petapp-be#886:** `randomPetPosts` is a feed scoped by `familyId` (only random-pet posts within one family). Backend `exploreFeed` is global cross-family and takes no `familyId`, so mapping to it would lose the family scope entirely — kept as-is, pending backend `randomFeed(familyId)`.
 
 Fetch posts with random (unmatched) animal detections for a specific family.  
 **Auth:** Optional — same privacy enforcement as above.
