@@ -108,6 +108,8 @@ Navigates to **Following screen**:
 **Each row:**
 - Family avatar + family name + `@tag` + city/country
 - Tap anywhere on the row (except action buttons) → **Family Posts screen**
+
+> followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 - `standard` family → **Following button** only
 - `charity` family → **Following button** + **Donate button**
   - Tap Donate → in-app Donate screen for that family (currently "Coming Soon")
@@ -383,7 +385,9 @@ query MyFollowing($cursor: String, $limit: Int) {
       type
       city
       country
-      followerCount
+      social {
+        followersCount
+      }
     }
     nextCursor
     hasMore
@@ -413,7 +417,9 @@ query MyFollowing($cursor: String, $limit: Int) {
           "type": "STANDARD",
           "city": "Internet",
           "country": "",
-          "followerCount": 3840
+          "social": {
+            "followersCount": 3840
+          }
         }
       ],
       "nextCursor": null,

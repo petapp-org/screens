@@ -66,13 +66,15 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 | `author.display_name` | Commenter's name — tappable → User Profile screen |
 | `body` | Comment text |
 | `created_at` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"5m"`, `"3h"`, `"2d"`, `"28 May"` |
-| `reply_count` | Total number of replies to this comment |
-| `is_own` | Boolean — whether the current viewer authored this comment |
-| `is_deletable` | Boolean — server-computed; `true` only when `is_own=true` AND `reply_count=0` AND comment was created within the last 10 minutes |
+| `replyCount` | Total number of replies to this comment |
+| `isOwn` | Boolean — whether the current viewer authored this comment |
+| `isDeletable` | Boolean — server-computed; `true` only when `isOwn=true` AND `replyCount=0` AND comment was created within the last 10 minutes |
+
+> ⚠️ replyCount / isDeletable: backend chưa hỗ trợ (mô hình nested replies đang escalate ở petapp-be#880). isOwn đã có (PR #879).
 
 **Comment actions:**
 - **Reply** button (always visible) → sets reply context in fixed input bar (requires login to submit)
-- **Delete** button → visible only when `is_deletable = true`; tapping shows confirmation before `DeleteComment mutation (P)`
+- **Delete** button → visible only when `isDeletable = true`; tapping shows confirmation before `DeleteComment mutation (P)`
 
 **Commenting requires login:**
 - Unauthenticated users can read all comments and replies
@@ -89,8 +91,8 @@ Replies are nested under their parent comment. Multi-level nesting is supported 
 - Tapping expands and loads the first 5 replies
 
 **Loaded reply:**
-- Same display fields as a top-level comment (`author`, `body`, `created_at`, `is_own`, `is_deletable`)
-- Has its own **Reply** and **Delete** buttons (same rules — `is_deletable` applies identically)
+- Same display fields as a top-level comment (`author`, `body`, `created_at`, `isOwn`, `isDeletable`)
+- Has its own **Reply** and **Delete** buttons (same rules — `isDeletable` applies identically)
 - If a reply itself has replies, show "View N replies ▾" beneath it (same expand behaviour, recursively)
 
 **"Load more replies":**
@@ -491,7 +493,7 @@ User types in input bar → taps Send
 ### Delete Comment
 
 ```
-User taps Delete on own comment  (button only visible when isDeletable=true)
+User taps Delete on own comment  (button only visible when isDeletable = true)
   └─> Show confirmation dialog
         └─> Confirm → DeleteComment mutation (P) { commentId }
               ├─ Success → remove comment from list; decrement parent replyCount if reply
@@ -510,7 +512,7 @@ User taps Delete on own comment  (button only visible when isDeletable=true)
 | Post `privacy=private`, viewer not a family member | Show `403` error state |
 | Post `privacy=followers`, viewer not following | Show `403` error state |
 | Delete attempted after 10 min window or comment has replies | `403` returned; hide Delete button; show toast |
-| Comment deleted successfully | Removed from list; parent `reply_count` decremented if reply |
+| Comment deleted successfully | Removed from list; parent `replyCount` decremented if reply |
 | Input bar — replying context | Banner "Replying to @username ×" shown above input; tap × clears reply context |
 | No comments yet | Show empty state: "Be the first to comment" |
 | Deep link to post | Load `Post query (M)` directly; Back button returns to previous screen or Explore if no history |

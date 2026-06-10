@@ -66,12 +66,16 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `pet_count` | Number of actual pets in the family |
 | `random_count` | Number of media items where `media_tag.type = "random" AND breed IS NOT NULL` — AI detected a breed but could not match to a named pet. Does NOT count media with no breed detected. Hidden from stats line when `0`. |
 | `random_post_count` | Total posts linked to random pets in this family. Used in the Random Pets row. |
-| `follower_count` | Total followers |
+| `social.followersCount` | Total followers |
 | `type` | `standard` \| `charity` |
-| `is_following` | Boolean (false when unauthenticated) |
+| `social.isFollowedByMe` | Boolean (false when unauthenticated) |
 | `about` | Free-text description |
 | `short_description` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
 | `donor_count` | Number of people who have donated. Only meaningful when `type = charity`; `null` for standard families. |
+
+> followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
+
+> PR #882: `viewerRole` (FamilyRole) và `isPrimary` (Boolean) nay khả dụng trên family object — có thể dùng cho UI logic quyền hạn thành viên nếu cần.
 
 **Avatar display rules:**
 - Family avatar can be explicitly set by the owner (via Screen 6 Update Family); if not set, falls back to stacked pet avatars
@@ -227,7 +231,7 @@ The selected view persists for the session (client-side state).
 
 Fetch family profile data for the info card, pets list, and about section.
 
-**Auth:** Optional — bearer token populates `isFollowing`.
+**Auth:** Optional — bearer token populates `social.isFollowedByMe`.
 
 **Operation:**
 ```graphql
@@ -247,9 +251,11 @@ query Family($id: ID!) {
     petCount
     randomCount
     randomPostCount
-    followerCount
+    social {
+      followersCount
+      isFollowedByMe
+    }
     type
-    isFollowing
     shortDescription
     donorCount
     about
@@ -294,9 +300,11 @@ query Family($id: ID!) {
       "petCount": 2,
       "randomCount": 10,
       "randomPostCount": 23,
-      "followerCount": 287,
+      "social": {
+        "followersCount": 287,
+        "isFollowedByMe": false
+      },
       "type": "CHARITY",
-      "isFollowing": false,
       "shortDescription": "Home-based cat rescue",
       "donorCount": 184,
       "about": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
