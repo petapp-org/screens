@@ -114,6 +114,8 @@ All actions require the caller to be a member of the posting charity **with that
 
 ### CN. Query: `MyRescues`
 
+> ⚠️ **GAP petapp-be#888:** backend has no `myRescues` query (charity's own listings). Kept as-is, pending backend.
+
 List the **active charity family's** own rescue listings, filtered by status.
 
 **Operation:**
