@@ -373,6 +373,8 @@ query MyLovedPosts($cursor: String, $limit: Int) {
 Paginated list of families the current user follows.  
 **Auth:** Required
 
+> ⚠️ **GAP petapp-be#887:** backend has no query returning the **families** a user follows. `following(userId)` returns `SocialUser` (id + follow counts only — no name/avatar/type), so it can't render family rows. Kept as-is, pending backend `followedFamilies(first, after): FamilyConnection!` — a later slice will reshape this to Relay then.
+
 **Operation:**
 ```graphql
 query MyFollowing($cursor: String, $limit: Int) {

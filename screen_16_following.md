@@ -85,6 +85,8 @@ Reuses endpoints defined in `screen_5_profile_settings.md` and `screen_1_home_ex
 
 See full definition in `screen_5_profile_settings.md` → **Section: AI. Query: MyFollowing**.
 
+> ⚠️ **GAP petapp-be#887:** this whole screen depends on a query returning the **families** the user follows; backend has none yet (`following(userId)` returns `SocialUser` stat-nodes only). Pending backend `followedFamilies`.
+
 **Variables:** `{ "cursor": null, "limit": 20 }`
 
 ### D. Mutation: `FollowFamily` *(for Undo)*
