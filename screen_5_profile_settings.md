@@ -54,7 +54,7 @@ Requires login. Not related to the "More" tab in the bottom navigation.
 ### 2. Family Pages Section
 
 **Rule: only 1 family can be active at any time.**  
-Active family is used for: receiving push notifications directed at the family; **scoping the Chats tab in Notifications (screen_10)** — which family-received threads are visible and which messages count as unread (only messages sent *after* the family became active); and as the default family when creating a new post.
+Active family is used for: receiving push notifications directed at the family; **scoping the Chats inbox in Messages (screen_10)** — which family-received threads are visible and which messages count as unread (only messages sent *after* the family became active); and as the default family when creating a new post.
 
 **Create Family Page row** (shown when user has no owned family):
 - Icon: `+`
@@ -264,7 +264,7 @@ query Me {
 Set the active family for the current user. All other families are deactivated automatically.  
 **Auth:** Required
 
-**Side effects (see screen_10):** Switching the active family re-scopes the Chats tab — threads received by the previous active family disappear, threads received by the new active family appear (DMs and own-sent threads are unaffected). The server records the activation moment; a family-received message counts as **unread only if** `sentAt > activation time`, so messages that arrived while the family was inactive are not marked unread.
+**Side effects (see screen_10):** Switching the active family re-scopes the Chats inbox — threads received by the previous active family disappear, threads received by the new active family appear (DMs and own-sent threads are unaffected). The server records the activation moment; a family-received message counts as **unread only if** `sentAt > activation time`, so messages that arrived while the family was inactive are not marked unread.
 
 **Operation:**
 ```graphql

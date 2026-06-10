@@ -87,7 +87,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - Reuse endpoints D and E from Screen 1
 
 **Message button:** *(hidden when you are a member of this family — active or non-active; you're already on the receiving side, can't message your own family; see screen_10)*
-- Tap → show **"Send as…"** bottom sheet (your individual self **or** your active family), then `StartThread (BI)` → open the thread in the Notifications screen's Thread View (screen_10). If a thread already exists for the same sender ↔ this family, it is reused (no duplicate).
+- Tap → show **"Send as…"** bottom sheet (your individual self **or** your active family), then `StartThread (BI)` → open the thread in the Messages screen's Thread View (screen_10). If a thread already exists for the same sender ↔ this family, it is reused (no duplicate).
 - Requires login → redirect to Login if not authenticated.
 
 ---
@@ -170,7 +170,7 @@ Parents                          [× close]
 
 - Each parent row shows: avatar + display name + tag (`@nickname`) + **Message icon `[✉]`** on the right
 - Tap a parent row (anywhere except the Message icon) → close bottom sheet → navigate to **User Posts screen** for that user
-- Tap **Message icon `[✉]`** → start a **DM** with that user: `StartThread (BI)` `{ senderType: USER (self), receiverType: USER }` → open the thread in the Notifications screen's Thread View (screen_10). Reuses existing DM thread if one exists. Requires login → redirect to Login if not authenticated.
+- Tap **Message icon `[✉]`** → start a **DM** with that user: `StartThread (BI)` `{ senderType: USER (self), receiverType: USER }` → open the thread in the Messages screen's Thread View (screen_10). Reuses existing DM thread if one exists. Requires login → redirect to Login if not authenticated.
   - Message icon is **hidden on your own row** (can't DM yourself)
 - Viewing the parent list: no login required
 

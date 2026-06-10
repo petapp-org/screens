@@ -1,15 +1,15 @@
-# Screen 10: Notifications
+# Screen 10: Messages
 
 ## Overview
 
-Notification center with **two tabs**: **Chats** and **Notifications**.
-- **Chats** — message notifications: a flat list of conversation threads relevant to the user *right now*, scoped to the user's **currently active family** (plus the user's own DMs and threads the user personally sent).
-- **Notifications** — general activity notifications (comments, replies, follows, loves, AI health alerts, missing/found pets, invite accepted, etc.).
+The **messaging** surface — a flat list of conversation threads (the **Chats inbox**) plus the **Thread View** for an individual conversation. Scoped to the user's **currently active family** (plus the user's own DMs and threads the user personally sent).
 
-Auth required. Accessible from: the **Messages icon** in the Explore header (screen_1) and My Pets header (screen_8).
-The Messages icon shows a **red dot** (no number) whenever there is any unread — combined across both tabs (chats unread + general unread). Inside the screen there is **no red dot**; unread items are shown in **bold** instead.
+> **Split note:** This screen was previously bundled with general activity notifications as a single two-tab "Notifications" screen. Messaging and notifications are now **separate screens** — general activity notifications (comments, loves, follows, AI health alerts, missing/found pets, invite accepted, …) live in **Notifications (`screen_22`)**. See Decisions Log #1.
 
-> **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `SetActiveFamily (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats tab: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
+Auth required. Accessible from the **Messages icon** (`✉`) in the Explore header (`screen_1`), My Pets header (`screen_8`), and More header (`screen_17`).
+The Messages icon shows a **red dot** (no number) whenever there is any **unread chat** — driven by `UnreadMessageCount (BL)`. (The separate **Notifications icon** `🔔` carries its own red dot from `NotificationUnreadCount (BU)`.) Inside the screen there is **no red dot**; unread threads are shown in **bold** instead.
+
+> **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `SetActiveFamily (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats inbox: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
 
 ---
 
@@ -17,15 +17,12 @@ The Messages icon shows a **red dot** (no number) whenever there is any unread �
 
 ```
 [Header]
-  Title: "Notifications"
-
-[Tab bar]
-  [ Chats ]   [ Notifications ]      ← tab label is BOLD when that tab has unread (no badge, no dot)
-  ──────                              (active tab underlined)
+  Left: Back button (when entered from a header icon, this is a root-ish screen — back returns to the prior tab)
+  Title: "Messages"
 
 ────────────────────────────────────────────────────────────
-TAB 1 — CHATS  (flat thread list, scoped to active family)
-              scope: Pudding's Family   ← current active family, shown once at top
+CHATS INBOX  (flat thread list, scoped to active family)
+             scope: Pudding's Family   ← current active family, shown once at top
 ────────────────────────────────────────────────────────────
 
   ● [avatarA] userA                              · 2m   ← DM: name only, no arrow (unread: bold)
@@ -41,30 +38,13 @@ TAB 1 — CHATS  (flat thread list, scoped to active family)
     "cho hỏi về bé mèo nhà mình..."
 
   (Empty: "No conversations yet")
-
-────────────────────────────────────────────────────────────
-TAB 2 — NOTIFICATIONS  (general activity, newest first)
-────────────────────────────────────────────────────────────
-
-  ● [avatarD] Linh Pham commented on your post          · 3m
-    "bé cún xinh quá ❤️"
-  ● [⚠ icon] AI Health Alert on Pudding                 · 1h
-    "Possible skin irritation detected in a recent photo"
-  ● [avatarE] Minh and 4 others loved your post         · 2h
-    [thumbnail]
-    [avatarF] Hoa started following your family          · 5h
-    [📍 icon] A missing dog was reported near you         · 1d
-
-  (Empty: "No notifications yet")
 ```
 
 ---
 
 ## Components
 
-### TAB 1 — Chats
-
-#### 1. Chats Thread List
+### 1. Chats Inbox (thread list)
 
 A **single flat list** — no "My Families / Sent to Families / DM" sections. The list contains exactly these threads (see **Access & Active-Family Rules**):
 
@@ -98,7 +78,7 @@ Threads received by the user's **non-active** families are **not shown** at all.
 | Time | Relative time of last message. |
 | CHARITY badge | Small badge next to a family name when that family `type = charity`. |
 
-**Unread indicator:** **bold** row text only. **No red dot** inside the screen (bold already conveys unread). The **Chats tab label** is bold when there are any unread threads.
+**Unread indicator:** **bold** row text only. **No red dot** inside the screen (bold already conveys unread). The header **Messages icon** is red-dotted when there are any unread threads.
 
 **Row tap:** → open **Thread View** (see below); calls `MarkThreadRead (BK)` on open.
 
@@ -106,34 +86,7 @@ Threads received by the user's **non-active** families are **not shown** at all.
 
 ---
 
-### TAB 2 — Notifications
-
-#### 2. General Notification List
-
-Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, optional thumbnail, relative time, and **bold when unread** (no red dot). The **Notifications tab label** is bold when there are any unread items. Tapping a row marks it read (`MarkNotificationRead (BT)`) and deep-links to its target.
-
-**Notification types:**
-
-| Type (enum) | Trigger | Row text (example) | Tap target |
-|-------------|---------|--------------------|------------|
-| `NEW_COMMENT` | Someone comments on the user's post | "`{actor}` commented on your post" + comment snippet | Post Detail (scrolled to comment) |
-| `NEW_REPLY` | Someone replies to the user's comment | "`{actor}` replied to your comment" + reply snippet | Post Detail (scrolled to reply) |
-| `POST_LOVES` | People love the user's post (**grouped**) | "`{actor}` and `{N}` others loved your post" + thumbnail | Post Detail |
-| `FAMILY_NEW_POST` | A family the user **follows** publishes a new post | "`{family}` shared a new post" + thumbnail | Post Detail |
-| `NEW_FOLLOWER` | Someone follows the user's family | "`{actor}` started following your family" | The follower's User Posts (or their family) |
-| `INVITE_ACCEPTED` | A parent the user invited accepts the family invite | "`{actor}` accepted your invite to `{family}`" | Family Posts / My Pets parents |
-| `HEALTH_ALERT` | AI detects a possible health issue in the user's pet media | "AI Health Alert on `{pet}`" + detail snippet | Pet Detail (screen_9) |
-| `MISSING_NEARBY` | A pet is reported missing near the user's location | "A missing `{species}` was reported near you" | Missing pet detail (Coming Soon) |
-| `PET_MISSING` | The user's own pet is marked missing (status confirmation) | "`{pet}` was marked as missing" | Pet Detail (screen_9) |
-| `PET_FOUND` | A previously-missing pet (own, or one the user reported/follows) is marked found | "`{pet}` was marked as found" | Pet Detail (screen_9) |
-
-**Grouping:** `POST_LOVES` collapses multiple lovers of the **same post** into one row (`{actor} and {N} others`). Other types are one row per event.
-
-> **Not included:** "Parent invite **received**" is intentionally **not** a notification type — there's no reliable way to surface an incoming invite as a noti in this model. Only `INVITE_ACCEPTED` (the outbound invite being accepted) is notified.
-
----
-
-### 3. Starting a Thread
+### 2. Starting a Thread
 
 *(composing happens from other screens, not from this inbox)*
 
@@ -144,6 +97,7 @@ Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, opt
 | Family Posts → **Message button** | Individual user **or** active family (user chooses) | That family |
 | Family Posts → Parents section → **Message icon** next to a user | Individual user only | That specific user |
 | My Pets → Parents section → **Message icon** next to a user | Individual user only | That specific user |
+| Lost Pet Detail → **"I saw {pet}"** (`screen_19`) | Individual user **or** active family (user chooses) | The pet's family |
 
 **Sender selection (only for family receivers):**
 - Bottom sheet *"Send as…"*:
@@ -159,7 +113,7 @@ Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, opt
 
 ---
 
-### 4. Thread View
+### 3. Thread View
 
 ```
 [Header]
@@ -207,7 +161,7 @@ Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, opt
 
 ## Access & Active-Family Rules
 
-The Chats tab is **scoped to the user's currently active family**. These rules are the source of truth.
+The Chats inbox is **scoped to the user's currently active family**. These rules are the source of truth.
 
 ### Thread visibility
 
@@ -232,9 +186,9 @@ When the user **switches active family** (F → M, via `SetActiveFamily (AG)` in
 
 ### Removal from a family
 
-- When the user is **removed** from a family, they **lose all access** to that family's received threads **and the entire chat-notification history** for that family. Nothing from that family remains visible.
-- If the removed family was the user's **active** family, the server **auto-switches** the active family to another family the user belongs to — applying to **both** the Chats noti scope **and** the action/context everywhere (My Pets, "Send as", etc.). The newly active family's received threads appear immediately.
-- **Edge — no other family:** if the removed family was the only one, active family becomes **unset**; the Chats tab then shows only the user's DMs and own sent threads.
+- When the user is **removed** from a family, they **lose all access** to that family's received threads **and the entire chat history** for that family. Nothing from that family remains visible.
+- If the removed family was the user's **active** family, the server **auto-switches** the active family to another family the user belongs to — applying to **both** the Chats scope **and** the action/context everywhere (My Pets, "Send as", etc.). The newly active family's received threads appear immediately.
+- **Edge — no other family:** if the removed family was the only one, active family becomes **unset**; the Chats inbox then shows only the user's DMs and own sent threads.
 
 ---
 
@@ -246,7 +200,7 @@ All calls go to `POST /graphql`.
 
 ### BG. Query: `MessageThreads`
 
-Fetch the Chats list for the current user. The server returns **only** the threads visible per the **Access & Active-Family Rules** (active-family-received + DMs + own-sent); non-active-family threads are excluded server-side. `unreadCount` is computed using the activation-timestamp rule.
+Fetch the Chats inbox for the current user. The server returns **only** the threads visible per the **Access & Active-Family Rules** (active-family-received + DMs + own-sent); non-active-family threads are excluded server-side. `unreadCount` is computed using the activation-timestamp rule.
 
 **Auth:** Required
 
@@ -480,7 +434,7 @@ mutation MarkThreadRead($threadId: ID!) {
 
 ### BL. Query: `UnreadMessageCount`
 
-Chats-tab unread count — `> 0` bolds the Chats tab label and contributes to the **Messages-icon red dot** (combined with `NotificationUnreadCount (BU)`).
+Chats unread count — `> 0` drives the **Messages-icon red dot** (`✉`, header). Independent of the Notifications-icon dot (`NotificationUnreadCount (BU)`, `screen_22`).
 
 **Auth:** Required
 
@@ -543,155 +497,21 @@ query SearchThreadMessages($threadId: ID!, $q: String!, $cursor: String, $limit:
 
 ---
 
-### BS. Query: `Notifications`
-
-General-notification feed for the Notifications tab (paginated, newest first).
-
-**Auth:** Required
-
-```graphql
-query Notifications($cursor: String, $limit: Int) {
-  notifications(cursor: $cursor, limit: $limit) {
-    items {
-      id
-      type          # NEW_COMMENT | NEW_REPLY | POST_LOVES | FAMILY_NEW_POST |
-                    # NEW_FOLLOWER | INVITE_ACCEPTED | HEALTH_ALERT |
-                    # MISSING_NEARBY | PET_MISSING | PET_FOUND
-      actor {       # who triggered it; null for system/AI events
-        id
-        name
-        avatarUrl
-      }
-      target {      # what the row deep-links to
-        type        # POST | COMMENT | PET | FAMILY | USER | MISSING_REPORT
-        id
-      }
-      preview       # snippet/text shown under the title (nullable)
-      thumbnailUrl  # media thumbnail (POST_LOVES / FAMILY_NEW_POST); else null
-      groupCount    # extra count for grouped types (POST_LOVES); else null
-      isRead
-      createdAt
-    }
-    nextCursor
-    hasMore
-  }
-}
-```
-
-**Variables:** `{ "cursor": null, "limit": 20 }`
-
-**Response `200 OK`:**
-```json
-{
-  "data": {
-    "notifications": {
-      "items": [
-        {
-          "id": "noti_001",
-          "type": "NEW_COMMENT",
-          "actor": {
-            "id": "user_044",
-            "name": "Linh Pham",
-            "avatarUrl": "https://cdn.petapp.com/users/user_044/avatar.jpg"
-          },
-          "target": { "type": "POST", "id": "post_988" },
-          "preview": "bé cún xinh quá ❤️",
-          "thumbnailUrl": null,
-          "groupCount": null,
-          "isRead": false,
-          "createdAt": "2026-06-07T08:55:00Z"
-        },
-        {
-          "id": "noti_002",
-          "type": "POST_LOVES",
-          "actor": {
-            "id": "user_071",
-            "name": "Minh",
-            "avatarUrl": "https://cdn.petapp.com/users/user_071/avatar.jpg"
-          },
-          "target": { "type": "POST", "id": "post_512" },
-          "preview": null,
-          "thumbnailUrl": "https://cdn.petapp.com/posts/post_512/thumb.jpg",
-          "groupCount": 4,
-          "isRead": false,
-          "createdAt": "2026-06-07T07:10:00Z"
-        }
-      ],
-      "nextCursor": "cursor_abc",
-      "hasMore": true
-    }
-  }
-}
-```
-
-**Errors:**
-
-| Code | Scenario |
-|------|----------|
-| `UNAUTHENTICATED` | Caller is not logged in |
-
----
-
-### BT. Mutation: `MarkNotificationRead`
-
-Mark one notification (or all) as read.
-
-**Auth:** Required
-
-```graphql
-mutation MarkNotificationRead($id: ID) {
-  markNotificationRead(id: $id)   # id null → mark ALL general notifications read
-}
-```
-
-**Errors:**
-
-| Code | Scenario |
-|------|----------|
-| `UNAUTHENTICATED` | Caller is not logged in |
-| `NOTIFICATION_NOT_FOUND` | `id` provided but does not exist for this user |
-
----
-
-### BU. Query: `NotificationUnreadCount`
-
-Notifications-tab unread count — `> 0` bolds the Notifications tab label and contributes to the **Messages-icon red dot** (combined with `UnreadMessageCount (BL)`).
-
-**Auth:** Required
-
-```graphql
-query NotificationUnreadCount {
-  notificationUnreadCount
-}
-```
-
-**Note:** Delivered via **WebSocket push** when available; falls back to polling every 30s.
-
-**Errors:**
-
-| Code | Scenario |
-|------|----------|
-| `UNAUTHENTICATED` | Caller is not logged in |
-
----
-
 ## User Flow Diagrams
 
-### Open Notifications from Messages icon
+### Open Messages from the Messages icon
 
 ```
-User taps Messages icon (Explore / My Pets header)
+User taps Messages icon (✉ — Explore / My Pets / More header)
   └─> [not authenticated] → redirect to Login
-  └─> [authenticated] → open screen on last-used tab (default: Chats)
-        ├─ Chats tab        → MessageThreads (BG)   → flat thread list
-        └─ Notifications tab → Notifications (BS)    → general noti list
+  └─> [authenticated] → MessageThreads (BG) → flat Chats inbox
 ```
 
-### Switch active family while Chats is open
+### Switch active family while inbox is open
 
 ```
 User switches active family F → M (SetActiveFamily AG, Profile Settings)
-  └─> Chats re-fetches MessageThreads (BG)
+  └─> inbox re-fetches MessageThreads (BG)
         └─> F-received threads drop out; M-received threads appear
               └─> DMs + own-sent threads unchanged
                     └─> unread recomputed (only post-switch messages unread)
@@ -701,26 +521,18 @@ User switches active family F → M (SetActiveFamily AG, Profile Settings)
 
 ```
 Server: user removed from active family F
-  └─> F-received threads + chat-noti history for F purged from view
-        └─> active family auto-switches F → M (noti scope + action context)
+  └─> F-received threads + chat history for F purged from view
+        └─> active family auto-switches F → M (scope + action context)
               ├─ has other family (M) → M-received threads appear; M now active everywhere
-              └─ no other family       → active = unset; Chats shows DMs + own-sent only
+              └─ no other family       → active = unset; inbox shows DMs + own-sent only
 ```
 
-### Open a thread (Chats)
+### Open a thread
 
 ```
 User taps a thread row
   └─> ThreadMessages (BH) { threadId, limit: 20 }  (oldest first, auto-scroll to bottom)
-        └─> MarkThreadRead (BK) { threadId }  → row un-bolds; badges decrement
-```
-
-### Open a general notification
-
-```
-User taps a notification row
-  └─> MarkNotificationRead (BT) { id }  → row un-bolds; tab badge decrements
-        └─> Deep-link to target (Post Detail / Pet Detail / User Posts / etc.)
+        └─> MarkThreadRead (BK) { threadId }  → row un-bolds; Messages-icon dot decrements
 ```
 
 ### Reply in thread
@@ -739,17 +551,14 @@ User taps Send
 |------|-----------|
 | Switch active family F → M | F-received threads hidden; M-received shown; DMs + own-sent unchanged |
 | New member invited to family | No unread for messages predating activation; old threads show as read |
-| Removed from non-active family | That family's received threads + chat-noti history removed; active family unchanged |
+| Removed from non-active family | That family's received threads + chat history removed; active family unchanged |
 | Removed from active family (has other family) | Auto-switch active → another family; its threads appear; context switches everywhere |
-| Removed from active family (no other family) | Active = unset; Chats shows only DMs + own-sent threads |
+| Removed from active family (no other family) | Active = unset; inbox shows only DMs + own-sent threads |
 | Co-member replies in a family-received thread | Outbound from the family → does **not** mark unread for other co-members; only the original external sender is notified |
 | User's own message is the last in a thread | Row shows the preview plainly; never bold (outbound never unread) |
 | Thread exists, user starts new thread with same entity | Returns existing thread — no duplicate |
 | Receiver family is deleted | Thread archived — read-only, cannot send new messages |
-| General notification target deleted (post/comment/pet removed) | Tapping marks it read and shows a "This content is no longer available" state instead of deep-linking |
-| `POST_LOVES` for the same post by many users | Collapsed to one grouped row (`{actor} and {N} others`) |
-| Parent invite received | **Not** a notification — only `INVITE_ACCEPTED` is surfaced |
-| New user, no activity | Chats: "No conversations yet"; Notifications: "No notifications yet" |
+| New user, no activity | Inbox: "No conversations yet" |
 
 ---
 
@@ -757,20 +566,16 @@ User taps Send
 
 | # | Question | Decision |
 |---|----------|----------|
-| 1 | Screen identity | Renamed "Messages" → **"Notifications"** with two tabs: **Chats** and **Notifications** |
-| 2 | Header entry point | Existing **Messages icon** (Explore + My Pets headers); shows a **red dot** (no number) when any unread exists (combined chats + general) |
+| 1 | Screen split | Messaging and notifications are **separate screens**: **Messages** (this screen — Chats inbox + Thread View) and **Notifications** (`screen_22` — general activity feed). Previously one two-tab screen. |
+| 2 | Header entry point | **Messages icon** `✉` (Explore + My Pets + More headers); red dot (no number) when any chat unread (`UnreadMessageCount BL`). Separate from the **Notifications icon** `🔔` (`screen_22`). |
 | 3 | Chats list structure | **Single flat list** — no "My Families / Sent to Families / DM" sections; active family name shown once at top as scope line |
 | 3a | Chats row rendering | **Hybrid by type**: DM = name only (no arrow); to active family = `sender → {activeFamily}`; sent = `you → {family}`. Type is read from the arrow pattern |
 | 4 | Chats scope | Scoped to **active family** (received) + user's **DMs** + user's **own-sent** threads; non-active-family received threads hidden |
-| 5 | Unread indicator | **Inside the screen**: bold only (rows + tab labels), no red dot. **Header Messages icon**: red dot when any unread |
+| 5 | Unread indicator | **Inside the screen**: bold only, no red dot. **Header Messages icon**: red dot when any chat unread |
 | 6 | Unread direction | Only **inbound** messages mark unread; outbound (own or co-member's family reply) never does |
 | 7 | Unread timing | Family-received message is unread only if `sentAt > active-family activation timestamp` for the user |
 | 8 | New member unread | None for pre-membership/pre-activation messages |
-| 9 | Removal from family | Lose all received threads + chat-noti history for that family |
-| 10 | Removal from active family | Auto-switch active family (noti scope + action context); unset if no other family |
-| 11 | "You:" notification rows | Removed — sent messages never create a standalone notification; previews may still show own last message plainly |
-| 12 | Thread message sort | Oldest first (`sentAt asc`); auto-scroll to bottom on open; page up for older |
-| 13 | General noti: parent invite received | Excluded — only `INVITE_ACCEPTED` notified |
-| 14 | General noti: loves | Grouped per post (`{actor} and {N} others`) |
-| 15 | Unread count delivery | WebSocket push preferred; poll every 30s fallback (both `BL` and `BU`) |
-| 16 | CHARITY badge | Shown next to charity family names in Chats rows |
+| 9 | Removal from family | Lose all received threads + chat history for that family |
+| 10 | Removal from active family | Auto-switch active family (scope + action context); unset if no other family |
+| 11 | Thread message sort | Oldest first (`sentAt asc`); auto-scroll to bottom on open; page up for older |
+| 12 | CHARITY badge | Shown next to charity family names in Chats rows |

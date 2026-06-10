@@ -17,8 +17,8 @@ The whole screen is scoped to a **selected city** shown in the location bar at t
 ```
 [Header]
   Title: "More"
-  Right actions: [Search icon] | [Messages icon] | [Profile avatar]
-  (identical header to My Pets — see screen_8; Messages red dot = combined unread)
+  Right actions: [Search icon] | [Messages icon ✉] | [Notifications icon 🔔] | [Profile avatar]
+  (identical header to My Pets — see screen_8; ✉ dot = unread chats, 🔔 dot = unread activity)
 
 [Location bar]
   [📍 icon]  HCMC, VN                                  [Change]
@@ -70,7 +70,7 @@ The whole screen is scoped to a **selected city** shown in the location bar at t
 
 ### 1. Header
 
-Identical to the My Pets header (`screen_8`): Search icon · Messages icon (red dot when any unread — combined Chats + Notifications, opens `screen_10`) · Profile avatar. No back button (it's a root tab).
+Identical to the My Pets header (`screen_8`): Search icon · Messages icon `✉` (red dot when any unread chat, opens `screen_10`) · Notifications icon `🔔` (red dot when any unread activity, opens `screen_22`) · Profile avatar. No back button (it's a root tab).
 
 ---
 

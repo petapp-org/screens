@@ -13,7 +13,7 @@ If logged in but no active family → show empty state with prompt to create or 
 ```
 [Header]
   Left: "My Pets" (title)
-  Right: Search icon | Messages icon (red dot if any unread — combined Chats + Notifications; opens screen_10) | Profile avatar
+  Right: Search icon | Messages icon ✉ (red dot if any unread chat; opens screen_10) | Notifications icon 🔔 (red dot if any unread activity; opens screen_22) | Profile avatar
 
 [Scrollable area]
   ├── Family Info Card (active family)
@@ -143,7 +143,7 @@ Parents                                    [× close]
 | Pending invite | `INVITED` | Hidden (not a member yet) | Cancel | Owner only |
 
 **Message icon `[✉]` (accepted co-parents only):**
-- Tap → start a **DM** with that user: `StartThread (BI)` `{ senderType: USER (self), receiverType: USER }` → open the thread in the Notifications screen's Thread View (screen_10). Reuses existing DM thread if one exists.
+- Tap → start a **DM** with that user: `StartThread (BI)` `{ senderType: USER (self), receiverType: USER }` → open the thread in the Messages screen's Thread View (screen_10). Reuses existing DM thread if one exists.
 
 **Remove action:**
 - Confirmation dialog → `RemoveParent mutation (AS)` (endpoint AS from Screen 6)

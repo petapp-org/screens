@@ -13,7 +13,7 @@ Default active filter tab: **Latest**.
 ```
 [Header]
   Title: "Explore"
-  Right actions: [Search icon] | [Messages icon] | [Profile avatar]
+  Right actions: [Search icon] | [Messages icon ✉] | [Notifications icon 🔔] | [Profile avatar]
 
 [Filter Tabs]
   Latest | Follow | Rescue
@@ -42,10 +42,11 @@ Default active filter tab: **Latest**.
 | Button | Logged-in | Not logged-in |
 |--------|-----------|---------------|
 | Search | Opens search screen | Tapping redirects to Login (auth required — see screen_11) |
-| Messages | Opens the **Notifications screen** (screen_10); shows a **red dot** when there is any unread — combined across Chats + general Notifications | Tapping redirects to Login; **no red dot shown** |
+| Messages `✉` | Opens the **Messages screen** (screen_10); shows a **red dot** when there is any unread chat | Tapping redirects to Login; **no red dot shown** |
+| Notifications `🔔` | Opens the **Notifications screen** (screen_22); shows a **red dot** when there is any unread activity | Tapping redirects to Login; **no red dot shown** |
 | Profile | Shows user's avatar; tapping opens profile screen | Shows default placeholder avatar; tapping redirects to Login |
 
-The unread state is fetched separately (not bundled in the feed response) — combining `UnreadMessageCount (BL)` + `NotificationUnreadCount (BU)` (see screen_10); delivered via WebSocket push, falling back to polling. The dot shows whenever the combined count `> 0` (no number).
+The unread state is fetched separately (not bundled in the feed response) — the Messages dot from `UnreadMessageCount (BL)` (see screen_10), the Notifications dot from `NotificationUnreadCount (BU)` (see screen_22); each delivered via WebSocket push, falling back to polling. Each dot shows whenever its own count `> 0` (no number).
 
 ---
 
@@ -548,7 +549,7 @@ mutation DismissFamilySuggestion($familyId: ID!) {
 
 Follow a family.
 
-> **Triggers notification:** fires a `NEW_FOLLOWER` notification to the followed family's members (see screen_10 → Notifications tab). Unfollowing (E) does not notify.
+> **Triggers notification:** fires a `NEW_FOLLOWER` notification to the followed family's members (see screen_22 — Notifications screen). Unfollowing (E) does not notify.
 
 **Auth:** Required → returns GraphQL error with code `UNAUTHORIZED` if not logged in
 
@@ -636,7 +637,7 @@ mutation UnfollowFamily($familyId: ID!) {
 
 Love a post.
 
-> **Triggers notification:** fires a `POST_LOVES` notification to the post author — **grouped** per post (`{actor} and {N} others loved your post`); see screen_10 → Notifications tab. Un-loving (G) does not notify.
+> **Triggers notification:** fires a `POST_LOVES` notification to the post author — **grouped** per post (`{actor} and {N} others loved your post`); see screen_22 (Notifications screen). Un-loving (G) does not notify.
 
 **Auth:** Required → redirect to login if not authenticated
 
@@ -969,7 +970,7 @@ query PostComments($postId: ID!, $limit: Int, $cursor: String) {
 
 Submit a new comment from the inline panel.
 
-> **Triggers notification:** fires a `NEW_COMMENT` notification to the post author (see screen_10 → Notifications tab). Not fired when the author comments on their own post.
+> **Triggers notification:** fires a `NEW_COMMENT` notification to the post author (see screen_22 — Notifications screen). Not fired when the author comments on their own post.
 
 **Auth:** Required → returns GraphQL error with code `UNAUTHORIZED` if not logged in
 
@@ -1102,8 +1103,9 @@ User taps "..." on a post
 | Unauthenticated user on Latest feed | Only `public` posts returned by server |
 | Post with `privacy=followers` | Only visible to family members + followers of that family |
 | Post with `privacy=private` | Only visible to family members of the authoring family |
-| Messages button — not logged in | No red dot; tapping redirects to Login |
-| Messages red dot source | Combined unread of Chats + general Notifications (`BL` + `BU`); dot only, no number |
+| Messages / Notifications button — not logged in | No red dot; tapping redirects to Login |
+| Messages red dot source | Unread chats (`UnreadMessageCount BL`); dot only, no number |
+| Notifications red dot source | Unread activity (`NotificationUnreadCount BU`); dot only, no number |
 | Profile button — not logged in | Default placeholder avatar shown; tapping redirects to Login |
 | Love — optimistic update fails (API error) | Revert `love_count` and `is_loved` to previous state; show error toast |
 | Comment count = 0 | Comment button still tappable; inline panel opens showing empty state |
@@ -1123,6 +1125,6 @@ All questions resolved. No open items.
 |---|----------|----------|
 | 1 | Suggested widget empty state | Hide widget entirely when no families remain |
 | 2 | Donate button destination | In-app screen; currently shows "Coming Soon" page |
-| 3 | Messages unread count | Fetched separately (not bundled in feed response); red dot = combined Chats + general Notifications unread (`BL` + `BU`) |
+| 3 | Header unread counts | Fetched separately (not bundled in feed response); **two independent dots** — Messages dot = unread chats (`BL`), Notifications dot = unread activity (`BU`) |
 | 4 | Post privacy enforcement | Server-side only — unauthenticated → public only; `followers` → family members + followers; `private` → family members only |
 | 5 | `short_description` source | Free-text field filled manually by charity family admin in profile settings |
