@@ -47,7 +47,7 @@ Shows all **non-deleted** pets belonging to the same family, as circular avatar 
 - **`[+]` button** (rightmost, dashed circle): tap → navigate to **Create Post screen** (Screen 7)
   - Same behavior as `[+]` in Random Pets section (Screen 8): AI scan in Create Post will match against family pets as normal
   - After publish → navigate to **My Pets tab** (Screen 8)
-- Deleted pets (`is_deleted = true`) are excluded from the switcher
+- Deleted pets (`isDeleted = true`) are excluded from the switcher
 
 ---
 
@@ -63,10 +63,10 @@ Male · 3 years · 47 posts
 | `name` | Pet name |
 | `species` | Species e.g. `"cat"`, `"dog"`, `"bird"` |
 | `breed` | Breed name, e.g. `"British Shorthair"` — `null` if unknown |
-| `is_public` | `true` / `false` — shown as a 🔒 lock badge next to pet name when `false` |
+| `isPublic` | `true` / `false` — shown as a 🔒 lock badge next to pet name when `false` |
 | `gender` | `Male` / `Female` / `Unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
-| `post_count` | Total posts linked to this pet |
+| `postCount` | Total posts linked to this pet |
 
 > Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
@@ -78,7 +78,7 @@ Male · 3 years · 47 posts
 
 ### 3. Missing Banner
 
-Shown only when `pet.missing_status != null`.
+Shown only when `pet.missingStatus != null`.
 
 ```
 ⚠️  MISSING · Last seen HCM · 2 days ago              [Mark as Found]
@@ -86,15 +86,15 @@ Shown only when `pet.missing_status != null`.
 
 | Field | Display |
 |-------|---------|
-| `missing_status.last_seen_at` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules) — how long since the pet was last seen. E.g. `"2d"`, `"28 May"` |
-| `missing_status.last_seen_location` | `city_code` display, e.g. `"HCM"` |
+| `missingStatus.lastSeenAt` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules) — how long since the pet was last seen. E.g. `"2d"`, `"28 May"` |
+| `missingStatus.lastSeenLocation` | `cityCode` display, e.g. `"HCM"` |
 
 **"Mark as Found" button:**
 - Shown to all family members (owner + parents)
 - **Disabled** for parents — only owner can tap it
 - Tap (owner) → confirmation: *"Mark Bụi as found?"* → `MarkPetFound mutation (BF)`
 - Banner removed immediately on success
-- Button re-enables automatically when a new missing report is filed (`pet.missing_status != null`)
+- Button re-enables automatically when a new missing report is filed (`pet.missingStatus != null`)
 
 ---
 
@@ -197,7 +197,7 @@ Status states: same pattern as Food tab.
 - Positioned **below the category tabs** — always visible regardless of which tab (Health / Food / Behavior / Med-Vac) is active. It is **not** part of any tab's content (the tabs only switch the HTML blob above).
 - Tap → opens the **Report Missing form** (see Section 8). The pet is already in context (the pet currently shown), so **no pet selector** is shown.
 - Shown to **all family members** (owner + parents).
-- **Hidden** when the pet is already missing (`missing_status != null`) — in that state the Missing banner + "Mark as Found" (Section 3) take over.
+- **Hidden** when the pet is already missing (`missingStatus != null`) — in that state the Missing banner + "Mark as Found" (Section 3) take over.
 
 ---
 
@@ -210,7 +210,7 @@ Status states: same pattern as Food tab.
 - Owner only; hidden for non-owner parents
 - Tap → confirmation dialog:
   *"Delete Bụi? This pet will be removed from your family's pet list. Posts linked to Bụi will remain. This action can be undone."*
-  → Confirm → `DeletePet mutation (BD)` (soft delete: `is_deleted = true`)
+  → Confirm → `DeletePet mutation (BD)` (soft delete: `isDeleted = true`)
 - Pet immediately disappears from:
   - Pet switcher (header)
   - My Pets pet rows (Screen 8)
@@ -229,7 +229,7 @@ Opened from `[...]` → "Edit Pet". Owner only.
 |-------|----------|-------|
 | Avatar | No | Replace pet avatar — upload via `RequestMediaUpload (BV)` `{ purpose: "PET_AVATAR" }` (screen_4) → use returned `publicUrl`; no AI scan |
 | Name | Yes | Pet display name |
-| Public | Yes | Toggle `is_public` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
+| Public | Yes | Toggle `isPublic` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
 | Species | Yes | Read-only if set by AI scan; editable if entered manually |
 | Breed | No | Read-only if set by AI scan; editable if entered manually; can be left blank |
 | Gender | Yes | `male` / `female` / `unknown` |
@@ -250,7 +250,7 @@ A **full-screen form** (`← Report Missing`). Shared by two entry points; the o
 | Opened from | Pet selector | Pet scope |
 |-------------|--------------|-----------|
 | **Pet Detail** — Report Missing button (Section 5) | Not shown — pet is the one on screen | — |
-| **Lost Pets screen** banner (`screen_18`) | **Shown** at top — pick the pet | The user's **active family** pets, **including private** (`is_public = false`); already-missing / deleted excluded. Reporting ignores pet privacy. See `screen_18` for selector details. |
+| **Lost Pets screen** banner (`screen_18`) | **Shown** at top — pick the pet | The user's **active family** pets, **including private** (`isPublic = false`); already-missing / deleted excluded. Reporting ignores pet privacy. See `screen_18` for selector details. |
 
 ```
 [Header]  ← Report Missing
@@ -279,8 +279,8 @@ DESCRIPTION *
 |-------|----------|-------|
 | `pet` | Yes | Pre-selected (Pet Detail) or via selector (Lost Pets — active family, incl. private) |
 | `photos` | **Yes** | **At least 1**, up to 10. Uploaded files only; **ordered**, `photos[0]` = **cover**; reorderable; "Set as cover" moves a photo to the front; no AI scan. On the Lost Pet Detail screen (`screen_19`) these render as a **single header carousel** (cover first) — there is no separate "more photos" block (decision: merged). |
-| `last_seen_location` | Yes | User drags a pin on the map → `{ lat, lng }`; reverse-geocoded → `{ city, city_code, country, country_code }` shown for confirmation. **No district.** |
-| `last_seen_at` | Yes | Date + time the pet was **last seen** (distinct from `reported_at`); defaults to now; cannot be in the future. |
+| `lastSeenLocation` | Yes | User drags a pin on the map → `{ lat, lng }`; reverse-geocoded → `{ city, cityCode, country, countryCode }` shown for confirmation. **No district.** |
+| `lastSeenAt` | Yes | Date + time the pet was **last seen** (distinct from `reportedAt`); defaults to now; cannot be in the future. |
 | `description` | **Yes** | Free text — identifying details to help others recognise the pet. Cannot be empty. |
 
 > **Submit** is enabled only when **all required fields** are set: a pet, ≥ 1 photo, a map location, a last-seen time, and a non-empty description.
@@ -288,7 +288,7 @@ DESCRIPTION *
 **Upload:** each photo uploaded via `RequestMediaUpload (BV)` `{ purpose: "MISSING_PHOTO" }` (screen_4) → use the returned `publicUrl`; no AI scan (missing photos are never scanned).
 
 **On submit → `ReportMissing mutation (BE)`:**
-- `pet.missing_status` set with the full shape: `last_seen_location` (+ `lat`/`lng`), `last_seen_at`, `description`, ordered `photos` (cover first), `reported_by` (the caller), `reported_at`.
+- `pet.missingStatus` set with the full shape: `lastSeenLocation` (+ `lat`/`lng`), `lastSeenAt`, `description`, ordered `photos` (cover first), `reportedBy` (the caller), `reportedAt`.
 - `MISSING` badge appears across the UI; Missing banner appears on Pet Detail (Section 3).
 - Push notification to family **followers**: *"Bụi from Minh's Family is missing! Last seen in Đà Lạt"*.
 - The report appears in **Lost Pets** (`screen_17` / `screen_18`) for the report's city, and on the **Lost Pet Detail** screen (`screen_19`).
@@ -300,12 +300,12 @@ DESCRIPTION *
 Triggered after a post is published that links to a pet (new or existing):
 
 ```
-Post published → media_tag.type = pet → pet identified/created
+Post published → mediaTag.type = pet → pet identified/created
   │
   ├─ Health analysis (per post)  [server-side async process — not a client API call]
-  │     └─> pet.health_status = "checking" while in queue
+  │     └─> pet.healthStatus = "checking" while in queue
   │           └─> Complete → update pet health record + status
-  │           └─> No result → pet.health_status = "no_data"
+  │           └─> No result → pet.healthStatus = "no_data"
   │
   └─ Breed data (if breed not yet generated)  [server-side async process — not a client API call]
         └─> All 3 tabs (Food, Behavior, Med/Vax) generated in parallel
@@ -856,7 +856,7 @@ User taps pet row in My Pets
 
 ```
 User taps another pet avatar in switcher
-  └─> Pet query (BA) { id: other_pet_id }
+  └─> Pet query (BA) { id: otherPetId }
         └─> Re-render all sections with new pet data
             (stay on same tab)
 ```
@@ -900,7 +900,7 @@ User taps [Delete Bụi]
 | Non-owner parent | Edit / Delete / Mark as Found actions hidden; can still Report Missing |
 | Soft-deleted pet accessed via direct link | `404 PET_NOT_FOUND` |
 | Media on posts tagged to deleted pet | Unchanged — pet badge still renders on historical posts using pet data from DB |
-| Health tab `source_post_id` | Tapping the source post thumbnail → navigate to Post Detail |
+| Health tab `sourcePostId` | Tapping the source post thumbnail → navigate to Post Detail |
 
 ---
 
@@ -908,7 +908,7 @@ User taps [Delete Bụi]
 
 | # | Question | Decision |
 |---|----------|----------|
-| 1 | Delete type | Soft delete (`is_deleted = true`); pet hidden from active UI; posts and tags unchanged |
+| 1 | Delete type | Soft delete (`isDeleted = true`); pet hidden from active UI; posts and tags unchanged |
 | 2 | Media tags on deleted pet | Not modified — historical posts retain pet badge (pet still exists in DB) |
 | 3 | Tab content format | All tabs render pre-generated HTML blob; client does not parse |
 | 4 | Health data scope | Per-post; only latest post's analysis is shown in Health tab |
@@ -922,5 +922,5 @@ User taps [Delete Bụi]
 | 12 | Report Missing surface | **Full-screen form** (Section 8), shared between Pet Detail and the Lost Pets banner |
 | 13 | Report pet selector scope (from Lost Pets) | **Active family** pets only, **including private** (reporting ignores pet privacy) |
 | 14 | Missing photos | Single **ordered** photo set; `photos[0]` = cover; rendered as one header carousel on Lost Pet Detail (no separate "more photos") |
-| 15 | Last seen | Map pin `lat`/`lng` + auto city/country (no district) **plus** an explicit `last_seen_at` time, distinct from `reported_at` |
-| 16 | Reporter identity | `missing_status.reported_by` recorded → Lost Pet Detail shows "Reported missing from {member / you}" to family members |
+| 15 | Last seen | Map pin `lat`/`lng` + auto city/country (no district) **plus** an explicit `lastSeenAt` time, distinct from `reportedAt` |
+| 16 | Reporter identity | `missingStatus.reportedBy` recorded → Lost Pet Detail shows "Reported missing from {member / you}" to family members |

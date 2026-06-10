@@ -69,23 +69,23 @@ Navigated to from:
 | Element | Display |
 |---------|---------|
 | Missing badge | `📍 MISSING` pill (badge text is **"MISSING"** — no "Report") |
-| Report time | `reported_at`, shown to the right of the badge as an absolute-ish string (e.g. `"Yesterday, 5:30 PM"`, `"May 9, 5:30 PM"`) |
+| Report time | `reportedAt`, shown to the right of the badge as an absolute-ish string (e.g. `"Yesterday, 5:30 PM"`, `"May 9, 5:30 PM"`) |
 | `pet.name` | Large heading |
-| `family.avatar_url` + `family.name` | Family that owns the pet; **tap family name → Family Posts** (`screen_3`) / My Pets if own family |
+| `family.avatarUrl` + `family.name` | Family that owns the pet; **tap family name → Family Posts** (`screen_3`) / My Pets if own family |
 
 ---
 
 ### 3. "Reported missing from …" line
 
-Shown **only to members of the pet's family** (`viewer_is_family_member = true`). Hidden entirely for everyone else (non-members, unauthenticated).
+Shown **only to members of the pet's family** (`viewerIsFamilyMember = true`). Hidden entirely for everyone else (non-members, unauthenticated).
 
 | Viewer | Text |
 |--------|------|
 | The reporter themselves | `"Reported missing from you"` |
-| Another family member | `"Reported missing from {reporter.display_name}"` |
+| Another family member | `"Reported missing from {reporter.displayName}"` |
 | Non-member / not logged in | *(line hidden)* |
 
-Source: `reported_by` on the report — returned by the API **only** to family members; `null` otherwise.
+Source: `reportedBy` on the report — returned by the API **only** to family members; `null` otherwise.
 
 ---
 
@@ -93,9 +93,9 @@ Source: `reported_by` on the report — returned by the API **only** to family m
 
 | Field | Display |
 |-------|---------|
-| Location | `"{cityShortName}, {countryCode}"` (e.g. `"Đà Lạt, VN"`) — from `last_seen.city_short_name` / `country_code` (consistent with the More tab + Lost Pets rows) |
-| When | `last_seen.at` as a full datetime (e.g. `"Yesterday, May 9 · 5:30 PM"`) — this is **when the pet was last seen**, distinct from the report time in Section 2 |
-| Map | A map with a single pin at `last_seen.lat` / `last_seen.lng`; tappable to open in the device map app / fullscreen |
+| Location | `"{cityShortName}, {countryCode}"` (e.g. `"Đà Lạt, VN"`) — from `lastSeen.cityShortName` / `countryCode` (consistent with the More tab + Lost Pets rows) |
+| When | `lastSeen.at` as a full datetime (e.g. `"Yesterday, May 9 · 5:30 PM"`) — this is **when the pet was last seen**, distinct from the report time in Section 2 |
+| Map | A map with a single pin at `lastSeen.lat` / `lastSeen.lng`; tappable to open in the device map app / fullscreen |
 
 ---
 
@@ -122,7 +122,7 @@ Source: `reported_by` on the report — returned by the API **only** to family m
 
 | Action | Behaviour | Visibility |
 |--------|-----------|------------|
-| **Share** | Copy the report's canonical web URL (`share_url`) to clipboard → toast *"Link copied"*. (On platforms with a native share sheet, may invoke it instead.) The link opens this same detail on web. | Always |
+| **Share** | Copy the report's canonical web URL (`shareUrl`) to clipboard → toast *"Link copied"*. (On platforms with a native share sheet, may invoke it instead.) The link opens this same detail on web. | Always |
 | **I saw {pet.name}** | Message the pet's **family**. Tap → if not logged in → **redirect to Login**; else open a thread toward the family via `StartThread (BI)` (see `screen_10`) — sender selection ("Send as…": self or active family) applies; the composer is **pre-filled** with *"I think I saw {pet.name}!"*. Reuses an existing thread if one exists. | **Hidden for members of the pet's family** (you can't message your own family — `screen_10` rule). Shown to everyone else; tap while logged out → Login. |
 
 - When "I saw …" is hidden (family member), the **Share** button spans the full width.
@@ -310,7 +310,7 @@ Tap [I saw {pet}]
 | 1 | Visibility | Public / **web-viewable** (optional auth); deep-linkable via `shareUrl` |
 | 2 | Photos layout | Single **header carousel**, cover (`photos[0]`) first; no separate "more photos" section |
 | 3 | Badge text | `MISSING` only (drop the "Report" word from the mockup) |
-| 4 | Two timestamps | Top badge row = `reported_at`; "Last seen → When" = `last_seen.at` |
+| 4 | Two timestamps | Top badge row = `reportedAt`; "Last seen → When" = `lastSeen.at` |
 | 5 | "Reported missing from …" | Shown to **family members only**; "you" if viewer is the reporter, else the reporter's name |
 | 6 | How you can help | **Fixed client-side text**, pet/family names interpolated; not from API |
 | 7 | Share | Copy canonical `shareUrl` to clipboard (native share sheet where available) |

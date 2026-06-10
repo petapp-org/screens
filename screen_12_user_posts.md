@@ -73,7 +73,7 @@ Reuses endpoint defined in `screen_3_family_posts.md`.
 
 See full definition in `screen_3_family_posts.md` → **Section: V. Query: UserPosts**.
 
-**Variables:** `{ "userId": "<user_id>", "limit": 10 }`
+**Variables:** `{ "userId": "<userId>", "limit": 10 }`
 
 ---
 
@@ -92,7 +92,7 @@ User taps author name on a post card
 
 ```
 User scrolls to bottom
-  └─> UserPosts query (V) { userId, cursor: <next_cursor>, limit: 10 }
+  └─> UserPosts query (V) { userId, cursor: <nextCursor>, limit: 10 }
         └─> Append new posts
               └─> hasMore=false → show "No more posts" state
 ```
@@ -102,7 +102,7 @@ User scrolls to bottom
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → UserPosts query (V) { userId, cursor: <next_cursor> }
+        └─> Scroll to load more → UserPosts query (V) { userId, cursor: <nextCursor> }
 ```
 
 ---

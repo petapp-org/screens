@@ -74,7 +74,7 @@ Reuses endpoint defined in `screen_3_family_posts.md`.
 
 See full definition in `screen_3_family_posts.md` → **Section: T. Query: PetPosts**.
 
-**Variables:** `{ "petId": "<pet_id>", "limit": 10 }`
+**Variables:** `{ "petId": "<petId>", "limit": 10 }`
 
 ---
 
@@ -93,7 +93,7 @@ User taps pet badge on a post card media
 
 ```
 User scrolls to bottom
-  └─> PetPosts query (T) { petId, cursor: <next_cursor>, limit: 10 }
+  └─> PetPosts query (T) { petId, cursor: <nextCursor>, limit: 10 }
         └─> Append new posts
               └─> hasMore=false → show "No more posts" state
 ```
@@ -103,7 +103,7 @@ User scrolls to bottom
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → PetPosts query (T) { petId, cursor: <next_cursor> }
+        └─> Scroll to load more → PetPosts query (T) { petId, cursor: <nextCursor> }
 ```
 
 ---

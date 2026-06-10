@@ -45,7 +45,7 @@ Requires login. Not related to the "More" tab in the bottom navigation.
 
 | Field | Description |
 |-------|-------------|
-| `avatar_url` | User avatar — tappable, opens Edit Profile screen |
+| `avatarUrl` | User avatar — tappable, opens Edit Profile screen |
 | `name` | Display name |
 | `tag` | Unique tag, displayed as `@tag` |
 
@@ -75,7 +75,7 @@ Active family is used for: receiving push notifications directed at the family; 
 - Toggling ON a family → sets it as active; all other families toggle OFF automatically
 - Only 1 can be ON at a time across owned + joined families
 - Creating a new family → auto-activates it (all others deactivated)
-- `SetActiveFamily mutation (AG)` `{ family_id }` → `200 OK`
+- `SetActiveFamily mutation (AG)` `{ familyId }` → `200 OK`
 
 ---
 
@@ -150,7 +150,7 @@ DANGER ZONE
 - Editable: avatar, name
 - Read-only: `tag` (shown greyed out with note "Tag cannot be changed")
 - Changing the avatar: upload via `RequestMediaUpload (BV)` `{ purpose: "USER_AVATAR" }` (screen_4) → use returned `publicUrl`; no AI scan
-- `UpdateMe mutation (AK)` `{ name, avatar_url }`
+- `UpdateMe mutation (AK)` `{ name, avatarUrl }`
 
 **Phone & Email:**
 - Shows current phone number (masked, e.g. `+84 *** *** 567`)
@@ -159,7 +159,7 @@ DANGER ZONE
 
 **Push Notifications:**
 - Toggle stored locally + synced to server
-- `UpdateMe mutation (AK)` `{ push_notifications_enabled: true|false }`
+- `UpdateMe mutation (AK)` `{ pushNotificationsEnabled: true|false }`
 
 **Language:**
 - Picker for app display language
@@ -168,7 +168,7 @@ DANGER ZONE
 **Log out:**
 - Tap → confirmation dialog: "Are you sure you want to log out?"
 - Confirm → clear local tokens → redirect to Register/Login screen
-- `Logout mutation (AL)` `{ refresh_token }` (invalidates refresh token server-side)
+- `Logout mutation (AL)` `{ refreshToken }` (invalidates refresh token server-side)
 
 **Delete Account screen** (1 level deeper — tap "Delete Account [>]" to navigate here):
 - Explains consequences: posts, pets, and family data will be removed
@@ -176,10 +176,10 @@ DANGER ZONE
 - Single **"Delete My Account"** button (red, destructive style)
 - Tap → confirmation dialog: "Are you sure? This starts a 30-day deletion period." → Confirm → `RequestAccountDeletion mutation`
 - After confirm: log out immediately → redirect to Register/Login screen
-- Server sets `scheduled_deletion_at = now + 30 days`
+- Server sets `scheduledDeletionAt = now + 30 days`
 
 **Reactivation (within 30 days):**
-- User logs in via OAuth → server detects `scheduled_deletion_at` is set → clears `scheduled_deletion_at` → account fully restored
+- User logs in via OAuth → server detects `scheduledDeletionAt` is set → clears `scheduledDeletionAt` → account fully restored
 - Show toast on login: "Welcome back! Your account deletion has been cancelled."
 
 ---
@@ -598,9 +598,9 @@ mutation RequestAccountDeletion {
 ```
 
 **Side effects:**
-- Sets `scheduled_deletion_at = now + 30 days` on the user record
+- Sets `scheduledDeletionAt = now + 30 days` on the user record
 - Caller is immediately logged out client-side after receiving response
-- User logging back in within 30 days via OAuth cancels the deletion (`scheduled_deletion_at` cleared); show toast "Welcome back! Your account deletion has been cancelled."
+- User logging back in within 30 days via OAuth cancels the deletion (`scheduledDeletionAt` cleared); show toast "Welcome back! Your account deletion has been cancelled."
 
 **Errors:**
 

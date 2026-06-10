@@ -91,9 +91,9 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 | Field | Required | Notes |
 |-------|----------|-------|
 | `city` | No | City name, e.g. `"Hồ Chí Minh"` |
-| `city_code` | No | Short code, e.g. `"HCM"` |
+| `cityCode` | No | Short code, e.g. `"HCM"` |
 | `country` | No | Country name, e.g. `"Việt Nam"` |
-| `country_code` | No | Country code, e.g. `"VN"` |
+| `countryCode` | No | Country code, e.g. `"VN"` |
 
 - Input via searchable city/country picker (same component as Create Post location)
 - Displayed on family profile as `"HCM - VN"`
@@ -156,7 +156,7 @@ Bottom sheet or full-screen modal.
 - Results exclude: current user (owner), already-added parents, already-invited users
 
 **Select a user:**
-- Tap result → `InviteParent mutation (AQ)` `{ user_id }`
+- Tap result → `InviteParent mutation (AQ)` `{ userId }`
 - Close modal → new row appears in Parents list with INVITED status
 
 **No match:**

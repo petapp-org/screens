@@ -116,7 +116,7 @@ User taps Activity → Following in Profile Settings
 
 ```
 User taps "Load more" button
-  └─> MyFollowing query (AI) { cursor: <next_cursor>, limit: 20 }
+  └─> MyFollowing query (AI) { cursor: <nextCursor>, limit: 20 }
         └─> Append new rows
               └─> hasMore=false → hide "Load more" button
 ```

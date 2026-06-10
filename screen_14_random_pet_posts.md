@@ -3,7 +3,7 @@
 ## Overview
 
 Post feed for all AI-detected but unmatched animals within a specific family — shows posts where at least one media frame has `mediaTag.type = "RANDOM"` with a detected breed or species.  
-Navigated to from: tapping **Random Pets row** in Family Posts (only when `random_count > 0`); tapping **"View All →"** in the Random Pets section in My Pets (screen_8, only when random posts exist).  
+Navigated to from: tapping **Random Pets row** in Family Posts (only when `randomCount > 0`); tapping **"View All →"** in the Random Pets section in My Pets (screen_8, only when random posts exist).  
 Accessible without login — unauthenticated users see only `public` posts.
 
 ---
@@ -59,7 +59,7 @@ No follow/message buttons — this is a filtered view of a family's posts, not t
 - Same server-side enforcement as Explore — unauthenticated sees `public` only
 - Server enforces — client receives only visible posts
 
-**Empty state:** Not applicable — both entry points are guarded by `random_count > 0` / section only shown when posts exist.
+**Empty state:** Not applicable — both entry points are guarded by `randomCount > 0` / section only shown when posts exist.
 
 ---
 
@@ -71,7 +71,7 @@ Reuses endpoint defined in `screen_3_family_posts.md`.
 
 See full definition in `screen_3_family_posts.md` → **Section: U. Query: RandomPetPosts**.
 
-**Variables:** `{ "familyId": "<family_id>", "limit": 10 }`
+**Variables:** `{ "familyId": "<familyId>", "limit": 10 }`
 
 ---
 
@@ -98,7 +98,7 @@ User taps "View All →" in Random Pets section (My Pets screen)
 
 ```
 User scrolls to bottom
-  └─> RandomPetPosts query (U) { familyId, cursor: <next_cursor>, limit: 10 }
+  └─> RandomPetPosts query (U) { familyId, cursor: <nextCursor>, limit: 10 }
         └─> Append new posts
               └─> hasMore=false → show "No more posts" state
 ```
@@ -108,7 +108,7 @@ User scrolls to bottom
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → RandomPetPosts query (U) { familyId, cursor: <next_cursor> }
+        └─> Scroll to load more → RandomPetPosts query (U) { familyId, cursor: <nextCursor> }
 ```
 
 ---
@@ -117,10 +117,10 @@ User taps grid view icon
 
 | Case | Expected Behaviour |
 |------|--------------------|
-| Entry point guards | Both entry points check `random_count > 0` before allowing navigation — empty state should never occur |
+| Entry point guards | Both entry points check `randomCount > 0` before allowing navigation — empty state should never occur |
 | Posts with mixed tags | A post may have some `type=PET` frames alongside `type=RANDOM` frames; it appears in this list if at least one frame is `RANDOM` with breed/species |
 | `mediaTag.type = "RANDOM"` on media frames | No pet badge shown; no navigation to Pet Posts from these frames |
-| Family changes between navigation events | If `random_count` drops to 0 after navigation (race condition), list simply shows empty — acceptable edge case |
+| Family changes between navigation events | If `randomCount` drops to 0 after navigation (race condition), list simply shows empty — acceptable edge case |
 
 ---
 

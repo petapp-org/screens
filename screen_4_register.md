@@ -96,7 +96,7 @@ Shown once after a new account is created via any method.
 
 **Submit:**
 - If an avatar was picked: upload it first via `RequestMediaUpload (BV)` `{ purpose: "USER_AVATAR" }` → use the returned `publicUrl` (no AI scan — avatars are never scanned)
-- `SetupProfile mutation (AE)` `{ name, tag, avatar_url }`
+- `SetupProfile mutation (AE)` `{ name, tag, avatarUrl }`
 - On success → navigate to the **post-login target** (return target if redirected here, else Explore)
 
 ---
@@ -224,7 +224,7 @@ mutation VerifyOtp($input: VerifyOtpInput!) {
 
 ### AC. Mutation: `AuthWithGoogle`
 
-Authenticate via Google OAuth id_token. Returns same `AuthResult` shape.
+Authenticate via Google OAuth idToken. Returns same `AuthResult` shape.
 **Auth:** Not required
 
 **Operation:**
@@ -274,7 +274,7 @@ mutation AuthWithGoogle($input: OAuthInput!) {
 
 ### AD. Mutation: `AuthWithApple`
 
-Authenticate via Apple OAuth id_token. Returns same `AuthResult` shape.
+Authenticate via Apple OAuth idToken. Returns same `AuthResult` shape.
 **Auth:** Not required
 
 **Operation:**

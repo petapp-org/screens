@@ -79,7 +79,7 @@ User taps Activity → Loves in Profile Settings
 
 ```
 User scrolls to bottom
-  └─> MyLovedPosts query (AH) { cursor: <next_cursor>, limit: 10 }
+  └─> MyLovedPosts query (AH) { cursor: <nextCursor>, limit: 10 }
         └─> Append new posts
               └─> hasMore=false → show "No more posts" state
 ```
