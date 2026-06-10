@@ -110,32 +110,36 @@ All calls go to `POST /graphql`.
 ### BN. Query: `SearchFamilies`
 
 ```graphql
-query SearchFamilies($q: String!, $cursor: String, $limit: Int) {
-  searchFamilies(q: $q, cursor: $cursor, limit: $limit) {
-    families {
-      id
-      name
-      tag
-      avatarUrl
-      type
-      location {
-        city
-        cityCode
-        country
-        countryCode
-      }
-      social {
-        followersCount
-        isFollowedByMe
+query SearchFamilies($q: String!, $first: Int = 20, $after: String) {
+  searchFamilies(q: $q, first: $first, after: $after) {
+    edges {
+      node {
+        id
+        name
+        tag
+        avatarUrl
+        type
+        location {
+          city
+          cityCode
+          country
+          countryCode
+        }
+        social {
+          followersCount
+          isFollowedByMe
+        }
       }
     }
-    nextCursor
-    hasMore
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
   }
 }
 ```
 
-**Variables:** `{ "q": "pudding", "limit": 20 }`
+**Variables:** `{ "q": "pudding", "first": 20 }`
 
 **Errors:**
 
@@ -148,21 +152,25 @@ query SearchFamilies($q: String!, $cursor: String, $limit: Int) {
 ### BO. Query: `SearchUsers`
 
 ```graphql
-query SearchUsers($q: String!, $cursor: String, $limit: Int) {
-  searchUsers(q: $q, cursor: $cursor, limit: $limit) {
-    users {
-      id
-      displayName
-      tag
-      avatarUrl
+query SearchUsers($q: String!, $first: Int = 20, $after: String) {
+  searchUsers(q: $q, first: $first, after: $after) {
+    edges {
+      node {
+        id
+        displayName
+        tag
+        avatarUrl
+      }
     }
-    nextCursor
-    hasMore
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
   }
 }
 ```
 
-**Variables:** `{ "q": "minh", "limit": 20 }`
+**Variables:** `{ "q": "minh", "first": 20 }`
 
 **Note:** `SearchUsers` is also used by the Invite Search Modal in screen_6 and screen_8 — same endpoint, same query shape.
 
@@ -177,27 +185,31 @@ query SearchUsers($q: String!, $cursor: String, $limit: Int) {
 ### BP. Query: `SearchPets`
 
 ```graphql
-query SearchPets($q: String!, $cursor: String, $limit: Int) {
-  searchPets(q: $q, cursor: $cursor, limit: $limit) {
-    pets {
-      id
-      name
-      species
-      breed
-      avatarUrl
-      family {
+query SearchPets($q: String!, $first: Int = 20, $after: String) {
+  searchPets(q: $q, first: $first, after: $after) {
+    edges {
+      node {
         id
         name
+        species
+        breed
         avatarUrl
+        family {
+          id
+          name
+          avatarUrl
+        }
       }
     }
-    nextCursor
-    hasMore
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
   }
 }
 ```
 
-**Variables:** `{ "q": "british", "limit": 20 }`
+**Variables:** `{ "q": "british", "first": 20 }`
 
 **Note:** Only pets from public families are returned. Server filters based on family privacy settings.
 

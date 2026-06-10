@@ -357,12 +357,20 @@ Search users to invite as parents.
 
 **Operation:**
 ```graphql
-query SearchUsers($q: String!, $limit: Int) {
-  searchUsers(q: $q, limit: $limit) {
-    id
-    displayName
-    username
-    avatarUrl
+query SearchUsers($q: String!, $first: Int = 20, $after: String) {
+  searchUsers(q: $q, first: $first, after: $after) {
+    edges {
+      node {
+        id
+        displayName
+        username
+        avatarUrl
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
   }
 }
 ```
@@ -371,7 +379,7 @@ query SearchUsers($q: String!, $limit: Int) {
 ```json
 {
   "q": "minhdang",
-  "limit": 10
+  "first": 10
 }
 ```
 
@@ -379,14 +387,22 @@ query SearchUsers($q: String!, $limit: Int) {
 ```json
 {
   "data": {
-    "searchUsers": [
-      {
-        "id": "user_002",
-        "displayName": "Minh Dang",
-        "username": "minhdang",
-        "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+    "searchUsers": {
+      "edges": [
+        {
+          "node": {
+            "id": "user_002",
+            "displayName": "Minh Dang",
+            "username": "minhdang",
+            "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+          }
+        }
+      ],
+      "pageInfo": {
+        "endCursor": null,
+        "hasNextPage": false
       }
-    ]
+    }
   }
 }
 ```
