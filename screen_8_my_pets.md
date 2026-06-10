@@ -155,7 +155,7 @@ Parents                                    [× close]
 - Tap → start a **DM** with that user: `StartThread (BI)` `{ senderType: USER (self), receiverType: USER }` → open the thread in the Messages screen's Thread View (screen_10). Reuses existing DM thread if one exists.
 
 **Remove action:**
-- Confirmation dialog → `RemoveParent mutation (AS)` (endpoint AS from Screen 6)
+- Confirmation dialog → `RemoveFamilyMember mutation (AS)` (endpoint AS from Screen 6)
 - Row removed immediately on confirm
 
 **Cancel invite action:**
@@ -434,7 +434,7 @@ User taps My Pets tab
 ```
 User taps Manage Parents
   └─> Open Parents bottom sheet (data already loaded from AY)
-        ├─ Owner: tap Remove on a parent → confirmation → RemoveParent mutation (AS)
+        ├─ Owner: tap Remove on a parent → confirmation → RemoveFamilyMember mutation (AS)
         ├─ Owner: tap Cancel on invite → CancelParentInvite mutation (AR)
         └─ Owner: tap Invite Another Parent → search modal → InviteParent mutation (AQ)
 ```

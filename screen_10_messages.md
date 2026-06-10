@@ -7,7 +7,7 @@ The **messaging** surface — a flat list of conversation threads (the **Chats i
 > **Split note:** This screen was previously bundled with general activity notifications as a single two-tab "Notifications" screen. Messaging and notifications are now **separate screens** — general activity notifications (comments, loves, follows, AI health alerts, missing/found pets, invite accepted, …) live in **Notifications (`screen_22`)**. See Decisions Log #1.
 
 Auth required. Accessible from the **Messages icon** (`✉`) in the Explore header (`screen_1`), My Pets header (`screen_8`), and More header (`screen_17`).
-The Messages icon shows a **red dot** (no number) whenever there is any **unread chat** — driven by `UnreadMessageCount (BL)`. (The separate **Notifications icon** `🔔` carries its own red dot from `NotificationUnreadCount (BU)`.) Inside the screen there is **no red dot**; unread threads are shown in **bold** instead.
+The Messages icon shows a **red dot** (no number) whenever there is any **unread chat** — driven by `UnreadMessageCount (BL)`. (The separate **Notifications icon** `🔔` carries its own red dot from `UnreadNotificationCount (BU)`.) Inside the screen there is **no red dot**; unread threads are shown in **bold** instead.
 
 > **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `SetActiveFamily (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats inbox: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
 
@@ -434,7 +434,7 @@ mutation MarkThreadRead($threadId: ID!) {
 
 ### BL. Query: `UnreadMessageCount`
 
-Chats unread count — `> 0` drives the **Messages-icon red dot** (`✉`, header). Independent of the Notifications-icon dot (`NotificationUnreadCount (BU)`, `screen_22`).
+Chats unread count — `> 0` drives the **Messages-icon red dot** (`✉`, header). Independent of the Notifications-icon dot (`UnreadNotificationCount (BU)`, `screen_22`).
 
 **Auth:** Required
 

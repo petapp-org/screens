@@ -120,7 +120,7 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 ```
 [Avatar]  [Parent name]  [PARENT]         [Remove]
 ```
-- Tap Remove → confirmation dialog → `RemoveParent mutation (AS)`
+- Tap Remove → confirmation dialog → `RemoveFamilyMember mutation (AS)`
 - Row removed immediately on confirmation
 
 **Invited parent row** (`status = invited`):
@@ -505,7 +505,7 @@ mutation CancelParentInvite($familyId: ID!, $userId: ID!) {
 
 ---
 
-### AS. Mutation: `RemoveParent`
+### AS. Mutation: `RemoveFamilyMember`
 Remove an accepted parent from the family.
 **Auth:** Required (owner only). Cannot remove self (owner).
 
@@ -513,8 +513,8 @@ Remove an accepted parent from the family.
 
 **Operation:**
 ```graphql
-mutation RemoveParent($familyId: ID!, $userId: ID!) {
-  removeParent(familyId: $familyId, userId: $userId) {
+mutation RemoveFamilyMember($familyId: ID!, $userId: ID!) {
+  removeFamilyMember(familyId: $familyId, userId: $userId) {
     success
   }
 }
@@ -532,7 +532,7 @@ mutation RemoveParent($familyId: ID!, $userId: ID!) {
 ```json
 {
   "data": {
-    "removeParent": {
+    "removeFamilyMember": {
       "success": true
     }
   }

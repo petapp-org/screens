@@ -7,7 +7,7 @@ The **general activity notification center** — a single flat feed of activity 
 > **Split note:** This screen was split out from the old two-tab "Notifications" screen. **Messaging** (the Chats inbox + Thread View) now lives in **Messages (`screen_10`)**; this screen holds only the **general activity feed**. See `screen_10` Decisions Log #1.
 
 Auth required. Accessible from the **Notifications icon** (`🔔`) in the Explore header (`screen_1`), My Pets header (`screen_8`), and More header (`screen_17`).
-The Notifications icon shows a **red dot** (no number) whenever there is any unread activity — driven by `NotificationUnreadCount (BU)`. (The separate **Messages icon** `✉` carries its own red dot from `UnreadMessageCount (BL)`, `screen_10`.) Inside the screen there is **no red dot**; unread items are shown in **bold** instead.
+The Notifications icon shows a **red dot** (no number) whenever there is any unread activity — driven by `UnreadNotificationCount (BU)`. (The separate **Messages icon** `✉` carries its own red dot from `UnreadMessageCount (BL)`, `screen_10`.) Inside the screen there is **no red dot**; unread items are shown in **bold** instead.
 
 ---
 
@@ -182,15 +182,15 @@ mutation MarkNotificationRead($id: ID) {
 
 ---
 
-### BU. Query: `NotificationUnreadCount`
+### BU. Query: `UnreadNotificationCount`
 
 Activity unread count — `> 0` drives the **Notifications-icon red dot** (`🔔`, header). Independent of the Messages-icon dot (`UnreadMessageCount (BL)`, `screen_10`).
 
 **Auth:** Required
 
 ```graphql
-query NotificationUnreadCount {
-  notificationUnreadCount
+query UnreadNotificationCount {
+  unreadNotificationCount
 }
 ```
 
@@ -241,7 +241,7 @@ User taps a notification row
 | # | Question | Decision |
 |---|----------|----------|
 | 1 | Screen split | Split from the old two-tab screen: this screen is the **general activity feed only**; messaging lives in **Messages (`screen_10`)** |
-| 2 | Header entry point | **Notifications icon** `🔔` (Explore + My Pets + More headers); red dot (no number) when any activity unread (`NotificationUnreadCount BU`). Separate from the **Messages icon** `✉` (`screen_10`) |
+| 2 | Header entry point | **Notifications icon** `🔔` (Explore + My Pets + More headers); red dot (no number) when any activity unread (`UnreadNotificationCount BU`). Separate from the **Messages icon** `✉` (`screen_10`) |
 | 3 | Unread indicator | **Inside the screen**: bold only, no red dot. **Header Notifications icon**: red dot when any unread |
 | 4 | Parent invite received | Excluded — only `INVITE_ACCEPTED` notified |
 | 5 | Loves grouping | Grouped per post (`{actor} and {N} others`) |

@@ -601,14 +601,14 @@ mutation CreatePost($input: CreatePostInput!) {
 
 ---
 
-### BQ. Query: `ListSpecies`
+### BQ. Query: `Species`
 
 Fetch all available species options for the Create Pet form.  
 **Auth:** Not required
 
 ```graphql
-query ListSpecies {
-  listSpecies {
+query Species {
+  species {
     id
     name
   }
@@ -619,7 +619,7 @@ query ListSpecies {
 ```json
 {
   "data": {
-    "listSpecies": [
+    "species": [
       { "id": "species_cat", "name": "Cat" },
       { "id": "species_dog", "name": "Dog" },
       { "id": "species_bird", "name": "Bird" }
@@ -630,14 +630,14 @@ query ListSpecies {
 
 ---
 
-### BR. Query: `ListBreeds`
+### BR. Query: `Breeds`
 
 Fetch all breed options for a given species, for the Create Pet form.  
 **Auth:** Not required
 
 ```graphql
-query ListBreeds($speciesId: ID!) {
-  listBreeds(speciesId: $speciesId) {
+query Breeds($speciesId: ID!) {
+  breeds(speciesId: $speciesId) {
     id
     name
   }
@@ -650,7 +650,7 @@ query ListBreeds($speciesId: ID!) {
 ```json
 {
   "data": {
-    "listBreeds": [
+    "breeds": [
       { "id": "breed_british_shorthair", "name": "British Shorthair" },
       { "id": "breed_orange_tabby", "name": "Orange Tabby Cat" }
     ]
