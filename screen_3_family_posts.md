@@ -420,7 +420,7 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
 }
 ```
 
-> `edges[].node` follows the canonical Post shape from `screen_1_home_explore.md` → Query A (Feed).
+> `edges[].node` follows the canonical Post shape from `screen_1_home_explore.md` → Query A (ExploreFeed).
 
 **Errors:**
 
@@ -534,7 +534,7 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 ```
 
 **Notes:**
-- `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
+- `posts[]` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
 - Server enforces privacy: unauthenticated → `public` only; authenticated → `public` + `followers` (if following family) + `private` (if family member).
 
 **Errors:**
@@ -587,7 +587,7 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
 ```
 
 **Notes:**
-- `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
+- `posts[]` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
 - Server filters: only posts where at least one media has `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
 - `mediaTag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
 
@@ -661,7 +661,7 @@ query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
 ```
 
 **Notes:**
-- `edges[].node` follows the canonical Post shape from screen_1 Query A (Feed).
+- `edges[].node` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
 
 **Errors:**
 
