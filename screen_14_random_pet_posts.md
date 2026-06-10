@@ -69,6 +69,8 @@ Reuses endpoint defined in `screen_3_family_posts.md`.
 
 ### U. Query: `RandomPetPosts`
 
+> ⚠️ **Mapping review cần thiết:** `randomPetPosts` là feed scoped theo `familyId` (chỉ posts trong 1 family có random pets). Backend `exploreFeed` là global cross-family và không nhận `familyId`. Mapping sang `exploreFeed` sẽ mất hoàn toàn scope family — giữ nguyên query cũ, chờ backend expose `randomFeed(familyId)` hoặc xác nhận design intent.
+
 See full definition in `screen_3_family_posts.md` → **Section: U. Query: RandomPetPosts**.
 
 **Variables:** `{ "familyId": "<familyId>", "limit": 10 }`

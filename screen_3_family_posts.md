@@ -342,7 +342,7 @@ query Family($id: ID!) {
 
 ---
 
-### R. Query: `FamilyPosts`
+### R. Query: `FamilyFeed`
 
 Fetch paginated posts for the family feed (used by both list view and grid view).
 
@@ -350,57 +350,77 @@ Fetch paginated posts for the family feed (used by both list view and grid view)
 
 **Operation:**
 ```graphql
-query FamilyPosts($familyId: ID!, $cursor: String, $limit: Int) {
-  familyPosts(familyId: $familyId, cursor: $cursor, limit: $limit) {
-    posts {
-      ...Post
+query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
+  familyFeed(familyId: $familyId, first: $first, after: $after) {
+    edges {
+      node {
+        id
+        family { id name avatarUrl type }
+        author { id displayName avatarUrl }
+        pets { id name avatarUrl }
+        caption
+        location { city cityCode country countryCode }
+        media {
+          id type url thumbnailUrl mimeType
+          width height durationSeconds provider
+          mediaTag { type id species breed }
+        }
+        loveCount
+        commentCount
+        isLoved
+        privacy
+        createdAt
+      }
     }
-    nextCursor
-    hasMore
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "familyId": "fam_xyz", "cursor": null, "limit": 10 }
+{ "familyId": "fam_xyz", "first": 10, "after": null }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "familyPosts": {
-      "posts": [
+    "familyFeed": {
+      "edges": [
         {
-          "id": "post_abc",
-          "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "type": "STANDARD" },
-          "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "..." },
-          "pets": [{ "id": "pet_111", "name": "Bụi", "avatarUrl": "..." }],
-          "caption": "Bụi nằm chờ mama 🌕",
-          "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
-          "media": [
-            {
-              "id": "media_001", "type": "UPLOADED",
-              "url": "https://cdn.petapp.com/media/001.jpg",
-              "thumbnailUrl": null, "mimeType": "image/jpeg",
-              "width": 1080, "height": 1080, "durationSeconds": null, "provider": null,
-              "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }
-            }
-          ],
-          "loveCount": 42, "commentCount": 5,
-          "isLoved": false, "privacy": "PUBLIC",
-          "createdAt": "2026-06-06T08:00:00Z"
+          "node": {
+            "id": "post_abc",
+            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "type": "STANDARD" },
+            "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "..." },
+            "pets": [{ "id": "pet_111", "name": "Bụi", "avatarUrl": "..." }],
+            "caption": "Bụi nằm chờ mama 🌕",
+            "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
+            "media": [
+              {
+                "id": "media_001", "type": "UPLOADED",
+                "url": "https://cdn.petapp.com/media/001.jpg",
+                "thumbnailUrl": null, "mimeType": "image/jpeg",
+                "width": 1080, "height": 1080, "durationSeconds": null, "provider": null,
+                "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }
+              }
+            ],
+            "loveCount": 42, "commentCount": 5,
+            "isLoved": false, "privacy": "PUBLIC",
+            "createdAt": "2026-06-06T08:00:00Z"
+          }
         }
       ],
-      "nextCursor": "cursor_abc123",
-      "hasMore": true
+      "pageInfo": { "endCursor": "eyJ...", "hasNextPage": true }
     }
   }
 }
 ```
 
-> `posts[]` follows the canonical Post shape from `screen_1_home_explore.md` → Query A (Feed).
+> `edges[].node` follows the canonical Post shape from `screen_1_home_explore.md` → Query A (Feed).
 
 **Errors:**
 
@@ -473,6 +493,8 @@ query FamilyParents($familyId: ID!) {
 
 ### T. Query: `PetPosts`
 
+> ⚠️ Backend chưa có petFeed (GAP petapp-be#884) — giữ nguyên, chờ backend.
+
 Fetch posts for a specific named pet.  
 **Auth:** Optional — bearer token enables `followers` + `private` posts for eligible viewers.
 
@@ -525,6 +547,8 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 
 ### U. Query: `RandomPetPosts`
 
+> ⚠️ **Mapping review cần thiết:** `randomPetPosts` là feed scoped theo `familyId` (chỉ posts trong 1 family có random pets). Backend `exploreFeed` là global cross-family và không nhận `familyId`. Mapping sang `exploreFeed` sẽ mất hoàn toàn scope family — giữ nguyên query cũ, chờ backend expose `randomFeed(familyId)` hoặc xác nhận design intent.
+
 Fetch posts with random (unmatched) animal detections for a specific family.  
 **Auth:** Optional — same privacy enforcement as above.
 
@@ -575,47 +599,69 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
 
 ---
 
-### V. Query: `UserPosts`
+### V. Query: `AuthorFeed`
 
 Fetch posts authored by a specific user.  
 **Auth:** Optional — same privacy enforcement as above.
 
 **Operation:**
 ```graphql
-query UserPosts($userId: ID!, $cursor: String, $limit: Int) {
-  userPosts(userId: $userId, cursor: $cursor, limit: $limit) {
-    user {
-      id
-      displayName
-      tag
-      avatarUrl
+query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
+  authorFeed(authorId: $authorId, first: $first, after: $after) {
+    edges {
+      node {
+        id
+        family { id name avatarUrl type }
+        author { id displayName avatarUrl }
+        pets { id name avatarUrl }
+        caption
+        location { city cityCode country countryCode }
+        media {
+          id type url thumbnailUrl mimeType
+          width height durationSeconds provider
+          mediaTag { type id species breed }
+        }
+        loveCount
+        commentCount
+        isLoved
+        privacy
+        createdAt
+      }
     }
-    posts {
-      ...PostCard
+    pageInfo {
+      endCursor
+      hasNextPage
     }
-    nextCursor
-    hasMore
   }
 }
 ```
 
-**Variables:** `{ "userId": "user_001", "limit": 10 }`
+**Variables:** `{ "authorId": "user_001", "first": 10 }`
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "userPosts": {
-      "user": { "id": "user_001", "displayName": "Minh Tuan", "tag": "minhtuan", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
-      "posts": [ { "id": "post_ghi", "caption": "Bụi dậy sớm cùng tui 🌅", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 34, "commentCount": 6, "privacy": "PUBLIC", "createdAt": "2026-06-06T07:00:00Z" } ],
-      "nextCursor": "cursor_xyz", "hasMore": false
+    "authorFeed": {
+      "edges": [
+        {
+          "node": {
+            "id": "post_ghi",
+            "caption": "Bụi dậy sớm cùng tui 🌅",
+            "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }],
+            "loveCount": 34, "commentCount": 6,
+            "privacy": "PUBLIC", "createdAt": "2026-06-06T07:00:00Z"
+          }
+        }
+      ],
+      "pageInfo": { "endCursor": null, "hasNextPage": false }
     }
   }
 }
 ```
 
 **Notes:**
-- `posts[]` follows the canonical Post shape from screen_1 Query A (Feed).
+- `edges[].node` follows the canonical Post shape from screen_1 Query A (Feed).
 
 **Errors:**
 
@@ -634,7 +680,7 @@ User taps family name on a post
   └─> Family query (Q) { familyId }
         ├─ FAMILY_NOT_FOUND → show "Family not found" error state
         └─ 200 → render info card + pets list + about
-              └─> FamilyPosts query (R) { familyId, limit: 10 }
+              └─> FamilyFeed query (R) { familyId, first: 10 }
                     └─> Render posts in default list view
 ```
 
@@ -643,7 +689,7 @@ User taps family name on a post
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → FamilyPosts query (R) { familyId, cursor: <nextCursor> }
+        └─> Scroll to load more → FamilyFeed query (R) { familyId, after: <pageInfo.endCursor> }
 ```
 
 ### Tap Pet row
@@ -779,7 +825,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 - Privacy rules: same server-side enforcement as Explore — unauthenticated sees `public` posts only; authenticated sees `public` + `followers` (if following the post's family) + `private` (if family member). Viewer always sees at least the post they tapped from.
 - Empty state: not applicable — screen is only reachable by tapping a post card, so at least 1 post is always visible
 - All canonical post card tap interactions apply (see `screen_1_home_explore.md` → Post Card)
-- API: Query `UserPosts` (endpoint V above)
+- API: Query `AuthorFeed` (endpoint V above)
 
 ---
 

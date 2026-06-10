@@ -69,11 +69,11 @@ No message button — messaging is per-family thread, not user-to-user.
 
 Reuses endpoint defined in `screen_3_family_posts.md`.
 
-### V. Query: `UserPosts`
+### V. Query: `AuthorFeed`
 
-See full definition in `screen_3_family_posts.md` → **Section: V. Query: UserPosts**.
+See full definition in `screen_3_family_posts.md` → **Section: V. Query: AuthorFeed**.
 
-**Variables:** `{ "userId": "<userId>", "limit": 10 }`
+**Variables:** `{ "authorId": "<authorId>", "first": 10 }`
 
 ---
 
@@ -83,7 +83,7 @@ See full definition in `screen_3_family_posts.md` → **Section: V. Query: UserP
 
 ```
 User taps author name on a post card
-  └─> UserPosts query (V) { userId, limit: 10 }
+  └─> AuthorFeed query (V) { authorId, first: 10 }
         ├─ USER_NOT_FOUND → show "User not found" error state
         └─ 200 → render user info card + posts list
 ```
@@ -92,9 +92,9 @@ User taps author name on a post card
 
 ```
 User scrolls to bottom
-  └─> UserPosts query (V) { userId, cursor: <nextCursor>, limit: 10 }
+  └─> AuthorFeed query (V) { authorId, after: <pageInfo.endCursor>, first: 10 }
         └─> Append new posts
-              └─> hasMore=false → show "No more posts" state
+              └─> pageInfo.hasNextPage=false → show "No more posts" state
 ```
 
 ### Switch to Grid View
@@ -102,7 +102,7 @@ User scrolls to bottom
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → UserPosts query (V) { userId, cursor: <nextCursor> }
+        └─> Scroll to load more → AuthorFeed query (V) { authorId, after: <pageInfo.endCursor> }
 ```
 
 ---
