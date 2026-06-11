@@ -350,20 +350,27 @@ Fetch breed-tagged media for the Random Pets section preview (2×2 grid + View A
 
 **Operation:**
 ```graphql
-query FamilyRandomMedia($familyId: ID!, $cursor: String, $limit: Int) {
-  familyRandomMedia(familyId: $familyId, cursor: $cursor, limit: $limit) {
+query FamilyRandomMedia($familyId: ID!, $first: Int! = 20, $after: String) {
+  familyRandomMedia(familyId: $familyId, first: $first, after: $after) {
+    mediaCount
     media {
-      id
-      thumbnailUrl
-      postId
-      breed
-      cityCode
-      countryCode
-      createdAt
+      edges {
+        cursor
+        node {
+          id
+          thumbnailUrl
+          postId
+          breed
+          cityCode
+          countryCode
+          createdAt
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    totalCount
-    nextCursor
-    hasMore
   }
 }
 ```
@@ -372,8 +379,8 @@ query FamilyRandomMedia($familyId: ID!, $cursor: String, $limit: Int) {
 ```json
 {
   "familyId": "fam_xyz",
-  "cursor": null,
-  "limit": 20
+  "first": 20,
+  "after": null
 }
 ```
 
@@ -382,24 +389,33 @@ query FamilyRandomMedia($familyId: ID!, $cursor: String, $limit: Int) {
 {
   "data": {
     "familyRandomMedia": {
-      "media": [
-        {
-          "id": "media_003",
-          "thumbnailUrl": "https://cdn.petapp.com/media/003_thumb.jpg",
-          "postId": "post_abc",
-          "breed": "British Shorthair",
-          "cityCode": "HCM",
-          "countryCode": "VN",
-          "createdAt": "2026-05-01T10:00:00Z"
+      "mediaCount": 12,
+      "media": {
+        "edges": [
+          {
+            "cursor": "cursor_media_003",
+            "node": {
+              "id": "media_003",
+              "thumbnailUrl": "https://cdn.petapp.com/media/003_thumb.jpg",
+              "postId": "post_abc",
+              "breed": "British Shorthair",
+              "cityCode": "HCM",
+              "countryCode": "VN",
+              "createdAt": "2026-05-01T10:00:00Z"
+            }
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": true,
+          "endCursor": "cursor_media_003"
         }
-      ],
-      "totalCount": 12,
-      "nextCursor": "...",
-      "hasMore": true
+      }
     }
   }
 }
 ```
+
+> **Note:** `mediaCount` (total media count for the family) is a sibling field on `familyRandomMedia`, not inside the connection — per ADR-0023 `totalCount` does not live in the Relay envelope.
 
 **Notes:**
 - `thumbnailUrl` used directly in the 2×2 grid cells

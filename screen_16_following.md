@@ -20,7 +20,7 @@ Requires login — unauthenticated users cannot reach this screen (Profile Setti
         ├── Family row 1
         ├── Family row 2
         └── ...
-        [Load more button — appears when hasMore=true]
+        [Load more button — appears when pageInfo.hasNextPage=true]
 
 [Empty state — shown when following no families]
   [Icon]
@@ -64,7 +64,7 @@ Each row contains:
 
 - Pagination is **manual** — no infinite scroll; user taps "Load more" explicitly
 - 20 families per page
-- "Load more" button appears at bottom of list when `hasMore = true`
+- "Load more" button appears at bottom of list when `pageInfo.hasNextPage = true`
 - Each tap loads 20 more and appends to list
 
 ---
@@ -85,9 +85,9 @@ Reuses endpoints defined in `screen_5_profile_settings.md` and `screen_1_home_ex
 
 See full definition in `screen_5_profile_settings.md` → **Section: AI. Query: MyFollowing**.
 
-> ⚠️ **GAP petapp-be#887:** this whole screen depends on a query returning the **families** the user follows; backend has none yet (`following(userId)` returns `SocialUser` stat-nodes only). Pending backend `followedFamilies`.
+> ✅ **Resolved (petapp-be#921):** backend exposes `myFollowingFamilies(first, after): FamilyConnection!` (Relay). This screen renders family rows directly from it.
 
-**Variables:** `{ "cursor": null, "limit": 20 }`
+**Variables:** `{ "first": 20, "after": null }`
 
 ### D. Mutation: `FollowFamily` *(for Undo)*
 
@@ -109,7 +109,7 @@ See full definition in `screen_1_home_explore.md` → **Section: B. Query: Sugge
 
 ```
 User taps Activity → Following in Profile Settings
-  └─> MyFollowing query (AI) { limit: 20 }
+  └─> MyFollowing query (AI) { first: 20 }
         └─> 200 → render family rows
               └─> list empty → show empty state + Suggested Families widget
 ```
@@ -118,9 +118,9 @@ User taps Activity → Following in Profile Settings
 
 ```
 User taps "Load more" button
-  └─> MyFollowing query (AI) { cursor: <nextCursor>, limit: 20 }
+  └─> MyFollowing query (AI) { after: <endCursor>, first: 20 }
         └─> Append new rows
-              └─> hasMore=false → hide "Load more" button
+              └─> pageInfo.hasNextPage=false → hide "Load more" button
 ```
 
 ### Unfollow with Undo

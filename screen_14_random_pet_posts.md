@@ -83,7 +83,7 @@ See full definition in `screen_3_family_posts.md` → **Section: U. Query: Rando
 
 ```
 User taps Random Pets row in Family Posts
-  └─> RandomPetPosts query (U) { familyId, limit: 10 }
+  └─> RandomPetPosts query (U) { familyId, first: 10 }
         ├─ FAMILY_NOT_FOUND → show "Family not found" error state
         └─ 200 → render family info card + posts list
 ```
@@ -92,7 +92,7 @@ User taps Random Pets row in Family Posts
 
 ```
 User taps "View All →" in Random Pets section (My Pets screen)
-  └─> RandomPetPosts query (U) { familyId: activeFamily.id, limit: 10 }
+  └─> RandomPetPosts query (U) { familyId: activeFamily.id, first: 10 }
         └─> 200 → render family info card + posts list
 ```
 
@@ -100,9 +100,9 @@ User taps "View All →" in Random Pets section (My Pets screen)
 
 ```
 User scrolls to bottom
-  └─> RandomPetPosts query (U) { familyId, cursor: <nextCursor>, limit: 10 }
+  └─> RandomPetPosts query (U) { familyId, after: <endCursor>, first: 10 }
         └─> Append new posts
-              └─> hasMore=false → show "No more posts" state
+              └─> hasNextPage=false → show "No more posts" state
 ```
 
 ### Switch to Grid View
@@ -110,7 +110,7 @@ User scrolls to bottom
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → RandomPetPosts query (U) { familyId, cursor: <nextCursor> }
+        └─> Scroll to load more → RandomPetPosts query (U) { familyId, after: <endCursor> }
 ```
 
 ---

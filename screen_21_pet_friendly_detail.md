@@ -255,20 +255,27 @@ Paginated reviews for a place, newest first.
 
 **Operation:**
 ```graphql
-query PlaceReviews($placeId: ID!, $cursor: String, $limit: Int) {
-  placeReviews(placeId: $placeId, cursor: $cursor, limit: $limit) {
-    items {
-      id
-      author { id displayName avatarUrl }
-      rating
-      comment
-      createdAt
-      isOwn
-      isEditable
+query PlaceReviews($placeId: ID!, $first: Int! = 20, $after: String) {
+  placeReviews(placeId: $placeId, first: $first, after: $after) {
+    reviewsCount
+    reviews {
+      edges {
+        cursor
+        node {
+          id
+          author { id displayName avatarUrl }
+          rating
+          comment
+          createdAt
+          isOwn
+          isEditable
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    nextCursor
-    hasMore
-    totalCount
   }
 }
 ```
@@ -276,26 +283,34 @@ query PlaceReviews($placeId: ID!, $cursor: String, $limit: Int) {
 **Notes:**
 - `isOwn` → authored by the viewer. `isEditable` → `true` only for the viewer's **latest** review (others, including older own reviews, are read-only).
 - Sorted `createdAt` desc.
+- `reviewsCount` (total review count for the place) is a sibling field on `placeReviews`, not inside the connection — per ADR-0023 `totalCount` does not live in the Relay envelope.
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
     "placeReviews": {
-      "items": [
-        {
-          "id": "rev_555",
-          "author": { "id": "user_001", "displayName": "Mai Anh", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
-          "rating": 5,
-          "comment": "Tụi mèo siêu cute, nhân viên thân thiện 😍",
-          "createdAt": "2026-06-07T09:00:00Z",
-          "isOwn": true,
-          "isEditable": true
+      "reviewsCount": 126,
+      "reviews": {
+        "edges": [
+          {
+            "cursor": "eyJpZCI6InJldl81NTUifQ==",
+            "node": {
+              "id": "rev_555",
+              "author": { "id": "user_001", "displayName": "Mai Anh", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
+              "rating": 5,
+              "comment": "Tụi mèo siêu cute, nhân viên thân thiện 😍",
+              "createdAt": "2026-06-07T09:00:00Z",
+              "isOwn": true,
+              "isEditable": true
+            }
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": true,
+          "endCursor": "eyJpZCI6InJldl81NTUifQ=="
         }
-      ],
-      "nextCursor": "eyJpZCI6InJldl81NTUifQ==",
-      "hasMore": true,
-      "totalCount": 126
+      }
     }
   }
 }

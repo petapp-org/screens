@@ -84,7 +84,7 @@ See full definition in `screen_3_family_posts.md` → **Section: T. Query: PetPo
 
 ```
 User taps pet badge on a post card media
-  └─> PetPosts query (T) { petId, limit: 10 }
+  └─> PetPosts query (T) { petId, first: 10 }
         ├─ PET_NOT_FOUND → show "Pet not found" error state
         └─ 200 → render pet info card + posts list
 ```
@@ -93,9 +93,9 @@ User taps pet badge on a post card media
 
 ```
 User scrolls to bottom
-  └─> PetPosts query (T) { petId, cursor: <nextCursor>, limit: 10 }
+  └─> PetPosts query (T) { petId, after: <endCursor>, first: 10 }
         └─> Append new posts
-              └─> hasMore=false → show "No more posts" state
+              └─> hasNextPage=false → show "No more posts" state
 ```
 
 ### Switch to Grid View
@@ -103,7 +103,7 @@ User scrolls to bottom
 ```
 User taps grid view icon
   └─> Re-render existing loaded posts as 3-column grid (no new API call)
-        └─> Scroll to load more → PetPosts query (T) { petId, cursor: <nextCursor> }
+        └─> Scroll to load more → PetPosts query (T) { petId, after: <endCursor> }
 ```
 
 ---
