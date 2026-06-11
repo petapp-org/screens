@@ -2,16 +2,16 @@
 
 Reference seed data for the **admin-entered** More categories, so backend can define the API and seed a realistic dataset. All records are in **HCMC** (`cityCode: "HCM"`, the only `AVAILABLE` city this phase).
 
-- **Pet Friendly** field model → `screen_21`; query shapes → `PetFriendlyPlaces (CD)` / `PetFriendlyPlace (CE)` (`screen_17` / `screen_21`).
+- **Pet Friendly** field model → `screen_21`; query shapes → `PetFriendlyPlaces (CD)` / `Place (CE)` (`screen_17` / `screen_21`).
 - **Events** field model → `screen_24`; query shapes → `Events (CI)` / `Event (CJ)` (`screen_17` / `screen_24`).
 
-> `distanceKm` is **computed per request** (from the caller's GPS or city centre) — it is **not** seeded. `avgRating` / `reviewCount` (Pet Friendly) and `interestedCount` / `viewerInterested` (Events) are **computed/aggregated**, not seeded (shown here only to illustrate the read shape). City centre used for these samples: HCMC `lat 10.7769, lng 106.7009`.
+> `distanceKm` is **computed per request** (from the caller's GPS or city centre) — it is **not** seeded. `ratingAvg` / `reviewCount` (Pet Friendly) and `interestedCount` / `viewerInterested` (Events) are **computed/aggregated**, not seeded (shown here only to illustrate the read shape). City centre used for these samples: HCMC `lat 10.7769, lng 106.7009`.
 
 ---
 
 ## A. Pet Friendly places
 
-Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `address?`, `city`, `lat`, `lng`, `suitableFor[]`, `tagText?` (≤18), `highlightText?` (≤20), `isPublished`. Computed on read: `avgRating`, `reviewCount`, `cityShortName`, `cityCode`, `country`, `countryCode`, `distanceKm`.
+Field model (admin enters): `name`, `category`, `photoMediaIds[]`, `description?`, `address?`, `city`, `lat`, `lng`, `suitableFor[]`, `tagText?` (≤18), `highlightText?` (≤20), `isPublished`. Computed on read: `ratingAvg`, `reviewCount`, `cityShortName`, `cityCode`, `country`, `countryCode`, `distanceKm`.
 
 ```json
 [
@@ -19,7 +19,7 @@ Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `add
     "id": "place_001",
     "name": "Lava Cat Coffee",
     "category": "CAFE",
-    "photos": [
+    "photoMediaIds": [
       "https://cdn.petapp.com/places/place_001/1.jpg",
       "https://cdn.petapp.com/places/place_001/2.jpg"
     ],
@@ -36,14 +36,14 @@ Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `add
     "tagText": "Carriers OK",
     "highlightText": "open until 22:00",
     "isPublished": true,
-    "avgRating": 4.8,
+    "ratingAvg": 4.8,
     "reviewCount": 126
   },
   {
     "id": "place_002",
     "name": "Ailu Cat Café",
     "category": "CAFE",
-    "photos": ["https://cdn.petapp.com/places/place_002/1.jpg"],
+    "photoMediaIds": ["https://cdn.petapp.com/places/place_002/1.jpg"],
     "description": "Resident-cat café; play with 12 cats while you work.",
     "address": "89 Lê Lợi, Bến Thành, Quận 1",
     "city": "Ho Chi Minh City",
@@ -57,14 +57,14 @@ Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `add
     "tagText": "Resident cats",
     "highlightText": "play with 12 cats",
     "isPublished": true,
-    "avgRating": 4.7,
+    "ratingAvg": 4.7,
     "reviewCount": 98
   },
   {
     "id": "place_003",
     "name": "The Pet Bistro",
     "category": "RESTAURANT",
-    "photos": ["https://cdn.petapp.com/places/place_003/1.jpg", "https://cdn.petapp.com/places/place_003/2.jpg"],
+    "photoMediaIds": ["https://cdn.petapp.com/places/place_003/1.jpg", "https://cdn.petapp.com/places/place_003/2.jpg"],
     "description": "Dog-friendly bistro with a shaded patio and a dog menu.",
     "address": "45 Thảo Điền, Quận 2 (Thủ Đức)",
     "city": "Ho Chi Minh City",
@@ -78,14 +78,14 @@ Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `add
     "tagText": "Patio · dogs OK",
     "highlightText": "dog menu",
     "isPublished": true,
-    "avgRating": 4.5,
+    "ratingAvg": 4.5,
     "reviewCount": 54
   },
   {
     "id": "place_004",
     "name": "Saigon Pet Hotel & Spa",
     "category": "HOTEL",
-    "photos": ["https://cdn.petapp.com/places/place_004/1.jpg"],
+    "photoMediaIds": ["https://cdn.petapp.com/places/place_004/1.jpg"],
     "description": "Boarding + grooming for cats and dogs; 24/7 staff.",
     "address": "120 Phan Xích Long, Phú Nhuận",
     "city": "Ho Chi Minh City",
@@ -99,14 +99,14 @@ Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `add
     "tagText": "Boarding · grooming",
     "highlightText": "24/7 staff",
     "isPublished": true,
-    "avgRating": 4.6,
+    "ratingAvg": 4.6,
     "reviewCount": 71
   },
   {
     "id": "place_005",
     "name": "Tao Đàn Dog Park Corner",
     "category": "PARK",
-    "photos": ["https://cdn.petapp.com/places/place_005/1.jpg"],
+    "photoMediaIds": ["https://cdn.petapp.com/places/place_005/1.jpg"],
     "description": "Open green area popular for off-leash morning dog walks.",
     "address": "Tao Đàn Park, Quận 1",
     "city": "Ho Chi Minh City",
@@ -120,14 +120,14 @@ Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `add
     "tagText": "Off-leash 5–8am",
     "highlightText": "large open area",
     "isPublished": true,
-    "avgRating": 4.4,
+    "ratingAvg": 4.4,
     "reviewCount": 33
   },
   {
     "id": "place_006",
     "name": "Hồ Tràm Pet Beach (demo, out of city)",
     "category": "BEACH",
-    "photos": ["https://cdn.petapp.com/places/place_006/1.jpg"],
+    "photoMediaIds": ["https://cdn.petapp.com/places/place_006/1.jpg"],
     "description": "Demo record outside HCMC — should NOT appear in HCMC listings.",
     "address": "Hồ Tràm, Bà Rịa–Vũng Tàu",
     "city": "Vũng Tàu",
@@ -141,7 +141,7 @@ Field model (admin enters): `name`, `category`, `photos[]`, `description?`, `add
     "tagText": "Sand · water",
     "highlightText": "200kđ pet fee",
     "isPublished": true,
-    "avgRating": 4.9,
+    "ratingAvg": 4.9,
     "reviewCount": 12
   }
 ]

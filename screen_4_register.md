@@ -97,7 +97,7 @@ Shown once after a new account is created via any method.
 - Show a persistent helper text below the field: *"⚠️ Your username cannot be changed after you create your account."*
 
 **Submit:**
-- If an avatar was picked: upload it first via `RequestMediaUpload (BV)` `{ purpose: "USER_AVATAR" }` → use the returned `publicUrl` (no AI scan — avatars are never scanned)
+- If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "USER_AVATAR", ... }] }` → use `list[0].publicUrl` (no AI scan — avatars are never scanned)
 - `UpdateMyProfile mutation (AE)` `{ displayName, username, avatarUrl }`
 - On success → navigate to the **post-login target** (return target if redirected here, else Explore)
 
@@ -369,41 +369,57 @@ Note: returns a Boolean scalar directly (no `{ available }` wrapper).
 
 ---
 
-### BV. Mutation: `RequestMediaUpload`
+### BV. Mutation: `SignUploadBatch`
 
-Get a pre-signed URL to upload an image/video. **Shared by all uploads** — user avatar, family avatar, pet avatar, and post media. **No AI scan** is performed here; scanning post media for pet detection is a separate, post-media-only step (`ScanMedia (AT)`, screen_7). Avatars are never scanned.
+Get pre-signed upload URLs for one or more media items. **Shared by all uploads** — user avatar, family avatar, pet avatar, and post media. **No AI scan** is performed here; scanning post media for pet detection is a separate, post-media-only step (`IdentifyPetFromMedia (AT)`, screen_7). Avatars are never scanned.
+
+The mutation is a batch: wrap a single upload as a one-element `items` list and read the result from `list[0]`.
 
 **Auth:** Required
 
 **Operation:**
 ```graphql
-mutation RequestMediaUpload($input: MediaUploadInput!) {
-  requestMediaUpload(input: $input) {
-    uploadUrl   # pre-signed PUT URL — client uploads the raw bytes here
-    publicUrl   # final hosted URL to store on the profile/family/pet/post
+mutation SignUploadBatch($items: [SignUploadBatchItemInput!]!) {
+  signUploadBatch(items: $items) {
+    uploadUrl      # pre-signed PUT URL — client uploads the raw bytes here
+    publicUrl      # final hosted URL to store on the profile/family/pet/post
     expiresIn
   }
 }
 ```
 
-**Variables:**
+**`SignUploadBatchItemInput`:**
+```graphql
+input SignUploadBatchItemInput {
+  ownerId: String!
+  mediaType: MediaType!
+  visibility: MediaVisibility!
+  contentType: String!
+  fileSizeBytes: Int!
+  purpose: MediaPurposeGQL!
+}
+```
+
+**Variables (single upload — wrap as one-element list):**
 ```json
-{ "input": { "contentType": "image/jpeg", "purpose": "USER_AVATAR" } }
+{ "items": [{ "ownerId": "user_001", "mediaType": "IMAGE", "visibility": "PUBLIC", "contentType": "image/jpeg", "fileSizeBytes": 204800, "purpose": "USER_AVATAR" }] }
 ```
 
 `purpose` enum: `USER_AVATAR` | `FAMILY_AVATAR` | `PET_AVATAR` | `POST_MEDIA`
 
-**Client flow:** call this → `PUT` the file bytes to `uploadUrl` → use `publicUrl` in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass `publicUrl` to `ScanMedia (AT)` to detect/match a pet.
+**Client flow:** call this → `PUT` the file bytes to `uploadUrl` (from `list[0]`) → use `publicUrl` (from `list[0]`) in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass the media id to `IdentifyPetFromMedia (AT)` to detect/match a pet.
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "requestMediaUpload": {
-      "uploadUrl": "https://storage.petapp.com/upload/abc123?sig=...",
-      "publicUrl": "https://cdn.petapp.com/media/abc123.jpg",
-      "expiresIn": 300
-    }
+    "signUploadBatch": [
+      {
+        "uploadUrl": "https://storage.petapp.com/upload/abc123?sig=...",
+        "publicUrl": "https://cdn.petapp.com/media/abc123.jpg",
+        "expiresIn": 300
+      }
+    ]
   }
 }
 ```

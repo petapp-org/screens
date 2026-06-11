@@ -96,7 +96,7 @@ Full, paginated list, sorted by **distance asc**.
 **Row** — the canonical **Pet Friendly item** defined in `screen_17` → Section 6:
 
 ```
-[photo]   {name}  ★{avgRating}                 {distanceKm}km
+[photo]   {name}  ★{ratingAvg}                 {distanceKm}km
           {suitable} · {tagText}
           {cityShortName}, {countryCode} · {highlightText}
 ```

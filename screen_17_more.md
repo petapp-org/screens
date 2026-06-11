@@ -218,7 +218,7 @@ Shows pet-friendly places **in the selected city**, the **3 nearest** to the use
 **Each row (Pet Friendly item)** — canonical layout, reused on `screen_20` and `screen_21`:
 
 ```
-[photo]   {name}  ★{avgRating}                 {distanceKm}km
+[photo]   {name}  ★{ratingAvg}                 {distanceKm}km
           {suitable} · {tagText}
           {cityShortName}, {countryCode} · {highlightText}
 ```
@@ -226,7 +226,7 @@ Shows pet-friendly places **in the selected city**, the **3 nearest** to the use
 | Element | Source | Notes |
 |---------|--------|-------|
 | Thumbnail | `thumbnailUrl` | first photo of the place |
-| `name` + `★avgRating` | `name`, `avgRating` | rating sits next to the name (line 1) |
+| `name` + `★ratingAvg` | `name`, `ratingAvg` | rating sits next to the name (line 1) |
 | `distanceKm` | computed per request | top-right; `< 10` → 1 decimal (`3.4km`), `≥ 10` → integer (`120km`) |
 | `suitable` | `suitableFor[]` | `CAT`→"Cat", `DOG`→"Dog", `OTHER`→"Pet friendly"; multiple joined by ` · ` |
 | `tagText` | admin free text, **≤ 18 chars** | line-2 flair after suitable; single line, `…` if overflow |
@@ -559,7 +559,7 @@ query PetFriendlyPlaces(
       suitableFor
       tagText
       highlightText
-      avgRating
+      ratingAvg
       reviewCount
       cityShortName
       countryCode
@@ -600,7 +600,7 @@ query PetFriendlyPlaces(
           "suitableFor": ["CAT"],
           "tagText": "Carriers OK",
           "highlightText": "open until 22:00",
-          "avgRating": 4.8,
+          "ratingAvg": 4.8,
           "reviewCount": 126,
           "cityShortName": "HCMC",
           "countryCode": "VN",
@@ -621,7 +621,7 @@ query PetFriendlyPlaces(
 - City-scoped (`cityCode` + `countryCode`); sorted by `distanceKm` asc.
 - `distanceKm` from `originLat`/`originLng` (user GPS). When GPS is absent, the server uses the **city centre** as origin (distance still returned, relative to centre).
 - Distance display rule (client): `< 10` → 1 decimal (`3.4km`); `≥ 10` → integer (`120km`).
-- `avgRating` / `reviewCount` are aggregated from user reviews (see `screen_21`); not admin-entered.
+- `ratingAvg` / `reviewCount` are aggregated from user reviews (see `screen_21`); not admin-entered.
 - `tagText` ≤ 18, `highlightText` ≤ 20 chars (admin-entered, see `screen_21` field model); render single-line + `…`.
 - Only `isPublished = true` places are returned.
 

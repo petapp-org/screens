@@ -149,7 +149,7 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `username` (shown greyed out with note "Username cannot be changed")
-- Changing the avatar: upload via `RequestMediaUpload (BV)` `{ purpose: "USER_AVATAR" }` (screen_4) → use returned `publicUrl`; no AI scan
+- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "USER_AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan
 - `UpdateMyProfile mutation (AK)` `{ displayName, avatarUrl }`
 
 **Phone & Email:**
@@ -168,7 +168,7 @@ DANGER ZONE
 **Log out:**
 - Tap → confirmation dialog: "Are you sure you want to log out?"
 - Confirm → clear local tokens → redirect to Register/Login screen
-- `Logout mutation (AL)` `{ refreshToken }` (invalidates refresh token server-side)
+- `Logout mutation (AL)` `{ sessionId, refreshToken }` (invalidates refresh token server-side)
 
 **Delete Account screen** (1 level deeper — tap "Delete Account [>]" to navigate here):
 - Explains consequences: posts, pets, and family data will be removed
@@ -558,8 +558,8 @@ Invalidate the current user's refresh token server-side and end the session.
 
 **Operation:**
 ```graphql
-mutation Logout($input: LogoutInput!) {
-  logout(input: $input) {
+mutation Logout($sessionId: String!, $refreshToken: String!) {
+  logout(sessionId: $sessionId, refreshToken: $refreshToken) {
     success
   }
 }
@@ -568,9 +568,8 @@ mutation Logout($input: LogoutInput!) {
 **Variables:**
 ```json
 {
-  "input": {
-    "refreshToken": "eyJ..."
-  }
+  "sessionId": "sess_abc",
+  "refreshToken": "eyJ..."
 }
 ```
 

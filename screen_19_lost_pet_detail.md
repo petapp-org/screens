@@ -136,7 +136,7 @@ Source: `reportedBy` on the report — returned by the API **only** to family me
 
 ---
 
-### CC. Query: `LostPet`
+### CC. Query: `GetLostPetReport`
 
 > ⚠️ **GAP petapp-be#888:** `getLostPetReport(id)` exists but returns a flat legacy `LostPetReportGQL` (petName/species/breed as strings, `area`, single `photoUrl`) — not the structured shape here (nested pet/family/reportedBy, geo `lastSeen`, `photos[]`). Kept as-is, pending backend enrichment.
 
@@ -146,8 +146,8 @@ Fetch a single missing-pet report for the detail screen.
 
 **Operation:**
 ```graphql
-query LostPet($reportId: ID!) {
-  lostPet(reportId: $reportId) {
+query GetLostPetReport($id: ID!) {
+  getLostPetReport(id: $id) {
     reportId
     status
     reportedAt
@@ -188,14 +188,14 @@ query LostPet($reportId: ID!) {
 
 **Variables:**
 ```json
-{ "reportId": "missing_report_001" }
+{ "id": "missing_report_001" }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "lostPet": {
+    "getLostPetReport": {
       "reportId": "missing_report_001",
       "status": "MISSING",
       "reportedAt": "2026-06-08T03:00:00Z",
@@ -261,7 +261,7 @@ query LostPet($reportId: ID!) {
 
 ```
 Tap a Lost Pet row / map pin / shared link
-  └─> LostPet query (CC) { reportId }
+  └─> GetLostPetReport query (CC) { id }
         ├─ REPORT_NOT_FOUND → "This report no longer exists" state
         ├─ status=FOUND → render found state
         └─ status=MISSING → render full detail

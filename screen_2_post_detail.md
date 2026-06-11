@@ -120,7 +120,7 @@ Always pinned to the bottom of the screen, above the system navigation bar.
 | Authenticated, non-empty input | Send button enabled |
 
 **Submit behaviour:**
-- Tap Send → `CreateComment mutation (L)` (top-level) or `CreateReply mutation (N)` (reply)
+- Tap Send → `CreateComment mutation (L)` (top-level, `parentId: null`) or `CreateComment mutation (N)` (reply, `parentId: commentId`)
 - Optimistic update: new comment/reply appears immediately in the list
 - On API error: remove optimistic item, restore input text, show error toast
 - After successful submit: clear input, scroll to the new comment/reply
@@ -257,9 +257,9 @@ query Post($id: ID!) {
 
 ---
 
-### N. Mutation: `CreateReply`
+### N. Mutation: `CreateComment` (reply form)
 
-Reply to a comment (or to a reply — any depth).
+Reply to a comment (or to a reply — any depth). Uses the unified `createComment` mutation with `parentId` set to the target comment's id.
 
 > **Triggers notification:** fires a `NEW_REPLY` notification to the author of the comment/reply being replied to (see screen_22 — Notifications screen). Not fired when replying to your own comment.
 
@@ -267,8 +267,8 @@ Reply to a comment (or to a reply — any depth).
 
 **Operation:**
 ```graphql
-mutation CreateReply($input: CreateReplyInput!) {
-  createReply(input: $input) {
+mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null) {
+  createComment(postId: $postId, body: $body, parentId: $parentId) {
     id
     parentId
     author {
@@ -288,10 +288,9 @@ mutation CreateReply($input: CreateReplyInput!) {
 **Variables:**
 ```json
 {
-  "input": {
-    "commentId": "comment_001",
-    "body": "Đồng ý nè 😄"
-  }
+  "postId": "post_001",
+  "body": "Đồng ý nè 😄",
+  "parentId": "comment_001"
 }
 ```
 
@@ -299,7 +298,7 @@ mutation CreateReply($input: CreateReplyInput!) {
 ```json
 {
   "data": {
-    "createReply": {
+    "createComment": {
       "id": "reply_001",
       "parentId": "comment_001",
       "author": {
@@ -486,7 +485,7 @@ User taps "View N replies ▾"
 User types in input bar → taps Send
   └─> [unauthenticated] → redirect to Login
   └─> [authenticated, top-level] → CreateComment mutation (L) { postId, body }
-  └─> [authenticated, replying]  → CreateReply mutation (N) { parentId, body }
+  └─> [authenticated, replying]  → CreateComment mutation (N) { postId, body, parentId }
         ├─ Optimistic: prepend new item immediately
         ├─ Success: confirm item, clear input
         └─ Error: remove item, restore input text, show toast

@@ -10,7 +10,7 @@ Navigated to from:
 
 Requires login (it lives under the More tab). Reading reviews + viewing info needs login like the rest of More; writing a review also requires login (always true here).
 
-This screen is also where the place's **rating data comes from**: `avgRating` / `reviewCount` shown on the rows in `screen_17` / `screen_20` are aggregated from the reviews submitted here.
+This screen is also where the place's **rating data comes from**: `ratingAvg` / `reviewCount` shown on the rows in `screen_17` / `screen_20` are aggregated from the reviews submitted here.
 
 ---
 
@@ -22,7 +22,7 @@ Places are **created/edited by admins** (no AI generation, no external provider 
 |-------|-------|-----|-------|
 | **Basics** | `name` | ✅ | Display name |
 | | `category` | ✅ | enum: `CAFE` / `RESTAURANT` / `HOTEL` / `PARK` / `BEACH` / `OTHER` → drives category filter chips |
-| | `photos[]` | ✅ | ≥ 1; first photo = thumbnail/cover; rest shown in the detail carousel |
+| | `photoMediaIds[]` | ✅ | `[String!]!` — ≥ 1; first photo = thumbnail/cover; rest shown in the detail carousel |
 | | `description` | — | Longer free text, shown on this detail screen |
 | **Location** | `city` | ✅ | Picked from supported Cities (`CA`) → derives `cityShortName` / `cityCode` / `country` / `countryCode` |
 | | `address` | — | Free text |
@@ -31,7 +31,7 @@ Places are **created/edited by admins** (no AI generation, no external provider 
 | | `tagText` | — | **≤ 18 chars** free text (AA) — short pet features after the suitability label |
 | | `highlightText` | — | **≤ 20 chars** free text (BB) — one "good to know" note after city-country |
 | **Status** | `isPublished` | ✅ | Hidden from all listings when `false` |
-| **Computed** | `avgRating`, `reviewCount` | — | Aggregated from user reviews (not admin-entered) |
+| **Computed** | `ratingAvg`, `reviewCount` | — | Aggregated from user reviews (not admin-entered) |
 
 **Admin form hints (placeholder/tooltip shown before typing):**
 - `tagText` — *"Tối đa 18 ký tự. Vài đặc điểm pet-friendly cách nhau bằng ` · `. VD: `Carriers · <10kg`, `Patio · dogs OK`, `Off-leash 5–8am`."*
@@ -48,7 +48,7 @@ Places are **created/edited by admins** (no AI generation, no external provider 
   Left: Back button
   Center: place name (static)
 
-[Photo carousel]                                 ← place.photos, swipeable, tap → zoom
+[Photo carousel]                                 ← place.photoMediaIds, swipeable, tap → zoom
   [ ◀   photo   ▶ ]   1/4
 
 [Title block]
@@ -79,7 +79,7 @@ Places are **created/edited by admins** (no AI generation, no external provider 
 
 ### 1. Photo Carousel
 
-- Renders `photos[]`, swipeable, `N/Total` indicator.
+- Renders `photoMediaIds[]`, swipeable, `N/Total` indicator.
 - Tap a photo → fullscreen zoom (lightbox); tap outside / × to exit.
 - Single photo → static image.
 
@@ -90,7 +90,7 @@ Places are **created/edited by admins** (no AI generation, no external provider 
 | Element | Source |
 |---------|--------|
 | `name` | place name (large) |
-| `★ avgRating · N reviews` | computed; tap → scroll to Reviews section |
+| `★ ratingAvg · N reviews` | computed; tap → scroll to Reviews section |
 | `category · suitable` | e.g. `"Café · Cat"`; `suitable` from `suitableFor` (Cat/Dog/Pet friendly) |
 
 ---
@@ -109,7 +109,7 @@ Places are **created/edited by admins** (no AI generation, no external provider 
 
 ### 4. Reviews
 
-**Summary:** `★ avgRating · N reviews` (aggregated from **all** reviews — see rules).
+**Summary:** `★ ratingAvg · N reviews` (aggregated from **all** reviews — see rules).
 
 **List** (`PlaceReviews (CF)`, paginated, newest first):
 
@@ -149,7 +149,7 @@ Rate Lava Cat Coffee
 | Multiple reviews per user/place | Allowed — a user can review the same place again over time |
 | Spacing | A new review is allowed only if the user's **latest** review on this place is **≥ 1 month** old (or they have none) |
 | Editing | Only the user's **latest** review is editable; older ones are locked history |
-| `avgRating` | Average of **all** reviews on the place (each review is a point-in-time data point); `reviewCount` = total reviews |
+| `ratingAvg` | Average of **all** reviews on the place (each review is a point-in-time data point); `reviewCount` = total reviews |
 | Auth | Writing/editing requires login (always true on this screen) |
 
 ---
@@ -161,18 +161,18 @@ Rate Lava Cat Coffee
 
 ---
 
-### CE. Query: `PetFriendlyPlace`
+### CE. Query: `Place`
 
 Fetch a single place for the detail screen, including the viewer's review state.
 
 **Operation:**
 ```graphql
-query PetFriendlyPlace($placeId: ID!, $originLat: Float, $originLng: Float) {
-  petFriendlyPlace(placeId: $placeId, originLat: $originLat, originLng: $originLng) {
+query Place($id: ID!, $originLat: Float, $originLng: Float) {
+  place(id: $id, originLat: $originLat, originLng: $originLng) {
     id
     name
     category
-    photos
+    photoMediaIds
     description
     address
     cityShortName
@@ -185,7 +185,7 @@ query PetFriendlyPlace($placeId: ID!, $originLat: Float, $originLng: Float) {
     suitableFor
     tagText
     highlightText
-    avgRating
+    ratingAvg
     reviewCount
     viewerReview {
       id
@@ -202,11 +202,11 @@ query PetFriendlyPlace($placeId: ID!, $originLat: Float, $originLng: Float) {
 ```json
 {
   "data": {
-    "petFriendlyPlace": {
+    "place": {
       "id": "place_001",
       "name": "Lava Cat Coffee",
       "category": "CAFE",
-      "photos": [
+      "photoMediaIds": [
         "https://cdn.petapp.com/places/place_001/1.jpg",
         "https://cdn.petapp.com/places/place_001/2.jpg"
       ],
@@ -222,7 +222,7 @@ query PetFriendlyPlace($placeId: ID!, $originLat: Float, $originLng: Float) {
       "suitableFor": ["CAT"],
       "tagText": "Carriers OK",
       "highlightText": "open until 22:00",
-      "avgRating": 4.8,
+      "ratingAvg": 4.8,
       "reviewCount": 126,
       "viewerReview": {
         "id": "rev_555",
@@ -239,7 +239,7 @@ query PetFriendlyPlace($placeId: ID!, $originLat: Float, $originLng: Float) {
 **Notes:**
 - `viewerReview` is the viewer's **latest** review on this place (`null` if none). It is the only one they can edit.
 - `canAddReview` = `true` when there is no `viewerReview` **or** its `createdAt` is ≥ 1 month ago. Drives the CTA ("Write" vs "Edit").
-- `avgRating` / `reviewCount` aggregate all reviews.
+- `ratingAvg` / `reviewCount` aggregate all reviews.
 
 **Errors:**
 
@@ -399,7 +399,7 @@ mutation UpdatePlaceReview($input: UpdatePlaceReviewInput!) {
 
 ```
 Tap a Pet Friendly row / map pin
-  └─> PetFriendlyPlace (CE) { placeId, originLat?, originLng? }
+  └─> Place (CE) { id, originLat?, originLng? }
         └─> render info + map
               └─> PlaceReviews (CF) { placeId, limit } → review list
                     └─ canAddReview ? "Write a review" : "Edit your review"
@@ -413,7 +413,7 @@ Tap [Write a review] / [Edit your review]
         ├─ Write → SubmitPlaceReview (CG)
         │      └─ REVIEW_TOO_SOON → switch to edit-latest, toast "You reviewed recently — edit instead"
         └─ Edit  → UpdatePlaceReview (CH)  (latest only)
-              └─> optimistic insert/update; recompute avgRating on refetch
+              └─> optimistic insert/update; recompute ratingAvg on refetch
 ```
 
 ---
@@ -441,7 +441,7 @@ Tap [Write a review] / [Edit your review]
 | 1 | Place source | Admin-entered (no AI, no external provider) |
 | 2 | AA / BB | Two free-text fields `tagText` (≤18) / `highlightText` (≤20) with admin tooltips + counters; single-line `…` on overflow |
 | 3 | suitableFor display | `CAT`→Cat, `DOG`→Dog, `OTHER`→Pet friendly; multiple joined by ` · ` |
-| 4 | Rating source | User reviews (not admin); `avgRating` = average of **all** reviews |
+| 4 | Rating source | User reviews (not admin); `ratingAvg` = average of **all** reviews |
 | 5 | Reviews per user | Multiple over time, each **≥ 1 month** apart |
 | 6 | Editing | Only the user's **latest** review is editable |
 | 7 | Rating requires comment | Yes — rating + comment both required |
