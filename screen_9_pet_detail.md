@@ -436,7 +436,7 @@ query Pet($petId: ID!) {
       "missingStatus": null,
       "isDeleted": false,
       "familyId": "fam_xyz",
-      "viewerRole": "owner",
+      "viewerRole": "PRIMARY",
       "tabs": {
         "health": {
           "status": "NORMAL",
@@ -473,7 +473,7 @@ query Pet($petId: ID!) {
 **Notes:**
 - When `tabs.health.status = CHECKING` or `NO_DATA`: `html` is `null`
 - Same for Food/Behavior/Med/Vac tabs
-- `viewerRole`: `"owner"` | `"parent"` — controls visibility of Edit / Delete / Mark as Found actions
+- `viewerRole`: `PRIMARY` | `CO_OWNER` (OwnershipRole) — controls visibility of Edit / Delete / Mark as Found actions
 - `missingStatus` is `null` when the pet is not missing. When set: `photos` is an **ordered** list with `photos[0]` = cover; `reportedBy` is the family member who filed the report; `lastSeenAt` is when the pet was last seen (distinct from `reportedAt`). These power the Missing banner (Section 3) and the Lost Pet Detail screen (`screen_19`).
 
 **Errors:**
