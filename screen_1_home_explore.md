@@ -937,60 +937,79 @@ Fetch comments for the inline comment panel. Returns comments sorted `createdAt 
 
 **Operation:**
 ```graphql
-query PostComments($postId: ID!, $limit: Int, $cursor: String) {
-  postComments(postId: $postId, limit: $limit, cursor: $cursor) {
-    comments {
-      id
-      author {
-        id
-        displayName
-        avatarUrl
+query PostComments($postId: ID!, $first: Int = 20, $after: String) {
+  post(id: $postId) {
+    id
+    commentsCount
+    comments(first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          id
+          author {
+            id
+            displayName
+            avatarUrl
+          }
+          body
+          createdAt
+        }
       }
-      body
-      createdAt
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    totalCount
-    nextCursor
-    hasMore
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "postId": "post_abc123", "limit": 10, "cursor": null }
+{ "postId": "post_abc123", "first": 10, "after": null }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "postComments": {
-      "comments": [
-        {
-          "id": "comment_001",
-          "author": {
-            "id": "user_002",
-            "displayName": "Bella",
-            "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+    "post": {
+      "id": "post_abc123",
+      "commentsCount": 34,
+      "comments": {
+        "edges": [
+          {
+            "cursor": "eyJpZCI6ImNvbW1lbnRfMDAxIn0=",
+            "node": {
+              "id": "comment_001",
+              "author": {
+                "id": "user_002",
+                "displayName": "Bella",
+                "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+              },
+              "body": "Cute quá trời 😍",
+              "createdAt": "2026-06-06T07:00:00Z"
+            }
           },
-          "body": "Cute quá trời 😍",
-          "createdAt": "2026-06-06T07:00:00Z"
-        },
-        {
-          "id": "comment_002",
-          "author": {
-            "id": "user_003",
-            "displayName": "Quang",
-            "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
-          },
-          "body": "Mắt to ghê 👀",
-          "createdAt": "2026-06-06T07:15:00Z"
+          {
+            "cursor": "eyJpZCI6ImNvbW1lbnRfMDAyIn0=",
+            "node": {
+              "id": "comment_002",
+              "author": {
+                "id": "user_003",
+                "displayName": "Quang",
+                "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+              },
+              "body": "Mắt to ghê 👀",
+              "createdAt": "2026-06-06T07:15:00Z"
+            }
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": true,
+          "endCursor": "eyJpZCI6ImNvbW1lbnRfMDAyIn0="
         }
-      ],
-      "totalCount": 34,
-      "nextCursor": "eyJpZCI6ImNvbW1lbnRfMDAxIn0=",
-      "hasMore": true
+      }
     }
   }
 }
