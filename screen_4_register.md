@@ -381,7 +381,7 @@ The mutation is a batch: wrap a single upload as a one-element `items` list and 
 ```graphql
 mutation SignUploadBatch($items: [SignUploadBatchItemInput!]!) {
   signUploadBatch(items: $items) {
-    uploadUrl      # pre-signed PUT URL — client uploads the raw bytes here
+    presignedUrl      # pre-signed PUT URL — client uploads the raw bytes here
     publicUrl      # final hosted URL to store on the profile/family/pet/post
     expiresIn
   }
@@ -407,7 +407,7 @@ input SignUploadBatchItemInput {
 
 `purpose` enum: `USER_AVATAR` | `FAMILY_AVATAR` | `PET_AVATAR` | `POST_MEDIA`
 
-**Client flow:** call this → `PUT` the file bytes to `uploadUrl` (from `list[0]`) → use `publicUrl` (from `list[0]`) in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass the media id to `IdentifyPetFromMedia (AT)` to detect/match a pet.
+**Client flow:** call this → `PUT` the file bytes to `presignedUrl` (from `list[0]`) → use `publicUrl` (from `list[0]`) in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass the media id to `IdentifyPetFromMedia (AT)` to detect/match a pet.
 
 **Response `200 OK`:**
 ```json
@@ -415,7 +415,7 @@ input SignUploadBatchItemInput {
   "data": {
     "signUploadBatch": [
       {
-        "uploadUrl": "https://storage.petapp.com/upload/abc123?sig=...",
+        "presignedUrl": "https://storage.petapp.com/upload/abc123?sig=...",
         "publicUrl": "https://cdn.petapp.com/media/abc123.jpg",
         "expiresIn": 300
       }

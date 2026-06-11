@@ -79,14 +79,14 @@ Each post card displays:
 | `familyName` | Name of the family that created the post |
 | `authorName` | Display name of the user who created the post. Shown top-right: `"authorName · time"` |
 | `pets` | List of **named pets** linked across all media in this post (only media with `mediaTag.type = "pet"`). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatarUrl }`. Can be empty. |
-| `caption` | Post text / description |
+| `body` | Post text / description |
 | `location` | Optional. `{ "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" }`. Shown bottom-right below author/time line: `"HCM - VN"`. Omitted if `null`. |
 | `media` | List of media items (see Media Object below). **Minimum 1, maximum 10.** |
 | `loveCount` | Total number of loves |
-| `commentCount` | Total number of comments |
+| `commentsCount` | Total number of comments |
 | `createdAt` | ISO 8601 timestamp |
 | `isLoved` | Boolean — whether the current user has loved this post (false if not logged in) |
-| `privacy` | `public` \| `followers` \| `private` — see visibility rules below |
+| `visibility` | `public` \| `followers` \| `private` — see visibility rules below |
 
 **Media Object:**
 
@@ -146,7 +146,7 @@ Each post card displays:
   - `34 comments` text and Comment button are both tappable
   - Tapping opens an **inline comment panel** (expands below the post card, does not navigate away)
   - Inline panel shows the **last 10 comments**, sorted by `createdAt` asc (oldest first within the set); panel **auto-scrolls to bottom** on open so the newest comment is visible
-  - If `commentCount > 10`: show a "View all N comments" link → navigates to Post Detail screen
+  - If `commentsCount > 10`: show a "View all N comments" link → navigates to Post Detail screen
   - User can submit a new comment directly from the inline panel (requires login)
   - **Close:** tap anywhere outside the panel (on the feed) to collapse it
 
@@ -260,7 +260,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
           name
           avatarUrl
         }
-        caption
+        body
         location {
           city
           cityCode
@@ -285,9 +285,9 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
           }
         }
         loveCount
-        commentCount
+        commentsCount
         isLoved
-        privacy
+        visibility
         createdAt
       }
     }
@@ -336,7 +336,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
                 "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
               }
             ],
-            "caption": "Pudding nằm chờ mama nấu cơm 🌕 Q7 cat life",
+            "body": "Pudding nằm chờ mama nấu cơm 🌕 Q7 cat life",
             "location": {
               "city": "Hồ Chí Minh",
               "cityCode": "HCM",
@@ -396,9 +396,9 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
               }
             ],
             "loveCount": 287,
-            "commentCount": 34,
+            "commentsCount": 34,
             "isLoved": false,
-            "privacy": "PUBLIC",
+            "visibility": "PUBLIC",
             "createdAt": "2026-06-06T06:00:00Z"
           }
         }
@@ -807,7 +807,7 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
       name
       avatarUrl
     }
-    caption
+    body
     location {
       city
       cityCode
@@ -832,9 +832,9 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
       }
     }
     loveCount
-    commentCount
+    commentsCount
     isLoved
-    privacy
+    visibility
     createdAt
   }
 }
@@ -845,8 +845,8 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
 {
   "postId": "post_abc123",
   "input": {
-    "caption": "Updated caption",
-    "privacy": "PUBLIC"
+    "body": "Updated caption",
+    "visibility": "PUBLIC"
   }
 }
 ```
@@ -857,8 +857,8 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
   "data": {
     "updatePost": {
       "id": "post_abc123",
-      "caption": "Updated caption",
-      "privacy": "PUBLIC"
+      "body": "Updated caption",
+      "visibility": "PUBLIC"
     }
   }
 }
@@ -1121,8 +1121,8 @@ User taps "..." on a post
 | Tapping Donate | Opens a chat with the charity (pre-filled VN support message) — interim, no wallet; see `screen_3` |
 | User already follows a suggested family | Should not appear in suggestions (server filters when authenticated) |
 | Unauthenticated user on Latest feed | Only `public` posts returned by server |
-| Post with `privacy=followers` | Only visible to family members + followers of that family |
-| Post with `privacy=private` | Only visible to family members of the authoring family |
+| Post with `visibility=followers` | Only visible to family members + followers of that family |
+| Post with `visibility=private` | Only visible to family members of the authoring family |
 | Messages / Notifications button — not logged in | No red dot; tapping redirects to Login |
 | Messages red dot source | Unread chats (`UnreadMessageCount BL`); dot only, no number |
 | Notifications red dot source | Unread activity (`UnreadNotificationCount BU`); dot only, no number |
