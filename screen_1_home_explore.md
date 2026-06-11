@@ -58,7 +58,7 @@ The unread state is fetched separately (not bundled in the feed response) — th
 |-----|-------------------------|-------------|---------------|
 | Latest | `ALL` | Newest posts across all families, sorted by `createdAt` desc | No |
 | Follow | `FOLLOW` | Posts from families the current user follows | Yes — redirect to Login if not authenticated |
-| Rescue | `RESCUE` | Posts from families with `familyType = charity` | No |
+| Rescue | `RESCUE` | Posts from families with `familyType = CHARITY` | No |
 
 **Inputs:**
 - `filter`: `ExploreFilter` — `ALL` | `FOLLOW` | `RESCUE` (tab mapping above; `sort` defaults to `LATEST`)
@@ -195,14 +195,14 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 | `avatarUrl` | Family avatar | all |
 | `social.followersCount` | Raw number | all |
 | `shortDescription` | Free-text description set by the family | **charity only** — hidden for standard families |
-| `familyType` | `standard` \| `charity` | all (drives UI logic) |
+| `familyType` | `NORMAL` \| `CHARITY` | all (drives UI logic) |
 | `social.isFollowedByMe` | Boolean | all |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
 **Buttons per family:**
-- `standard` type → **Follow** button only
-- `charity` type → **Follow** button + **Donate** button
+- `NORMAL` type → **Follow** button only
+- `CHARITY` type → **Follow** button + **Donate** button
 
 **Donate button behaviour:** (interim — no wallet yet)
 - Tapping Donate → **opens a chat** with that charity family, pre-filled with a Vietnamese support message (canonical behaviour defined in `screen_3` → Charity Section → Donate button behaviour; mechanic identical to Lost Pet "I saw").
@@ -317,7 +317,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
               "id": "fam_xyz",
               "name": "Pudding's Family",
               "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-              "familyType": "STANDARD"
+              "familyType": "NORMAL"
             },
             "author": {
               "id": "user_001",
@@ -440,7 +440,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 
 - On web: hovering the time text shows a tooltip with the full datetime (e.g. `"06/06/2026 13:00"`)
   - Bottom-right: location as `cityCode - countryCode` (omit if `location` is null)
-- `filter: FOLLOWING` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
+- `filter: FOLLOW` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
 - `filter: RESCUE` returns posts from families where `family.familyType = CHARITY`
 - `isLoved` is always `false` when unauthenticated
 - Server enforces privacy rules before returning results — unauthenticated callers only receive `PUBLIC` posts; `FOLLOWERS` posts are filtered based on the caller's follow list
@@ -450,7 +450,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 | Code | Scenario |
 |------|----------|
 | `INVALID_FILTER` | Unknown filter value |
-| `UNAUTHORIZED` | `filter: FOLLOWING` without auth token |
+| `UNAUTHORIZED` | `filter: FOLLOW` without auth token |
 | `INVALID_CURSOR` | Cursor is malformed or expired |
 
 ---
@@ -508,14 +508,14 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
           "isFollowedByMe": false
         },
         "shortDescription": null,
-        "familyType": "STANDARD"
+        "familyType": "NORMAL"
       }
     ]
   }
 }
 ```
 
-**Note:** `shortDescription` is always present in the response but is `null` for `STANDARD` families. The client should only render the description line when `familyType = CHARITY` and `shortDescription` is non-null.
+**Note:** `shortDescription` is always present in the response but is `null` for `NORMAL` families. The client should only render the description line when `familyType = CHARITY` and `shortDescription` is non-null.
 
 `shortDescription` is a free-text field that the charity family admin fills in manually (via their family profile settings). It is not computed or auto-generated.
 
@@ -900,14 +900,14 @@ Delete post (author/family member only).
 
 **Operation:**
 ```graphql
-mutation DeletePost($postId: ID!) {
-  deletePost(postId: $postId)
+mutation DeletePost($id: ID!) {
+  deletePost(id: $id)
 }
 ```
 
 **Variables:**
 ```json
-{ "postId": "post_abc123" }
+{ "id": "post_abc123" }
 ```
 
 **Response `200 OK`:**
@@ -1033,8 +1033,8 @@ Submit a new comment from the inline panel.
 
 **Operation:**
 ```graphql
-mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
-  createComment(postId: $postId, input: $input) {
+mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null) {
+  createComment(postId: $postId, body: $body, parentId: $parentId) {
     id
     author {
       id
@@ -1049,7 +1049,7 @@ mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
 
 **Variables:**
 ```json
-{ "postId": "post_abc123", "input": { "body": "Cute quá trời 😍" } }
+{ "postId": "post_abc123", "body": "Cute quá trời 😍", "parentId": null }
 ```
 
 **Response `200 OK`:**
@@ -1153,8 +1153,8 @@ User taps "..." on a post
 | Different media frames link to different pets | Each frame shows its own pet badge independently |
 | Post media type is `embedded` | Show video embed player (YouTube iframe / native player); `thumbnailUrl` as poster |
 | Suggested widget — 0 families returned | Widget is hidden entirely; not shown at all |
-| Family type is `charity` | Show both **Follow** and **Donate** buttons |
-| Family type is `standard` | Show **Follow** button only |
+| Family type is `CHARITY` | Show both **Follow** and **Donate** buttons |
+| Family type is `NORMAL` | Show **Follow** button only |
 | Tapping Donate | Opens a chat with the charity (pre-filled VN support message) — interim, no wallet; see `screen_3` |
 | User already follows a suggested family | Should not appear in suggestions (server filters when authenticated) |
 | Unauthenticated user on Latest feed | Only `public` posts returned by server |

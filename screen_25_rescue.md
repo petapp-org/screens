@@ -66,7 +66,7 @@ Have a pet that needs a home?
 Post it so people nearby can adopt.            [ Post a Rescue ]
 ```
 
-- Shown **only when the user's active family is a charity** (`family.familyType = charity`). Non-charity active family (or no active family) → banner hidden.
+- Shown **only when the user's active family is a charity** (`family.familyType = CHARITY`). Non-charity active family (or no active family) → banner hidden.
 - **[Post a Rescue]** → opens the **Create Rescue form** (`screen_26` → Section "Create Rescue Form").
 - **"Manage your rescues →"** secondary link → opens **Manage Rescues** (`screen_27`) — the charity's Open/Adopted listings. (Same destination as the My Pets "Rescues" row, `screen_8`.)
 - A charity member whose charity is **not** currently active won't see the banner here — they post/manage from **Manage Rescues** (`screen_27`) after switching their active family to the charity. (Mirrors the Lost Pets active-family rule.)

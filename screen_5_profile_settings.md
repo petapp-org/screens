@@ -110,8 +110,8 @@ Navigates to **Following screen**:
 - Tap anywhere on the row (except action buttons) → **Family Posts screen**
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
-- `standard` family → **Following button** only
-- `charity` family → **Following button** + **Donate button**
+- `NORMAL` family → **Following button** only
+- `CHARITY` family → **Following button** + **Donate button**
   - Tap Donate → **opens a chat** with that charity (pre-filled VN support message) — interim, no wallet; canonical in `screen_3`. Login required; hidden for members of that charity.
 
 **Unfollow:**
@@ -149,7 +149,7 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `username` (shown greyed out with note "Username cannot be changed")
-- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "USER_AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan
+- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan
 - `UpdateMyProfile mutation (AK)` `{ displayName, avatarUrl }`
 
 **Phone & Email:**
@@ -235,7 +235,7 @@ query Me {
           "name": "Minh's Family",
           "tag": "minhfamily",
           "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-          "familyType": "STANDARD",
+          "familyType": "NORMAL",
           "isPrimary": true,
           "role": "OWNER"
         },
@@ -244,9 +244,9 @@ query Me {
           "name": "Cecilia's Family",
           "tag": "ceciliafam",
           "avatarUrl": "https://cdn.petapp.com/families/fam_abc/avatar.jpg",
-          "familyType": "STANDARD",
+          "familyType": "NORMAL",
           "isPrimary": false,
-          "role": "PARENT"
+          "role": "MEMBER"
         }
       ]
     }
@@ -356,7 +356,7 @@ query MyLovedPosts($after: String) {
           "cursor": "cursor_token_here",
           "node": {
             "id": "post_001",
-            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg", "familyType": "STANDARD" },
+            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg", "familyType": "NORMAL" },
             "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
             "pets": [ { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" } ],
             "body": "Bụi nằm chờ mama nấu cơm 🌕",
@@ -433,7 +433,7 @@ query MyFollowing($cursor: String, $limit: Int) {
           "name": "Daily Cats",
           "tag": "dailycats",
           "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-          "familyType": "STANDARD",
+          "familyType": "NORMAL",
           "city": "Internet",
           "country": "",
           "social": {

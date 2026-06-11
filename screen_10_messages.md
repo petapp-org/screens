@@ -9,7 +9,7 @@ The **messaging** surface — a flat list of conversation threads (the **Chats i
 Auth required. Accessible from the **Messages icon** (`✉`) in the Explore header (`screen_1`), My Pets header (`screen_8`), and More header (`screen_17`).
 The Messages icon shows a **red dot** (no number) whenever there is any **unread chat** — driven by `UnreadMessageCount (BL)`. (The separate **Notifications icon** `🔔` carries its own red dot from `UnreadNotificationCount (BU)`.) Inside the screen there is **no red dot**; unread threads are shown in **bold** instead.
 
-> **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `SetActiveFamily (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats inbox: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
+> **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `MarkFamilyPrimary (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats inbox: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
 
 ---
 
@@ -76,7 +76,7 @@ Threads received by the user's **non-active** families are **not shown** at all.
 |---------|---------|
 | Last message preview | One line, truncated. May be my own message (rendered plainly — never bold; no special "You:" label). |
 | Time | Relative time of last message. |
-| CHARITY badge | Small badge next to a family name when that family `familyType = charity`. |
+| CHARITY badge | Small badge next to a family name when that family `familyType = CHARITY`. |
 
 **Unread indicator:** **bold** row text only. **No red dot** inside the screen (bold already conveys unread). The header **Messages icon** is red-dotted when there are any unread threads.
 
@@ -172,7 +172,7 @@ The Chats inbox is **scoped to the user's currently active family**. These rules
 | **DM** to/from the user | ✅ Yes — always (not scoped to active family) |
 | Thread the user **personally sent** to a family | ✅ Yes — always (user is the sender) |
 
-When the user **switches active family** (F → M, via `SetActiveFamily (AG)` in Profile Settings):
+When the user **switches active family** (F → M, via `MarkFamilyPrimary (AG)` in Profile Settings):
 - Threads received by **F disappear** from Chats; threads received by **M appear**.
 - DMs and the user's own sent threads are unaffected (always visible).
 
@@ -510,7 +510,7 @@ User taps Messages icon (✉ — Explore / My Pets / More header)
 ### Switch active family while inbox is open
 
 ```
-User switches active family F → M (SetActiveFamily AG, Profile Settings)
+User switches active family F → M (MarkFamilyPrimary AG, Profile Settings)
   └─> inbox re-fetches MessageThreads (BG)
         └─> F-received threads drop out; M-received threads appear
               └─> DMs + own-sent threads unchanged

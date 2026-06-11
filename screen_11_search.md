@@ -191,8 +191,14 @@ query SearchPets($q: String!, $first: Int = 20, $after: String) {
       node {
         id
         name
-        species
-        breed
+        species {
+          name
+          iconEmoji
+        }
+        breed {
+          nameVi
+          nameEn
+        }
         avatarUrl
         family {
           id

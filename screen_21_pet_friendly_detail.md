@@ -21,7 +21,7 @@ Places are **created/edited by admins** (no AI generation, no external provider 
 | Group | Field | Req | Notes |
 |-------|-------|-----|-------|
 | **Basics** | `name` | ✅ | Display name |
-| | `category` | ✅ | enum: `CAFE` / `RESTAURANT` / `HOTEL` / `PARK` / `BEACH` / `OTHER` → drives category filter chips |
+| | `category` | ✅ | enum: `CAFE` / `RESTAURANT` / `HOTEL` / `PARK` / `BEACH` / `GROOMING` / `VET` → drives category filter chips |
 | | `photoMediaIds[]` | ✅ | `[String!]!` — ≥ 1; first photo = thumbnail/cover; rest shown in the detail carousel |
 | | `description` | — | Longer free text, shown on this detail screen |
 | **Location** | `city` | ✅ | Picked from supported Cities (`CA`) → derives `cityShortName` / `cityCode` / `country` / `countryCode` |

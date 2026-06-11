@@ -92,7 +92,7 @@ Each row:
 | `avatarUrl` | Pet avatar |
 | `isPublic` | 🔒 lock icon shown on row if `isPublic = false` (private pet) |
 | `name` | Pet name |
-| `breed` | Breed name (truncated with `...` if long) |
+| `breed` | `BreedGQL` — use `breed.nameVi` (Vietnamese) or `breed.nameEn` for display (truncated with `...` if long); `null` if unknown |
 | `sex` | `Male` / `Female` / `Unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `postCount` | `N posts` |
@@ -148,7 +148,7 @@ Parents                                    [× close]
 | Row | Badges | Message icon `[✉]` | Action | Who can see action |
 |-----|--------|--------------------|--------|--------------------|
 | Owner (self) | `YOU` + `OWNER` | Hidden (can't DM yourself) | None | — |
-| Accepted parent | `PARENT` | Shown — opens a DM | Remove | Owner only |
+| Accepted parent | `MEMBER` | Shown — opens a DM | Remove | Owner only |
 | Pending invite | `INVITED` | Hidden (not a member yet) | Cancel | Owner only |
 
 **Message icon `[✉]` (accepted co-parents only):**
@@ -176,7 +176,7 @@ Parents                                    [× close]
 🐾  Rescues                                 [>]
 ```
 
-- **Shown only when the active family is a charity** (`family.familyType = charity`). Hidden for all non-charity families.
+- **Shown only when the active family is a charity** (`family.familyType = CHARITY`). Hidden for all non-charity families.
 - Tap → navigate to **Manage Rescues** (`screen_27`) — the charity's Open / Adopted rescue listings, where they post, edit, mark adopted, or reopen.
 - Available to all charity members (owner + parents), consistent with the post/close permission (member of the charity while it's active).
 - No new endpoint here — Manage Rescues uses its own queries/mutations (`MyRescues CN`, `CloseRescue CP`, `ReopenRescue CQ`, `UpdateRescue CS`, `CreateRescue CO`).
@@ -250,7 +250,10 @@ query ActiveFamily {
       id
       name
       avatarUrl
-      breed
+      breed {
+        nameVi
+        nameEn
+      }
       isPublic
       sex
       ageMonths
@@ -259,7 +262,7 @@ query ActiveFamily {
     }
     parents {
       id
-      name
+      displayName
       username
       avatarUrl
       role
@@ -299,7 +302,7 @@ query ActiveFamily {
           "id": "pet_111",
           "name": "Bụi",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-          "breed": "Orange Tabby Cat",
+          "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" },
           "isPublic": true,
           "sex": "MALE",
           "ageMonths": 36,
@@ -310,7 +313,7 @@ query ActiveFamily {
           "id": "pet_222",
           "name": "Măng",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
-          "breed": "Buckskin Pony",
+          "breed": { "nameVi": "Ngựa buckskin", "nameEn": "Buckskin Pony" },
           "sex": "FEMALE",
           "ageMonths": 60,
           "postCount": 24,
@@ -318,9 +321,9 @@ query ActiveFamily {
         }
       ],
       "parents": [
-        { "id": "user_001", "name": "Minh Dang", "username": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
-        { "id": "user_002", "name": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "PARENT", "status": "JOINED" },
-        { "id": "user_003", "name": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "PARENT", "status": "INVITED" }
+        { "id": "user_001", "displayName": "Minh Dang", "username": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
+        { "id": "user_002", "displayName": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "MEMBER", "status": "JOINED" },
+        { "id": "user_003", "displayName": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "MEMBER", "status": "INVITED" }
       ]
     }
   }
@@ -328,7 +331,7 @@ query ActiveFamily {
 ```
 
 **Notes:**
-- `viewerRole`: `OWNER` | `PARENT` — controls visibility of Edit button and management actions in Parents popup
+- `viewerRole`: `OWNER` | `MEMBER` — controls visibility of Edit button and management actions in Parents popup
 - `parents` included here to avoid a separate API call when opening the bottom sheet
 
 **Errors:**

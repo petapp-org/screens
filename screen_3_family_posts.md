@@ -24,7 +24,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
   │     ├── N pets  [· N randoms — only if > 0]  · N followers
   │     └── [Follow button]  [Message button]
   │
-  ├── Charity Section  ← only shown when familyType = charity
+  ├── Charity Section  ← only shown when familyType = CHARITY
   │     ├── [♡ icon]  shortDescription
   │     ├── [♡ icon]  "N people have helped"
   │     └── [Donate button — full width]
@@ -64,14 +64,14 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `avatarUrl` | Used as fallback / single avatar |
 | `petAvatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
 | `petCount` | Number of actual pets in the family |
-| `randomCount` | Number of media items where `mediaTag.type = "random" AND breed IS NOT NULL` — AI detected a breed but could not match to a named pet. Does NOT count media with no breed detected. Hidden from stats line when `0`. |
+| `randomCount` | Number of media items where `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Does NOT count media with no breed or species detected. Hidden from stats line when `0`. |
 | `randomPostCount` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
-| `familyType` | `standard` \| `charity` |
+| `familyType` | `NORMAL` \| `CHARITY` |
 | `social.isFollowedByMe` | Boolean (false when unauthenticated) |
-| `about` | Free-text description |
+| `bio` | Free-text description |
 | `shortDescription` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
-| `donorCount` | Number of people who have donated. Only meaningful when `familyType = charity`; `null` for standard families. |
+| `donorCount` | Number of people who have donated. Only meaningful when `familyType = CHARITY`; `null` for standard families. |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
@@ -83,7 +83,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - `petCount = 1` (public pet) → show that pet's avatar
 - `petCount ≥ 2` (public pets) → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
 - Only **public pets** (`isPublic = true`) are included in the stacked display — private pets are never shown to non-members
-- `familyType = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
+- `familyType = CHARITY` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**
 - Not following → button label "Follow"; tap → `FollowFamily mutation (D)` (requires login → redirect to Login)
@@ -96,7 +96,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 ---
 
-### 2. Charity Section *(only rendered when `familyType = charity`)*
+### 2. Charity Section *(only rendered when `familyType = CHARITY`)*
 
 Displayed between the Family Info Card and the Pets List.
 
@@ -106,7 +106,7 @@ Displayed between the Family Info Card and the Pets List.
 | `donorCount` | Displayed as `"♡ 184 people have helped"` |
 | Donate button | Full-width button — see **Donate button behaviour** below |
 
-- The entire section is hidden for `standard` families.
+- The entire section is hidden for `NORMAL` families.
 
 **Donate button behaviour (canonical — interim, no wallet yet):**
 
@@ -141,7 +141,7 @@ Each pet row:
 | `id` | Pet ID |
 | `avatarUrl` | Pet avatar |
 | `name` | Pet name |
-| `breed` | Breed name (may be truncated with `...` if long) |
+| `breed` | `BreedGQL` — use `breed.nameVi` (Vietnamese) or `breed.nameEn` for display (may be truncated with `...` if long); `null` if unknown |
 | `sex` | `male` \| `female` \| `unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `postCount` | Total posts linked to this pet |
@@ -197,8 +197,8 @@ Parents                          [× close]
 ### 4. About Section
 
 - Label: "ABOUT"
-- Body: `family.about` — free-text, multi-line
-- Hidden entirely if `about` is null or empty
+- Body: `family.bio` — free-text, multi-line
+- Hidden entirely if `bio` is null or empty
 
 ---
 
@@ -270,13 +270,16 @@ query Family($id: ID!) {
     familyType
     shortDescription
     donorCount
-    about
+    bio
     parentCount
     pets {
       id
       name
       avatarUrl
-      breed
+      breed {
+        nameVi
+        nameEn
+      }
       sex
       ageMonths
       postCount
@@ -319,14 +322,14 @@ query Family($id: ID!) {
       "familyType": "CHARITY",
       "shortDescription": "Home-based cat rescue",
       "donorCount": 184,
-      "about": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
+      "bio": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
       "parentCount": 1,
       "pets": [
         {
           "id": "pet_111",
           "name": "Bụi",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-          "breed": "Orange Tabby Cat",
+          "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" },
           "sex": "MALE",
           "ageMonths": 36,
           "postCount": 47
@@ -335,7 +338,7 @@ query Family($id: ID!) {
           "id": "pet_222",
           "name": "Chao",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
-          "breed": "Vietnamese Native",
+          "breed": { "nameVi": "Mèo nội địa Việt Nam", "nameEn": "Vietnamese Native" },
           "sex": "FEMALE",
           "ageMonths": 24,
           "postCount": 38
@@ -406,7 +409,7 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
         {
           "node": {
             "id": "post_abc",
-            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "familyType": "STANDARD" },
+            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "familyType": "NORMAL" },
             "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "..." },
             "pets": [{ "id": "pet_111", "name": "Bụi", "avatarUrl": "..." }],
             "body": "Bụi nằm chờ mama 🌕",
@@ -517,8 +520,14 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
     pet {
       id
       name
-      breed
-      species
+      breed {
+        nameVi
+        nameEn
+      }
+      species {
+        name
+        iconEmoji
+      }
       avatarUrl
     }
     posts {
@@ -537,7 +546,7 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 {
   "data": {
     "petPosts": {
-      "pet": { "id": "pet_111", "name": "Bụi", "species": "Cat", "breed": "Orange Tabby Cat", "avatarUrl": "..." },
+      "pet": { "id": "pet_111", "name": "Bụi", "species": { "name": "Cat", "iconEmoji": "🐱" }, "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" }, "avatarUrl": "..." },
       "posts": [ { "id": "post_abc", "body": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentsCount": 5, "visibility": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } ],
       "nextCursor": "cursor_xyz", "hasMore": true
     }
@@ -737,11 +746,11 @@ User taps Parents row
 | `petCount = 0` | Show default family avatar; no pets list section |
 | `petCount = 1` | Show single pet avatar (no stacking animation) |
 | `petCount ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
-| `familyType = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
-| `familyType = standard` | No ribbon; no Charity Section |
+| `familyType = CHARITY` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
+| `familyType = NORMAL` | No ribbon; no Charity Section |
 | `petCount ≤ 5` | Pets list: single vertical column |
 | `petCount > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
-| `about` is null or empty | Hide About section entirely |
+| `bio` is null or empty | Hide About section entirely |
 | `randomCount = 0` | Hide "randoms" from stats line; hide Random Pets row from pets list |
 | `randomCount > 0` | Show "N randoms" in stats line; show Random Pets row at bottom of pets list |
 | Story button | Hidden — Story (`screen_29`) is member-only; this screen's viewer is always a non-member |

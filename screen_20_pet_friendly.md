@@ -66,6 +66,8 @@ Horizontal scrollable row. **Single-select** — exactly one chip active at a ti
 | **Hotels** | `{ category: "HOTEL" }` | category |
 | **Parks** | `{ category: "PARK" }` | category |
 | **Beaches** | `{ category: "BEACH" }` | category |
+| **Grooming** | `{ category: "GROOMING" }` | category |
+| **Vet** | `{ category: "VET" }` | category |
 
 > Chip set is driven by the place taxonomy (`category` + `suitableFor`). Single-select keeps it simple this phase; combining dimensions can come later.
 
