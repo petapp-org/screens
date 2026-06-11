@@ -538,8 +538,8 @@ Edit pet info.
 
 **Operation:**
 ```graphql
-mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
-  updatePet(id: $id, input: $input) {
+mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
+  updatePet(petId: $petId, input: $input) {
     id
     name
     species
@@ -571,7 +571,7 @@ mutation UpdatePet($id: ID!, $input: UpdatePetInput!) {
 **Variables:**
 ```json
 {
-  "id": "pet_111",
+  "petId": "pet_111",
   "input": {
     "name": "Bụi Bụi",
     "species": "Cat",

@@ -260,8 +260,8 @@ Update an existing family.
 
 **Operation:**
 ```graphql
-mutation UpdateFamily($id: ID!, $input: UpdateFamilyInput!) {
-  updateFamily(id: $id, input: $input) {
+mutation UpdateFamily($familyId: ID!, $input: UpdateFamilyInput!) {
+  updateFamily(familyId: $familyId, input: $input) {
     id
     name
     about
@@ -276,7 +276,7 @@ mutation UpdateFamily($id: ID!, $input: UpdateFamilyInput!) {
 **Variables:**
 ```json
 {
-  "id": "fam_001",
+  "familyId": "fam_001",
   "input": {
     "name": "Updated Name",
     "about": "Updated description",
@@ -319,9 +319,7 @@ Check tag availability during Create form.
 **Operation:**
 ```graphql
 query CheckFamilyTag($tag: String!) {
-  checkFamilyTag(tag: $tag) {
-    available
-  }
+  checkFamilyTag(tag: $tag)
 }
 ```
 
@@ -336,9 +334,7 @@ query CheckFamilyTag($tag: String!) {
 ```json
 {
   "data": {
-    "checkFamilyTag": {
-      "available": true
-    }
+    "checkFamilyTag": true
   }
 }
 ```
@@ -530,7 +526,11 @@ Remove an accepted parent from the family.
 ```graphql
 mutation RemoveFamilyMember($familyId: ID!, $userId: ID!) {
   removeFamilyMember(familyId: $familyId, userId: $userId) {
-    success
+    id
+    members {
+      userId
+      role
+    }
   }
 }
 ```
@@ -548,7 +548,10 @@ mutation RemoveFamilyMember($familyId: ID!, $userId: ID!) {
 {
   "data": {
     "removeFamilyMember": {
-      "success": true
+      "id": "fam_001",
+      "members": [
+        { "userId": "user_001", "role": "OWNER" }
+      ]
     }
   }
 }
