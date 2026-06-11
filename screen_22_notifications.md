@@ -40,25 +40,24 @@ ACTIVITY FEED  (general activity, newest first, infinite scroll)
 
 ### 1. Activity Feed
 
-Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, optional thumbnail, relative time, and **bold when unread** (no red dot). The header **Notifications icon** is red-dotted when there are any unread items. Tapping a row marks it read (`MarkNotificationRead (BT)`) and deep-links to its target.
+Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, optional thumbnail, relative time, and **bold when unread** (no red dot). The header **Notifications icon** is red-dotted when there are any unread items. Tapping a row marks it read (`MarkNotificationAsRead (BT)`) and deep-links to its target.
 
-**Notification types:**
+**Notification categories (`category` enum in contract):**
 
-| Type (enum) | Trigger | Row text (example) | Tap target |
-|-------------|---------|--------------------|------------|
-| `NEW_COMMENT` | Someone comments on the user's post | "`{actor}` commented on your post" + comment snippet | Post Detail (scrolled to comment) |
-| `NEW_REPLY` | Someone replies to the user's comment | "`{actor}` replied to your comment" + reply snippet | Post Detail (scrolled to reply) |
-| `POST_LOVES` | People love the user's post (**grouped**) | "`{actor}` and `{N}` others loved your post" + thumbnail | Post Detail |
-| `FAMILY_NEW_POST` | A family the user **follows** publishes a new post | "`{family}` shared a new post" + thumbnail | Post Detail |
-| `NEW_FOLLOWER` | Someone follows the user's family | "`{actor}` started following your family" | The follower's User Posts (or their family) |
-| `INVITE_ACCEPTED` | A parent the user invited accepts the family invite | "`{actor}` accepted your invite to `{family}`" | Family Posts / My Pets parents |
-| `HEALTH_ALERT` | AI detects a possible health issue in the user's pet media | "AI Health Alert on `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
-| `MISSING_NEARBY` | A pet is reported missing near the user's location | "A missing `{species}` was reported near you" | Lost Pet Detail (`screen_19`), via `target.type = MISSING_REPORT` |
-| `PET_MISSING` | The user's own pet is marked missing (status confirmation) | "`{pet}` was marked as missing" | Pet Detail (`screen_9`) |
-| `PET_FOUND` | A previously-missing pet (own, or one the user reported/follows) is marked found | "`{pet}` was marked as found" | Pet Detail (`screen_9`) |
-| `RESCUE_INQUIRY` | Someone taps **Inquire to Adopt** on a rescue listing the user's **charity family** posted | "`{actor}` is interested in adopting `{petName}`" | Rescue Detail (`screen_26`), via `target.type = RESCUE_LISTING` |
+| Category (enum) | Trigger | Row text (example) | Tap target |
+|------------------|---------|--------------------|------------|
+| `CARE_REMINDER` | Scheduled care reminder for the user's pet | "Time to care for `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
+| `VACCINE_DUE` | Upcoming or overdue vaccine for the user's pet | "Vaccine due for `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
+| `HEALTH_SIGNAL` | AI detects a possible health issue in the user's pet media | "AI Health Alert on `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
+| `SYSTEM` | System-level announcements or alerts | `title` value | Varies by `data` payload |
 
-**Grouping:** `POST_LOVES` collapses multiple lovers of the **same post** into one row (`{actor} and {N} others`). Other types are one row per event.
+> **`UNSPECIFIED`** is a contract sentinel — treat as `SYSTEM` in the UI.
+
+> **Legacy type strings** (`NEW_COMMENT`, `POST_LOVES`, `INVITE_ACCEPTED`, etc.) are **not in the current contract**. These notification types are planned for a future enrichment phase — tracked as target SDL GAPs (see field table below).
+
+**Grouping:** `POST_LOVES`-style grouping (multiple actors per post) is a **GAP** (no `groupCount` in contract yet — see field table). Render each row independently until the backend adds grouping support.
+
+> ⚠️ **`MISSING_NEARBY`/`PET_MISSING`/`PET_FOUND`/`RESCUE_INQUIRY`** notification categories are planned but not yet in the contract enum. They will be added in a later backend enrichment slice.
 
 > **`RESCUE_INQUIRY`** is sent to the **charity family's members** (like other family-directed events) and fires only on a user's **first** inquiry for that listing (idempotent — re-inquiring doesn't re-notify). The adoption conversation itself lands in **Messages** (`screen_10`); this notification is the heads-up. Tapping opens the Rescue Detail in manage context.
 
@@ -79,73 +78,87 @@ General-notification feed (paginated, newest first).
 **Auth:** Required
 
 ```graphql
-query MyNotifications($cursor: String, $limit: Int = 50) {
-  myNotifications(limit: $limit, cursor: $cursor) {
-    notifications {
-      id
-      type          # NEW_COMMENT | NEW_REPLY | POST_LOVES | FAMILY_NEW_POST |
-                    # NEW_FOLLOWER | INVITE_ACCEPTED | HEALTH_ALERT |
-                    # MISSING_NEARBY | PET_MISSING | PET_FOUND | RESCUE_INQUIRY
-      actor {       # who triggered it; null for system/AI events
+query MyNotifications($after: String) {
+  myNotifications(first: 20, after: $after) {
+    edges {
+      cursor
+      node {
         id
-        name
-        avatarUrl
+        userId
+        category   # CARE_REMINDER | VACCINE_DUE | HEALTH_SIGNAL | SYSTEM
+        channel    # PUSH | IN_APP | EMAIL
+        status
+        title
+        body
+        data
+        createdAt
+        readAt     # null = unread; non-null DateTime = read
       }
-      target {      # what the row deep-links to
-        type        # POST | COMMENT | PET | FAMILY | USER | MISSING_REPORT | RESCUE_LISTING
-        id
-      }
-      preview       # snippet/text shown under the title (nullable)
-      thumbnailUrl  # media thumbnail (POST_LOVES / FAMILY_NEW_POST); else null
-      groupCount    # extra count for grouped types (POST_LOVES); else null
-      isRead
-      createdAt
     }
-    nextCursor
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
 
-**Variables:** `{ "cursor": null, "limit": 20 }`
+> **Field notes:**
+>
+> | Contract field | Notes |
+> |----------------|-------|
+> | `category` | Replaces old `type` (see category table above) |
+> | `readAt` | Replaces `isRead`; "unread" = `readAt == null` |
+> | `title` + `body` | Replaces `preview`; `title` is the bold headline, `body` is the snippet |
+> | `data` | `[String!]!` — structured payload for deep-linking (e.g. `["PET", "pet_111"]`) |
+> | `actor {}` | ⚠️ **GAP** (not in contract — target SDL ENRICH) |
+> | `target {}` | ⚠️ **GAP** (not in contract — target SDL ENRICH) |
+> | `thumbnailUrl` | ⚠️ **GAP** (not in contract — target SDL ENRICH) |
+> | `groupCount` | ⚠️ **GAP** (not in contract — target SDL ENRICH) |
+
+**Variables:** `{ "after": null }`
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
     "myNotifications": {
-      "notifications": [
+      "edges": [
         {
-          "id": "noti_001",
-          "type": "NEW_COMMENT",
-          "actor": {
-            "id": "user_044",
-            "name": "Linh Pham",
-            "avatarUrl": "https://cdn.petapp.com/users/user_044/avatar.jpg"
-          },
-          "target": { "type": "POST", "id": "post_988" },
-          "preview": "bé cún xinh quá ❤️",
-          "thumbnailUrl": null,
-          "groupCount": null,
-          "isRead": false,
-          "createdAt": "2026-06-07T08:55:00Z"
+          "cursor": "cursor_noti_001",
+          "node": {
+            "id": "noti_001",
+            "userId": "user_001",
+            "category": "HEALTH_SIGNAL",
+            "channel": "IN_APP",
+            "status": "SENT",
+            "title": "AI Health Alert on Pudding",
+            "body": "Possible skin irritation detected in a recent photo",
+            "data": ["PET", "pet_222"],
+            "createdAt": "2026-06-07T08:55:00Z",
+            "readAt": null
+          }
         },
         {
-          "id": "noti_002",
-          "type": "POST_LOVES",
-          "actor": {
-            "id": "user_071",
-            "name": "Minh",
-            "avatarUrl": "https://cdn.petapp.com/users/user_071/avatar.jpg"
-          },
-          "target": { "type": "POST", "id": "post_512" },
-          "preview": null,
-          "thumbnailUrl": "https://cdn.petapp.com/posts/post_512/thumb.jpg",
-          "groupCount": 4,
-          "isRead": false,
-          "createdAt": "2026-06-07T07:10:00Z"
+          "cursor": "cursor_noti_002",
+          "node": {
+            "id": "noti_002",
+            "userId": "user_001",
+            "category": "CARE_REMINDER",
+            "channel": "IN_APP",
+            "status": "SENT",
+            "title": "Time to groom Bụi",
+            "body": "Weekly grooming reminder",
+            "data": ["PET", "pet_111"],
+            "createdAt": "2026-06-07T07:10:00Z",
+            "readAt": "2026-06-07T07:15:00Z"
+          }
         }
       ],
-      "nextCursor": "cursor_abc"
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "cursor_noti_002"
+      }
     }
   }
 }
@@ -159,15 +172,28 @@ query MyNotifications($cursor: String, $limit: Int = 50) {
 
 ---
 
-### BT. Mutation: `MarkNotificationRead`
+### BT. Mutation: `MarkNotificationAsRead` / `MarkAllNotificationsAsRead`
 
-Mark one notification (or all) as read.
+Mark one notification as read, or mark all as read.
 
 **Auth:** Required
 
+**Mark single (tap a row):**
 ```graphql
-mutation MarkNotificationRead($id: ID) {
-  markNotificationRead(id: $id)   # id null → mark ALL general notifications read
+mutation MarkNotificationAsRead($notificationId: ID!) {
+  markNotificationAsRead(notificationId: $notificationId) {
+    id
+    readAt
+  }
+}
+```
+
+**Variables:** `{ "notificationId": "noti_001" }`
+
+**Mark all (tap "Mark all as read"):**
+```graphql
+mutation MarkAllNotificationsAsRead {
+  markAllNotificationsAsRead   # returns Int! — count of notifications marked read
 }
 ```
 
@@ -176,7 +202,7 @@ mutation MarkNotificationRead($id: ID) {
 | Code | Scenario |
 |------|----------|
 | `UNAUTHENTICATED` | Caller is not logged in |
-| `NOTIFICATION_NOT_FOUND` | `id` provided but does not exist for this user |
+| `NOTIFICATION_NOT_FOUND` | `notificationId` does not exist for this user |
 
 ---
 
@@ -209,15 +235,24 @@ query UnreadNotificationCount {
 ```
 User taps Notifications icon (🔔 — Explore / My Pets / More header)
   └─> [not authenticated] → redirect to Login
-  └─> [authenticated] → MyNotifications (BS) → activity feed
+  └─> [authenticated] → MyNotifications (BS) { first: 20, after: null } → activity feed
+```
+
+### Infinite Scroll
+
+```
+User scrolls to bottom
+  └─> MyNotifications (BS) { first: 20, after: pageInfo.endCursor }
+        └─> Append new rows
+              └─> pageInfo.hasNextPage=false → no more rows
 ```
 
 ### Open a notification
 
 ```
 User taps a notification row
-  └─> MarkNotificationRead (BT) { id }  → row un-bolds; Notifications-icon dot decrements
-        └─> Deep-link to target (Post Detail / Pet Detail / User Posts / Lost Pet Detail / etc.)
+  └─> MarkNotificationAsRead (BT) { notificationId }  → readAt set; row un-bolds; Notifications-icon dot decrements
+        └─> Deep-link via data[] payload (Pet Detail / etc.)
 ```
 
 ---
@@ -226,10 +261,11 @@ User taps a notification row
 
 | Case | Behaviour |
 |------|-----------|
-| General notification target deleted (post/comment/pet removed) | Tapping marks it read and shows a "This content is no longer available" state instead of deep-linking |
-| `POST_LOVES` for the same post by many users | Collapsed to one grouped row (`{actor} and {N} others`) |
-| `MISSING_NEARBY` tapped | Opens **Lost Pet Detail** (`screen_19`) for the `MISSING_REPORT` target |
-| Parent invite received | **Not** a notification — only `INVITE_ACCEPTED` is surfaced |
+| Deep-link target deleted (pet removed, etc.) | Tapping marks it read via `MarkNotificationAsRead` and shows "This content is no longer available" instead of deep-linking |
+| `readAt != null` | Row displayed in normal weight (not bold) |
+| `readAt == null` | Row displayed in **bold** (unread) |
+| `POST_LOVES`-style grouping | **GAP** — `groupCount` not in contract yet; render each notification independently until backend enrichment |
+| Deep-link interpretation | Parse `data[]` array to determine target: `["PET", "<id>"]` → Pet Detail, `["CARE", "<id>"]` → Pet Detail care tab, etc. |
 | New user, no activity | "No notifications yet" |
 
 ---
@@ -241,7 +277,9 @@ User taps a notification row
 | 1 | Screen split | Split from the old two-tab screen: this screen is the **general activity feed only**; messaging lives in **Messages (`screen_10`)** |
 | 2 | Header entry point | **Notifications icon** `🔔` (Explore + My Pets + More headers); red dot (no number) when any activity unread (`UnreadNotificationCount BU`). Separate from the **Messages icon** `✉` (`screen_10`) |
 | 3 | Unread indicator | **Inside the screen**: bold only, no red dot. **Header Notifications icon**: red dot when any unread |
-| 4 | Parent invite received | Excluded — only `INVITE_ACCEPTED` notified |
-| 5 | Loves grouping | Grouped per post (`{actor} and {N} others`) |
-| 6 | `MISSING_NEARBY` target | Deep-links to **Lost Pet Detail** (`screen_19`) via `target.type = MISSING_REPORT` |
+| 4 | Parent invite received | Excluded — only `INVITE_ACCEPTED` notified (future `SYSTEM` notification via `data` payload) |
+| 5 | Loves grouping | **GAP** — `groupCount` not in contract; render flat until enrichment |
+| 6 | `MISSING_NEARBY` deep-link | **GAP** — `target {}` not in contract; parse `data[]` when enrichment ships |
 | 7 | Unread count delivery | WebSocket push preferred; poll every 30s fallback |
+| 8 | `isRead` field | Removed — use `readAt != null` to determine read state |
+| 9 | `markNotificationRead(id: null)` | Removed — use `markAllNotificationsAsRead` mutation instead |

@@ -313,13 +313,28 @@ Paginated list of posts the current user has loved, sorted by love date descendi
 
 **Operation:**
 ```graphql
-query MyLovedPosts($cursor: String, $limit: Int) {
-  myLovedPosts(cursor: $cursor, limit: $limit) {
-    posts {
-      ...Post
+query MyLovedPosts($after: String) {
+  myLovedPosts(first: 20, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        family { id name avatarUrl type }
+        author { id displayName avatarUrl }
+        pets { id name avatarUrl }
+        body
+        location { city cityCode country countryCode }
+        media { id url mimeType width height durationSeconds }
+        loveCount
+        commentsCount
+        isLoved
+        createdAt
+      }
     }
-    nextCursor
-    hasMore
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
@@ -327,8 +342,7 @@ query MyLovedPosts($cursor: String, $limit: Int) {
 **Variables:**
 ```json
 {
-  "cursor": null,
-  "limit": 10
+  "after": null
 }
 ```
 
@@ -337,25 +351,28 @@ query MyLovedPosts($cursor: String, $limit: Int) {
 {
   "data": {
     "myLovedPosts": {
-      "posts": [
+      "edges": [
         {
-          "id": "post_001",
-          "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg", "type": "STANDARD" },
-          "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
-          "pets": [ { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" } ],
-          "caption": "Bụi nằm chờ mama nấu cơm 🌕",
-          "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
-          "media": [ { "id": "media_001", "type": "UPLOADED", "url": "https://cdn.petapp.com/media/001.jpg", "thumbnailUrl": null, "mimeType": "image/jpeg", "width": 1080, "height": 1080, "durationSeconds": null, "provider": null, "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } } ],
-          "loveCount": 24,
-          "commentCount": 3,
-          "isLoved": true,
-          "isOwn": false,
-          "privacy": "PUBLIC",
-          "createdAt": "2026-06-06T08:00:00Z"
+          "cursor": "cursor_token_here",
+          "node": {
+            "id": "post_001",
+            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg", "type": "STANDARD" },
+            "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
+            "pets": [ { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" } ],
+            "body": "Bụi nằm chờ mama nấu cơm 🌕",
+            "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
+            "media": [ { "id": "media_001", "url": "https://cdn.petapp.com/media/001.jpg", "mimeType": "image/jpeg", "width": 1080, "height": 1080, "durationSeconds": null } ],
+            "loveCount": 24,
+            "commentsCount": 3,
+            "isLoved": true,
+            "createdAt": "2026-06-06T08:00:00Z"
+          }
         }
       ],
-      "nextCursor": "cursor_token_here",
-      "hasMore": true
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "cursor_token_here"
+      }
     }
   }
 }
