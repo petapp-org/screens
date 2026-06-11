@@ -234,7 +234,7 @@ Shows pet-friendly places **in the selected city**, the **3 nearest** to the use
 | `highlightText` | admin free text, **≤ 20 chars** | line-3 flair after city-country; single line, `…` if overflow |
 
 - **Tap a row** → **Pet Friendly Place Detail** (`screen_21`).
-- Data source: `PetFriendlyPlaces query (CD)` `{ cityCode, countryCode, originLat?, originLng?, limit: 3 }`.
+- Data source: `PetFriendlyPlaces query (CD)` `{ cityCode, countryCode, originLat?, originLng?, first: 3 }`.
 
 ---
 
@@ -274,7 +274,7 @@ Shows **upcoming events in the selected city**, the **3 soonest** to start.
 | Ended | `now > endAt` | *(not shown — filtered out of all listings)* |
 
 - **Tap a row** → **Event Detail** (`screen_24`).
-- Data source: `Events query (CI)` `{ cityCode, countryCode, originLat?, originLng?, limit: 3 }`.
+- Data source: `Events query (CI)` `{ cityCode, countryCode, originLat?, originLng?, first: 3 }`.
 
 ---
 
@@ -303,7 +303,7 @@ Shows **open rescue listings in the selected city** — pets that **charity fami
 | `charityName` + CHARITY badge | posting `family.name` | line 3 — the rescue org (charity family); badge always shown (only charity families can post) |
 
 - **Tap a row** → **Rescue Detail** (`screen_26`).
-- Data source: `Rescues query (CL)` `{ cityCode, countryCode, originLat?, originLng?, sort: NEAREST, limit: 3 }`.
+- Data source: `Rescues query (CL)` `{ cityCode, countryCode, originLat?, originLng?, sort: NEAREST, first: 3 }`.
 
 > **Posting a rescue is NOT done from the More hub section** — there is no Post button here. Charity families post from the **Rescue screen** banner (`screen_25`) or from **Manage Rescues** (`screen_27`).
 
@@ -394,7 +394,7 @@ query Cities {
 
 > ⚠️ **GAP petapp-be#888:** backend has no browse-by-city lost-pets query (only `searchLostPets(q!, lat/lng)` text-search + `listLostPetReports(type, cursor)`). Kept as-is, pending backend `lostPetsByCity(... first, after)`.
 
-Returns missing-pet reports for a city. Used by both the **More → Lost Pets section** (`limit: 3`) and the full **Lost Pets screen** (paginated, with filters). Filter args beyond `cityCode` are consumed by the full screen — documented here for reuse; the More section passes only `cityCode` + `limit`.
+Returns missing-pet reports for a city. Used by both the **More → Lost Pets section** (`first: 3`) and the full **Lost Pets screen** (paginated, with filters). Filter args beyond `cityCode` are consumed by the full screen — documented here for reuse; the More section passes only `cityCode` + `first`.
 
 **Auth:** Required.
 
@@ -404,49 +404,56 @@ query LostPets(
   $cityCode: String!
   $countryCode: String!
   $filter: LostPetsFilter
-  $cursor: String
-  $limit: Int
+  $after: String
+  $first: Int! = 20
 ) {
   lostPets(
     cityCode: $cityCode
     countryCode: $countryCode
     filter: $filter
-    cursor: $cursor
-    limit: $limit
+    after: $after
+    first: $first
   ) {
-    items {
-      reportId
-      pet {
-        id
-        name
-        species
-        breed
-        avatarUrl
+    reportsCount
+    edges {
+      cursor
+      node {
+        reportId
+        pet {
+          id
+          name
+          species
+          breed
+          avatarUrl
+        }
+        family {
+          id
+          name
+          avatarUrl
+        }
+        lastSeen {
+          city
+          cityShortName
+          cityCode
+          country
+          countryCode
+          lat
+          lng
+          at
+        }
+        reportedAt
+        distanceKm
       }
-      family {
-        id
-        name
-        avatarUrl
-      }
-      lastSeen {
-        city
-        cityShortName
-        cityCode
-        country
-        countryCode
-        lat
-        lng
-        at
-      }
-      reportedAt
-      distanceKm
     }
-    nextCursor
-    hasMore
-    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
+
+> **Note:** `reportsCount` is a sibling field on `lostPets` (total number of matching reports), alongside `edges`/`pageInfo` but not inside the Relay connection — per ADR-0023.
 
 **`LostPetsFilter` (used by the full Lost Pets screen, not the More section):**
 ```json
@@ -462,7 +469,7 @@ query LostPets(
 
 **Variables (More section — preview):**
 ```json
-{ "cityCode": "HCM", "countryCode": "VN", "limit": 3 }
+{ "cityCode": "HCM", "countryCode": "VN", "first": 3 }
 ```
 
 **Response `200 OK`:**
@@ -470,38 +477,43 @@ query LostPets(
 {
   "data": {
     "lostPets": {
-      "items": [
+      "reportsCount": 12,
+      "edges": [
         {
-          "reportId": "miss_001",
-          "pet": {
-            "id": "pet_201",
-            "name": "Măng",
-            "species": "Pony",
-            "breed": "buckskin",
-            "avatarUrl": "https://cdn.petapp.com/pets/pet_201/avatar.jpg"
-          },
-          "family": {
-            "id": "fam_minh",
-            "name": "Minh's Family",
-            "avatarUrl": "https://cdn.petapp.com/families/fam_minh/avatar.jpg"
-          },
-          "lastSeen": {
-            "city": "Đà Lạt",
-            "cityShortName": "Đà Lạt",
-            "cityCode": "DL",
-            "country": "Việt Nam",
-            "countryCode": "VN",
-            "lat": 11.9404,
-            "lng": 108.4583,
-            "at": "2026-06-07T17:30:00Z"
-          },
-          "reportedAt": "2026-06-07T17:35:00Z",
-          "distanceKm": null
+          "cursor": "eyJpZCI6Im1pc3NfMDAxIn0=",
+          "node": {
+            "reportId": "miss_001",
+            "pet": {
+              "id": "pet_201",
+              "name": "Măng",
+              "species": "Pony",
+              "breed": "buckskin",
+              "avatarUrl": "https://cdn.petapp.com/pets/pet_201/avatar.jpg"
+            },
+            "family": {
+              "id": "fam_minh",
+              "name": "Minh's Family",
+              "avatarUrl": "https://cdn.petapp.com/families/fam_minh/avatar.jpg"
+            },
+            "lastSeen": {
+              "city": "Đà Lạt",
+              "cityShortName": "Đà Lạt",
+              "cityCode": "DL",
+              "country": "Việt Nam",
+              "countryCode": "VN",
+              "lat": 11.9404,
+              "lng": 108.4583,
+              "at": "2026-06-07T17:30:00Z"
+            },
+            "reportedAt": "2026-06-07T17:35:00Z",
+            "distanceKm": null
+          }
         }
       ],
-      "nextCursor": "eyJpZCI6Im1pc3NfMDAxIn0=",
-      "hasMore": true,
-      "totalCount": 12
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "eyJpZCI6Im1pc3NfMDAxIn0="
+      }
     }
   }
 }
@@ -527,7 +539,7 @@ query LostPets(
 
 > ⚠️ **Partial GAP petapp-be#888:** backend `places(category, lat, lng, radiusM, sort, offset, limit)` is geo+offset, not cityCode+cursor. Kept as-is, pending backend cityCode/Relay support.
 
-Returns pet-friendly places for a city, sorted by distance from the user. Used by both the **More → Pet Friendly section** (`limit: 3`) and the full **Pet Friendly screen** (`screen_20`, paginated + filtered).
+Returns pet-friendly places for a city, sorted by distance from the user. Used by both the **More → Pet Friendly section** (`first: 3`) and the full **Pet Friendly screen** (`screen_20`, paginated + filtered).
 
 **Auth:** Required.
 
@@ -539,8 +551,8 @@ query PetFriendlyPlaces(
   $filter: PetFriendlyFilter
   $originLat: Float
   $originLng: Float
-  $cursor: String
-  $limit: Int
+  $after: String
+  $first: Int! = 20
 ) {
   petFriendlyPlaces(
     cityCode: $cityCode
@@ -548,31 +560,38 @@ query PetFriendlyPlaces(
     filter: $filter
     originLat: $originLat
     originLng: $originLng
-    cursor: $cursor
-    limit: $limit
+    after: $after
+    first: $first
   ) {
-    items {
-      id
-      name
-      category
-      thumbnailUrl
-      suitableFor
-      tagText
-      highlightText
-      ratingAvg
-      reviewCount
-      cityShortName
-      countryCode
-      lat
-      lng
-      distanceKm
+    placesCount
+    edges {
+      cursor
+      node {
+        id
+        name
+        category
+        thumbnailUrl
+        suitableFor
+        tagText
+        highlightText
+        ratingAvg
+        reviewCount
+        cityShortName
+        countryCode
+        lat
+        lng
+        distanceKm
+      }
     }
-    nextCursor
-    hasMore
-    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
+
+> **Note:** `placesCount` is a sibling field on the query result (total number of matching places), not inside the connection — per ADR-0023.
 
 **`PetFriendlyFilter`** (single active chip on the full screen; omit for "All"):
 ```json
@@ -583,7 +602,7 @@ query PetFriendlyPlaces(
 
 **Variables (More section — preview):**
 ```json
-{ "cityCode": "HCM", "countryCode": "VN", "originLat": 10.78, "originLng": 106.70, "limit": 3 }
+{ "cityCode": "HCM", "countryCode": "VN", "originLat": 10.78, "originLng": 106.70, "first": 3 }
 ```
 
 **Response `200 OK`:**
@@ -591,27 +610,32 @@ query PetFriendlyPlaces(
 {
   "data": {
     "petFriendlyPlaces": {
-      "items": [
+      "placesCount": 12,
+      "edges": [
         {
-          "id": "place_001",
-          "name": "Lava Cat Coffee",
-          "category": "CAFE",
-          "thumbnailUrl": "https://cdn.petapp.com/places/place_001/1.jpg",
-          "suitableFor": ["CAT"],
-          "tagText": "Carriers OK",
-          "highlightText": "open until 22:00",
-          "ratingAvg": 4.8,
-          "reviewCount": 126,
-          "cityShortName": "HCMC",
-          "countryCode": "VN",
-          "lat": 10.7731,
-          "lng": 106.7042,
-          "distanceKm": 3.4
+          "cursor": "eyJpZCI6InBsYWNlXzAwMSJ9",
+          "node": {
+            "id": "place_001",
+            "name": "Lava Cat Coffee",
+            "category": "CAFE",
+            "thumbnailUrl": "https://cdn.petapp.com/places/place_001/1.jpg",
+            "suitableFor": ["CAT"],
+            "tagText": "Carriers OK",
+            "highlightText": "open until 22:00",
+            "ratingAvg": 4.8,
+            "reviewCount": 126,
+            "cityShortName": "HCMC",
+            "countryCode": "VN",
+            "lat": 10.7731,
+            "lng": 106.7042,
+            "distanceKm": 3.4
+          }
         }
       ],
-      "nextCursor": "eyJpZCI6InBsYWNlXzAwMSJ9",
-      "hasMore": true,
-      "totalCount": 12
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "eyJpZCI6InBsYWNlXzAwMSJ9"
+      }
     }
   }
 }
@@ -639,7 +663,7 @@ query PetFriendlyPlaces(
 
 > ⚠️ **GAP petapp-be#888:** the Events domain does not exist on backend (no `Event` type, no query). Kept as-is, pending backend.
 
-Returns **upcoming** events for a city, sorted soonest-first. Used by both the **More → Events section** (`limit: 3`) and the full **Events screen** (`screen_23`, paginated + time/price filters). All events are **admin-entered** (no AI, no charity/family hosting).
+Returns **upcoming** events for a city, sorted soonest-first. Used by both the **More → Events section** (`first: 3`) and the full **Events screen** (`screen_23`, paginated + time/price filters). All events are **admin-entered** (no AI, no charity/family hosting).
 
 **Auth:** Required.
 
@@ -651,8 +675,8 @@ query Events(
   $filter: EventsFilter
   $originLat: Float
   $originLng: Float
-  $cursor: String
-  $limit: Int
+  $after: String
+  $first: Int! = 20
 ) {
   events(
     cityCode: $cityCode
@@ -660,32 +684,39 @@ query Events(
     filter: $filter
     originLat: $originLat
     originLng: $originLng
-    cursor: $cursor
-    limit: $limit
+    after: $after
+    first: $first
   ) {
-    items {
-      id
-      title
-      thumbnailUrl
-      startAt
-      endAt
-      price
-      isFree
-      venueName
-      cityShortName
-      countryCode
-      lat
-      lng
-      distanceKm
-      interestedCount
-      viewerInterested
+    eventsCount
+    edges {
+      cursor
+      node {
+        id
+        title
+        thumbnailUrl
+        startAt
+        endAt
+        price
+        isFree
+        venueName
+        cityShortName
+        countryCode
+        lat
+        lng
+        distanceKm
+        interestedCount
+        viewerInterested
+      }
     }
-    nextCursor
-    hasMore
-    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
+
+> **Note:** `eventsCount` is a sibling field on the query result (total number of matching events), not inside the connection — per ADR-0023.
 
 **`EventsFilter`** (used by the full Events screen; single active chip — omit for "All"):
 ```json
@@ -696,7 +727,7 @@ query Events(
 
 **Variables (More section — preview):**
 ```json
-{ "cityCode": "HCM", "countryCode": "VN", "originLat": 10.78, "originLng": 106.70, "limit": 3 }
+{ "cityCode": "HCM", "countryCode": "VN", "originLat": 10.78, "originLng": 106.70, "first": 3 }
 ```
 
 **Response `200 OK`:**
@@ -704,28 +735,33 @@ query Events(
 {
   "data": {
     "events": {
-      "items": [
+      "eventsCount": 8,
+      "edges": [
         {
-          "id": "event_001",
-          "title": "Cat Adoption Day",
-          "thumbnailUrl": "https://cdn.petapp.com/events/event_001/1.jpg",
-          "startAt": "2026-06-15T02:00:00Z",
-          "endAt": "2026-06-15T05:00:00Z",
-          "price": "Free",
-          "isFree": true,
-          "venueName": "Lava Cat Coffee",
-          "cityShortName": "HCMC",
-          "countryCode": "VN",
-          "lat": 10.7731,
-          "lng": 106.7042,
-          "distanceKm": 2.1,
-          "interestedCount": 48,
-          "viewerInterested": false
+          "cursor": "eyJpZCI6ImV2ZW50XzAwMSJ9",
+          "node": {
+            "id": "event_001",
+            "title": "Cat Adoption Day",
+            "thumbnailUrl": "https://cdn.petapp.com/events/event_001/1.jpg",
+            "startAt": "2026-06-15T02:00:00Z",
+            "endAt": "2026-06-15T05:00:00Z",
+            "price": "Free",
+            "isFree": true,
+            "venueName": "Lava Cat Coffee",
+            "cityShortName": "HCMC",
+            "countryCode": "VN",
+            "lat": 10.7731,
+            "lng": 106.7042,
+            "distanceKm": 2.1,
+            "interestedCount": 48,
+            "viewerInterested": false
+          }
         }
       ],
-      "nextCursor": "eyJpZCI6ImV2ZW50XzAwMSJ9",
-      "hasMore": true,
-      "totalCount": 8
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "eyJpZCI6ImV2ZW50XzAwMSJ9"
+      }
     }
   }
 }
@@ -753,7 +789,7 @@ query Events(
 
 > ⚠️ **GAP petapp-be#888:** backend has no browse-by-city rescue query (only `searchRescueCases(q!, lat/lng)`). Kept as-is, pending backend `rescuesByCity(... first, after)`.
 
-Returns **open** rescue listings for a city (pets posted for adoption by **charity families**). Used by both the **More → Rescue section** (`limit: 3`) and the full **Rescue screen** (`screen_25`, paginated + species filter + sort). All listings are created by charity families (`family.familyType = CHARITY`).
+Returns **open** rescue listings for a city (pets posted for adoption by **charity families**). Used by both the **More → Rescue section** (`first: 3`) and the full **Rescue screen** (`screen_25`, paginated + species filter + sort). All listings are created by charity families (`family.familyType = CHARITY`).
 
 **Auth:** Required.
 
@@ -766,8 +802,8 @@ query Rescues(
   $sort: RescuesSort        # NEAREST | NEWEST  (default NEAREST)
   $originLat: Float
   $originLng: Float
-  $cursor: String
-  $limit: Int
+  $after: String
+  $first: Int! = 20
 ) {
   rescues(
     cityCode: $cityCode
@@ -776,31 +812,38 @@ query Rescues(
     sort: $sort
     originLat: $originLat
     originLng: $originLng
-    cursor: $cursor
-    limit: $limit
+    after: $after
+    first: $first
   ) {
-    items {
-      id
-      name
-      species
-      breed
-      ageText
-      gender
-      thumbnailUrl
-      charity { id name avatarUrl }
-      cityShortName
-      countryCode
-      lat
-      lng
-      distanceKm
-      createdAt
+    rescuesCount
+    edges {
+      cursor
+      node {
+        id
+        name
+        species
+        breed
+        ageText
+        gender
+        thumbnailUrl
+        charity { id name avatarUrl }
+        cityShortName
+        countryCode
+        lat
+        lng
+        distanceKm
+        createdAt
+      }
     }
-    nextCursor
-    hasMore
-    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
+
+> **Note:** `rescuesCount` is a sibling field on the query result (total number of matching rescue listings), not inside the connection — per ADR-0023.
 
 **`RescuesFilter`** (species chip on the full screen; omit for "All"):
 ```json
@@ -809,7 +852,7 @@ query Rescues(
 
 **Variables (More section — preview):**
 ```json
-{ "cityCode": "HCM", "countryCode": "VN", "sort": "NEAREST", "originLat": 10.78, "originLng": 106.70, "limit": 3 }
+{ "cityCode": "HCM", "countryCode": "VN", "sort": "NEAREST", "originLat": 10.78, "originLng": 106.70, "first": 3 }
 ```
 
 **Response `200 OK`:**
@@ -817,31 +860,36 @@ query Rescues(
 {
   "data": {
     "rescues": {
-      "items": [
+      "rescuesCount": 9,
+      "edges": [
         {
-          "id": "rescue_001",
-          "name": "Miu",
-          "species": "Cat",
-          "breed": "Domestic shorthair",
-          "ageText": "~4 months",
-          "gender": "FEMALE",
-          "thumbnailUrl": "https://cdn.petapp.com/rescues/rescue_001/1.jpg",
-          "charity": {
-            "id": "fam_paws",
-            "name": "Paws Rescue Saigon",
-            "avatarUrl": "https://cdn.petapp.com/families/fam_paws/avatar.jpg"
-          },
-          "cityShortName": "HCMC",
-          "countryCode": "VN",
-          "lat": 10.7820,
-          "lng": 106.6960,
-          "distanceKm": 2.3,
-          "createdAt": "2026-06-07T09:00:00Z"
+          "cursor": "eyJpZCI6InJlc2N1ZV8wMDEifQ==",
+          "node": {
+            "id": "rescue_001",
+            "name": "Miu",
+            "species": "Cat",
+            "breed": "Domestic shorthair",
+            "ageText": "~4 months",
+            "gender": "FEMALE",
+            "thumbnailUrl": "https://cdn.petapp.com/rescues/rescue_001/1.jpg",
+            "charity": {
+              "id": "fam_paws",
+              "name": "Paws Rescue Saigon",
+              "avatarUrl": "https://cdn.petapp.com/families/fam_paws/avatar.jpg"
+            },
+            "cityShortName": "HCMC",
+            "countryCode": "VN",
+            "lat": 10.7820,
+            "lng": 106.6960,
+            "distanceKm": 2.3,
+            "createdAt": "2026-06-07T09:00:00Z"
+          }
         }
       ],
-      "nextCursor": "eyJpZCI6InJlc2N1ZV8wMDEifQ==",
-      "hasMore": true,
-      "totalCount": 9
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "eyJpZCI6InJlc2N1ZV8wMDEifQ=="
+      }
     }
   }
 }
@@ -849,7 +897,7 @@ query Rescues(
 
 **Notes:**
 - City-scoped (`cityCode` + `countryCode`); returns only `status = OPEN` listings (adopted/closed are excluded — like Lost Pets `found`).
-- `sort`: `NEAREST` (distance asc) or `NEWEST` (`createdAt` desc). The More section always passes `NEAREST, limit: 3`.
+- `sort`: `NEAREST` (distance asc) or `NEWEST` (`createdAt` desc). The More section always passes `NEAREST, first: 3`.
 - `distanceKm` from `originLat`/`originLng` (user GPS); absent → server uses city centre.
 - `breed` / `ageText` are optional (admin/charity entered) — skip null parts in the row's line 2.
 - `charity` is always a `family.familyType = CHARITY` (only charity families can post) → CHARITY badge always shown.
@@ -879,7 +927,7 @@ User taps More tab
                     │      ├─ AVAILABLE   → set + fetch sections
                     │      └─ COMING_SOON → set + show LOCKED state
                     └─ denied/fail → default HCMC, VN → fetch sections
-                          └─> fetch all 4 sections in parallel (each limit: 3):
+                          └─> fetch all 4 sections in parallel (each first: 3):
                                 ├─ LostPets (CB)          { cityCode, countryCode }            (sorted reportedAt desc)
                                 ├─ PetFriendlyPlaces (CD) { cityCode, countryCode, originLat?, originLng? }  (nearest)
                                 ├─ Events (CI)            { cityCode, countryCode, originLat?, originLng? }  (soonest)

@@ -333,25 +333,32 @@ Fetch replies for a comment (triggered when user expands "View N replies").
 
 **Operation:**
 ```graphql
-query CommentReplies($commentId: ID!, $limit: Int, $cursor: String) {
-  commentReplies(commentId: $commentId, limit: $limit, cursor: $cursor) {
+query CommentReplies($commentId: ID!, $first: Int! = 5, $after: String) {
+  commentReplies(commentId: $commentId, first: $first, after: $after) {
+    repliesCount
     replies {
-      id
-      parentId
-      author {
-        id
-        displayName
-        avatarUrl
+      edges {
+        cursor
+        node {
+          id
+          parentId
+          author {
+            id
+            displayName
+            avatarUrl
+          }
+          body
+          createdAt
+          replyCount
+          isOwn
+          isDeletable
+        }
       }
-      body
-      createdAt
-      replyCount
-      isOwn
-      isDeletable
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    totalCount
-    nextCursor
-    hasMore
   }
 }
 ```
@@ -360,8 +367,8 @@ query CommentReplies($commentId: ID!, $limit: Int, $cursor: String) {
 ```json
 {
   "commentId": "comment_001",
-  "limit": 5,
-  "cursor": null
+  "first": 5,
+  "after": null
 }
 ```
 
@@ -370,29 +377,38 @@ query CommentReplies($commentId: ID!, $limit: Int, $cursor: String) {
 {
   "data": {
     "commentReplies": {
-      "replies": [
-        {
-          "id": "reply_001",
-          "parentId": "comment_001",
-          "author": {
-            "id": "user_003",
-            "displayName": "Luna",
-            "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
-          },
-          "body": "Đồng ý nè 😄",
-          "createdAt": "2026-06-06T09:00:00Z",
-          "replyCount": 2,
-          "isOwn": false,
-          "isDeletable": false
+      "repliesCount": 8,
+      "replies": {
+        "edges": [
+          {
+            "cursor": "eyJpZCI6InJlcGx5XzAwMSJ9",
+            "node": {
+              "id": "reply_001",
+              "parentId": "comment_001",
+              "author": {
+                "id": "user_003",
+                "displayName": "Luna",
+                "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+              },
+              "body": "Đồng ý nè 😄",
+              "createdAt": "2026-06-06T09:00:00Z",
+              "replyCount": 2,
+              "isOwn": false,
+              "isDeletable": false
+            }
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": true,
+          "endCursor": "eyJpZCI6InJlcGx5XzAwMSJ9"
         }
-      ],
-      "totalCount": 8,
-      "nextCursor": "eyJpZCI6InJlcGx5XzAwMSJ9",
-      "hasMore": true
+      }
     }
   }
 }
 ```
+
+> **Note:** `repliesCount` (total reply count for the parent comment) is a sibling field on `commentReplies`, not inside the connection — per ADR-0023 `totalCount` does not live in the Relay envelope.
 
 **Errors:**
 
@@ -466,7 +482,7 @@ User taps post in Explore feed
         ├─ POST_NOT_FOUND → show "Post not found" error screen
         ├─ FORBIDDEN → show "You don't have permission to view this post"
         └─ 200 → render post card
-              └─> PostComments query (K) { postId, limit: 20 }
+              └─> PostComments query (K) { postId, first: 20 }
                     └─> Render top-level comments
                           └─> Each comment with replyCount > 0 shows "View N replies ▾"
 ```
@@ -475,9 +491,9 @@ User taps post in Explore feed
 
 ```
 User taps "View N replies ▾"
-  └─> CommentReplies query (O) { commentId, limit: 5 }
+  └─> CommentReplies query (O) { commentId, first: 5 }
         └─> Render first 5 replies under comment
-              ├─ hasMore=true → show "Load N more replies"
+              ├─ hasNextPage=true → show "Load N more replies"
               └─ Each reply with replyCount > 0 → shows "View N replies ▾" (recursive)
 ```
 

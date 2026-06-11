@@ -253,58 +253,72 @@ Fetch messages in a thread (paginated, **oldest first** — `sentAt asc`). Load 
 **Auth:** Required
 
 ```graphql
-query ThreadMessages($threadId: ID!, $cursor: String, $limit: Int) {
-  threadMessages(threadId: $threadId, cursor: $cursor, limit: $limit) {
+query ThreadMessages($threadId: ID!, $after: String, $first: Int) {
+  threadMessages(threadId: $threadId, after: $after, first: $first) {
     messages {
-      id
-      sender {
-        userId
-        userName
-        userAvatarUrl
-        familyId
-        familyName
-      }
-      body
-      repliedTo {
-        id
-        body
-        sender {
-          userName
-          familyName
+      edges {
+        cursor
+        node {
+          id
+          sender {
+            userId
+            userName
+            userAvatarUrl
+            familyId
+            familyName
+          }
+          body
+          repliedTo {
+            id
+            body
+            sender {
+              userName
+              familyName
+            }
+          }
+          sentAt
         }
       }
-      sentAt
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    nextCursor
-    hasMore
   }
 }
 ```
 
-**Variables:** `{ "threadId": "thread_001", "limit": 20 }`
+**Variables:** `{ "threadId": "thread_001", "first": 20 }`
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
     "threadMessages": {
-      "messages": [
-        {
-          "id": "msg_001",
-          "sender": {
-            "userId": "user_001",
-            "userName": "Minh Dang",
-            "userAvatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
-            "familyId": null,
-            "familyName": null
-          },
-          "body": "hello bạn, gia đình bạn nuôi mèo đẹp nhỉ",
-          "repliedTo": null,
-          "sentAt": "2026-06-01T09:00:00Z"
+      "messages": {
+        "edges": [
+          {
+            "cursor": "cursor_xyz",
+            "node": {
+              "id": "msg_001",
+              "sender": {
+                "userId": "user_001",
+                "userName": "Minh Dang",
+                "userAvatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
+                "familyId": null,
+                "familyName": null
+              },
+              "body": "hello bạn, gia đình bạn nuôi mèo đẹp nhỉ",
+              "repliedTo": null,
+              "sentAt": "2026-06-01T09:00:00Z"
+            }
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": true,
+          "endCursor": "cursor_xyz"
         }
-      ],
-      "nextCursor": "cursor_xyz",
-      "hasMore": true
+      }
     }
   }
 }
@@ -460,27 +474,36 @@ Server-side search across all messages in a thread.
 **Auth:** Required
 
 ```graphql
-query SearchThreadMessages($threadId: ID!, $q: String!, $cursor: String, $limit: Int) {
-  searchThreadMessages(threadId: $threadId, q: $q, cursor: $cursor, limit: $limit) {
+query SearchThreadMessages($threadId: ID!, $q: String!, $after: String, $first: Int) {
+  searchThreadMessages(threadId: $threadId, q: $q, after: $after, first: $first) {
+    messagesCount
     messages {
-      id
-      body
-      sentAt
-      sender {
-        userId
-        userName
-        familyId
-        familyName
+      edges {
+        cursor
+        node {
+          id
+          body
+          sentAt
+          sender {
+            userId
+            userName
+            familyId
+            familyName
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
-    totalCount
-    nextCursor
-    hasMore
   }
 }
 ```
 
-**Variables:** `{ "threadId": "thread_001", "q": "mèo", "limit": 20 }`
+> **Note:** `messagesCount` is a sibling field on the search result (total number of matching messages), not inside the connection — per ADR-0023.
+
+**Variables:** `{ "threadId": "thread_001", "q": "mèo", "first": 20 }`
 
 **Notes:**
 - Min 2 characters required (enforced client-side before calling).
@@ -531,7 +554,7 @@ Server: user removed from active family F
 
 ```
 User taps a thread row
-  └─> ThreadMessages (BH) { threadId, limit: 20 }  (oldest first, auto-scroll to bottom)
+  └─> ThreadMessages (BH) { threadId, first: 20 }  (oldest first, auto-scroll to bottom)
         └─> MarkThreadRead (BK) { threadId }  → row un-bolds; Messages-icon dot decrements
 ```
 

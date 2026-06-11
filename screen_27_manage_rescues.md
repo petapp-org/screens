@@ -120,28 +120,35 @@ List the **active charity family's** own rescue listings, filtered by status.
 
 **Operation:**
 ```graphql
-query MyRescues($status: RescueStatus!, $cursor: String, $limit: Int) {
-  myRescues(status: $status, cursor: $cursor, limit: $limit) {
-    items {
-      id
-      name
-      species
-      ageText
-      gender
-      thumbnailUrl
-      status
-      inquiriesCount
-      createdAt
-      adoptedAt
-    }
+query MyRescues($status: RescueStatus!, $first: Int! = 20, $after: String) {
+  myRescues(status: $status, first: $first, after: $after) {
     counts { open adopted }
-    nextCursor
-    hasMore
+    rescues {
+      edges {
+        cursor
+        node {
+          id
+          name
+          species
+          ageText
+          gender
+          thumbnailUrl
+          status
+          inquiriesCount
+          createdAt
+          adoptedAt
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
   }
 }
 ```
 
-**Variables:** `{ "status": "OPEN", "limit": 20 }`
+**Variables:** `{ "status": "OPEN", "first": 20 }`
 
 **Notes:**
 - Scoped server-side to the caller's **active charity family**; no `familyId` argument needed.

@@ -513,10 +513,12 @@ query FamilyParents($familyId: ID!) {
 Fetch posts for a specific named pet.  
 **Auth:** Optional — bearer token enables `followers` + `private` posts for eligible viewers.
 
+> When backend ships this (GAP petapp-be#884), the list **must be born Relay** (ADR-0023): `posts` is a `PostConnection` (`edges { cursor node } pageInfo { hasNextPage endCursor }`), args `first`/`after`. The `pet` header travels as a sibling field outside the connection.
+
 **Operation:**
 ```graphql
-query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
-  petPosts(petId: $petId, cursor: $cursor, limit: $limit) {
+query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
+  petPosts(petId: $petId, first: $first, after: $after) {
     pet {
       id
       name
@@ -531,15 +533,22 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
       avatarUrl
     }
     posts {
-      ...PostCard
+      edges {
+        cursor
+        node {
+          ...PostCard
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    nextCursor
-    hasMore
   }
 }
 ```
 
-**Variables:** `{ "petId": "pet_111", "limit": 10 }`
+**Variables:** `{ "petId": "pet_111", "first": 10, "after": null }`
 
 **Response `200 OK`:**
 ```json
@@ -547,8 +556,12 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
   "data": {
     "petPosts": {
       "pet": { "id": "pet_111", "name": "Bụi", "species": { "name": "Cat", "iconEmoji": "🐱" }, "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" }, "avatarUrl": "..." },
-      "posts": [ { "id": "post_abc", "body": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentsCount": 5, "visibility": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } ],
-      "nextCursor": "cursor_xyz", "hasMore": true
+      "posts": {
+        "edges": [
+          { "cursor": "eyJpZCI6InBvc3RfYWJjIn0=", "node": { "id": "post_abc", "body": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentsCount": 5, "visibility": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } }
+        ],
+        "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfYWJjIn0=" }
+      }
     }
   }
 }
@@ -573,10 +586,12 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 Fetch posts with random (unmatched) animal detections for a specific family.  
 **Auth:** Optional — same privacy enforcement as above.
 
+> When backend ships this (GAP petapp-be#886), the list **must be born Relay** (ADR-0023): `posts` is a `PostConnection`, args `first`/`after`. The `family` header (incl. `randomCount`) travels as a sibling field outside the connection.
+
 **Operation:**
 ```graphql
-query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
-  randomPetPosts(familyId: $familyId, cursor: $cursor, limit: $limit) {
+query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
+  randomPetPosts(familyId: $familyId, first: $first, after: $after) {
     family {
       id
       name
@@ -584,15 +599,22 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
       randomCount
     }
     posts {
-      ...PostCard
+      edges {
+        cursor
+        node {
+          ...PostCard
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    nextCursor
-    hasMore
   }
 }
 ```
 
-**Variables:** `{ "familyId": "fam_xyz", "limit": 10 }`
+**Variables:** `{ "familyId": "fam_xyz", "first": 10, "after": null }`
 
 **Response `200 OK`:**
 ```json
@@ -600,8 +622,12 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
   "data": {
     "randomPetPosts": {
       "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "randomCount": 10 },
-      "posts": [ { "id": "post_def", "body": "Mèo lạ ghé thăm nhà 🐱", "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }], "loveCount": 18, "commentsCount": 2, "visibility": "PUBLIC", "createdAt": "2026-06-05T10:00:00Z" } ],
-      "nextCursor": "cursor_abc", "hasMore": true
+      "posts": {
+        "edges": [
+          { "cursor": "eyJpZCI6InBvc3RfZGVmIn0=", "node": { "id": "post_def", "body": "Mèo lạ ghé thăm nhà 🐱", "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }], "loveCount": 18, "commentsCount": 2, "visibility": "PUBLIC", "createdAt": "2026-06-05T10:00:00Z" } }
+        ],
+        "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfZGVmIn0=" }
+      }
     }
   }
 }

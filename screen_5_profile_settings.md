@@ -106,7 +106,7 @@ Navigates to **Following screen**:
 - API: `MyFollowing query (AI)`
 
 **Each row:**
-- Family avatar + family name + `@tag` + city/country
+- Family avatar + family name + `@tag`
 - Tap anywhere on the row (except action buttons) → **Family Posts screen**
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
@@ -390,26 +390,29 @@ query MyLovedPosts($after: String) {
 Paginated list of families the current user follows.  
 **Auth:** Required
 
-> ⚠️ **GAP petapp-be#887:** backend has no query returning the **families** a user follows. `following(userId)` returns `SocialUser` (id + follow counts only — no name/avatar/type), so it can't render family rows. Kept as-is, pending backend `followedFamilies(first, after): FamilyConnection!` — a later slice will reshape this to Relay then.
+> ✅ **Resolved (petapp-be#921):** backend now exposes `myFollowingFamilies(first, after): FamilyConnection!` (Relay). `Family` carries no `city`/`country` fields, so those are dropped from the selection.
 
 **Operation:**
 ```graphql
-query MyFollowing($cursor: String, $limit: Int) {
-  myFollowing(cursor: $cursor, limit: $limit) {
-    families {
-      id
-      name
-      tag
-      avatarUrl
-      familyType
-      city
-      country
-      social {
-        followersCount
+query MyFollowing($first: Int! = 20, $after: String) {
+  myFollowingFamilies(first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        name
+        tag
+        avatarUrl
+        familyType
+        social {
+          followersCount
+        }
       }
     }
-    nextCursor
-    hasMore
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
@@ -417,8 +420,8 @@ query MyFollowing($cursor: String, $limit: Int) {
 **Variables:**
 ```json
 {
-  "cursor": null,
-  "limit": 20
+  "first": 20,
+  "after": null
 }
 ```
 
@@ -426,23 +429,26 @@ query MyFollowing($cursor: String, $limit: Int) {
 ```json
 {
   "data": {
-    "myFollowing": {
-      "families": [
+    "myFollowingFamilies": {
+      "edges": [
         {
-          "id": "fam_xyz",
-          "name": "Daily Cats",
-          "tag": "dailycats",
-          "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-          "familyType": "NORMAL",
-          "city": "Internet",
-          "country": "",
-          "social": {
-            "followersCount": 3840
+          "cursor": "eyJpZCI6ImZhbV94eXoifQ==",
+          "node": {
+            "id": "fam_xyz",
+            "name": "Daily Cats",
+            "tag": "dailycats",
+            "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+            "familyType": "NORMAL",
+            "social": {
+              "followersCount": 3840
+            }
           }
         }
       ],
-      "nextCursor": null,
-      "hasMore": false
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": "eyJpZCI6ImZhbV94eXoifQ=="
+      }
     }
   }
 }
