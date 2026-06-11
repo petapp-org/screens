@@ -46,6 +46,8 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 - Header: family avatar · family name (top-left) | `authorName · time` (top-right) | pets subtitle (bottom-left) | location (bottom-right, if set)
 - Media carousel with `N/Total` badge and per-frame pet badge (`mediaTag.type = "pet"` only)
 - Tap **pet badge** → Pet Posts screen
+
+> **`focusPetId` (optional nav param):** when Post Detail is opened from a pet's **Story** (`screen_29`), it carries `focusPetId`. The media carousel is then **reordered client-side** so the media tagged to that pet (`mediaTag.type = PET`, `id = focusPetId`) come **first** (preserving their relative order), then the rest. No API change — uses the `media[].mediaTag` already returned by `Post (M)`. Without the param, media keep their original post order.
 - Tap **family name** → Family Posts screen
 - Tap **author name** → User Posts screen
 - Love button with optimistic update

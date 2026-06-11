@@ -27,7 +27,7 @@ If logged in but no active family → show empty state with prompt to create or 
   │     ├── [avatar]  Name · Breed  [🔒 if private]
   │     │             gender · age · N posts
   │     │             [health status badge]
-  │     │             [Story — disabled]  [>]
+  │     │             [Story]  [>]
   │     └── (repeat for each pet)
   │
   ├── Manage Parents row  [>]
@@ -112,7 +112,7 @@ Each row:
 
 > Detailed per-tab health logic (Food / Behavior / Med) defined in Screen 9.
 
-**Story button:** disabled (greyed out, no action) — same as Screen 3.
+**Story button:** → opens the pet's **Story** (`screen_29`) — the chronological photo/video timeline of that pet, with a Play slideshow. Available to family members (this screen is always viewed by a member).
 
 **Tap row (anywhere except Story):** → navigate to **Pet Detail screen** for that pet.
 
@@ -449,7 +449,7 @@ User taps Manage Parents
 | `randomCount = 0` | Hide "randoms" from stats line; RANDOM PETS section shows empty state |
 | `viewerRole = parent` (not owner) | Edit button hidden; Parents popup is read-only (no Remove/Cancel/Invite actions) |
 | `healthStatus = CONCERN` | Amber `CONCERN` badge on pet row |
-| Story button | Disabled (greyed out, no action) |
+| Story button | Opens the pet's Story (`screen_29`) |
 | No pets in family | Pet rows section shows empty state: "No pets yet — create a post to add pets" |
 | Random Pets grid — tap cell | Navigate to Post Detail for the parent post |
 | `[+]` in Random Pets header | Navigate to Create Post screen |

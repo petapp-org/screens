@@ -16,7 +16,7 @@ Accessible to: family members (owner + parents) — My Pets is always viewed by 
   (horizontal scroll if many pets)
 
 [Pet identity row]
-  Pet Name — Breed                                                    [...]
+  Pet Name — Breed                                          [▶ Story]  [...]
   gender · age · N posts
 
 [Missing banner — only when status = missing]
@@ -54,7 +54,7 @@ Shows all **non-deleted** pets belonging to the same family, as circular avatar 
 ### 2. Pet Identity Row
 
 ```
-Bụi — Orange Tabby Cat                                              [...]
+Bụi — Orange Tabby Cat                                   [▶ Story]  [...]
 Male · 3 years · 47 posts
 ```
 
@@ -69,6 +69,10 @@ Male · 3 years · 47 posts
 | `postCount` | Total posts linked to this pet |
 
 > Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
+
+**`[▶ Story]` button:**
+- Opens the pet's **Story** (`screen_29`) — the chronological photo/video timeline + Play slideshow.
+- Shown to all family members (Pet Detail is member-only; Story is too).
 
 **`[...]` action menu:**
 - "Edit Pet" → opens Edit Pet bottom sheet (see Section 7)

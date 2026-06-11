@@ -137,8 +137,8 @@ Each pet row:
 > Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
 **Interactions:**
-- Tap anywhere on the row (except Story button) → navigates to **Pet Posts screen** for that pet (viewer is always unauth/non-member on this screen)
-- **Story button** → disabled for now (render as disabled state, no action)
+- Tap anywhere on the row → navigates to **Pet Posts screen** for that pet (viewer is always unauth/non-member on this screen)
+- **No Story button** → the pet **Story** (`screen_29`) is **member-only**, and this screen's viewer is always a non-member, so it is **not shown here** (members reach Story from My Pets / Pet Detail)
 
 **Random Pets row** (shown only when `randomCount > 0`):
 
@@ -732,7 +732,7 @@ User taps Parents row
 | `about` is null or empty | Hide About section entirely |
 | `randomCount = 0` | Hide "randoms" from stats line; hide Random Pets row from pets list |
 | `randomCount > 0` | Show "N randoms" in stats line; show Random Pets row at bottom of pets list |
-| Story button | Render as disabled (greyed out); no tap action |
+| Story button | Hidden — Story (`screen_29`) is member-only; this screen's viewer is always a non-member |
 | Follow button — not logged in | Tap → redirect to Login |
 | Message button — not logged in | Tap → redirect to Login |
 | No posts | Show empty state: "No posts yet" |
@@ -836,7 +836,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 | 1 | Post count shown in header | Not shown |
 | 2 | Pet list pagination | None — all pets shown at once |
 | 3 | Default post view | List view |
-| 4 | Story button | Disabled (coming later) |
+| 4 | Story button | Not shown here — pet Story (`screen_29`) is member-only; Family Posts viewer is always a non-member |
 | 5 | `randomCount = 0` display | Hide from stats line and hide Random Pets row |
 | 6 | Parents navigation | Bottom sheet popup (not a separate screen) |
 | 7 | Random pets navigation | Separate Random Pet Posts screen |
