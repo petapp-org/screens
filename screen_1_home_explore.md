@@ -204,9 +204,9 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 - `standard` type → **Follow** button only
 - `charity` type → **Follow** button + **Donate** button
 
-**Donate button behaviour:**
-- Tapping Donate → opens in-app Donate screen for that family
-- Current state: Donate screen shows a "Coming Soon" placeholder page
+**Donate button behaviour:** (interim — no wallet yet)
+- Tapping Donate → **opens a chat** with that charity family, pre-filled with a Vietnamese support message (canonical behaviour defined in `screen_3` → Charity Section → Donate button behaviour; mechanic identical to Lost Pet "I saw").
+- Not logged in → redirect to Login. Hidden for members of that charity.
 - No external URL needed; navigation is handled in-app by family ID
 
 **Dismiss / Hide:**
@@ -1118,7 +1118,7 @@ User taps "..." on a post
 | Suggested widget — 0 families returned | Widget is hidden entirely; not shown at all |
 | Family type is `charity` | Show both **Follow** and **Donate** buttons |
 | Family type is `standard` | Show **Follow** button only |
-| Tapping Donate | Navigate to in-app Donate screen (currently "Coming Soon" page) |
+| Tapping Donate | Opens a chat with the charity (pre-filled VN support message) — interim, no wallet; see `screen_3` |
 | User already follows a suggested family | Should not appear in suggestions (server filters when authenticated) |
 | Unauthenticated user on Latest feed | Only `public` posts returned by server |
 | Post with `privacy=followers` | Only visible to family members + followers of that family |
@@ -1144,7 +1144,7 @@ All questions resolved. No open items.
 | # | Question | Decision |
 |---|----------|----------|
 | 1 | Suggested widget empty state | Hide widget entirely when no families remain |
-| 2 | Donate button destination | In-app screen; currently shows "Coming Soon" page |
+| 2 | Donate button (interim) | No wallet yet — opens a chat with the charity (pre-filled VN message); canonical in `screen_3` |
 | 3 | Header unread counts | Fetched separately (not bundled in feed response); **two independent dots** — Messages dot = unread chats (`BL`), Notifications dot = unread activity (`BU`) |
 | 4 | Post privacy enforcement | Server-side only — unauthenticated → public only; `followers` → family members + followers; `private` → family members only |
 | 5 | `shortDescription` source | Free-text field filled manually by charity family admin in profile settings |

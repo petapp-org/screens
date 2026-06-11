@@ -104,10 +104,22 @@ Displayed between the Family Info Card and the Pets List.
 |---------|-------------|
 | `shortDescription` | Displayed with a ♡ icon prefix, e.g. `"♡ Home-based cat rescue"` |
 | `donorCount` | Displayed as `"♡ 184 people have helped"` |
-| Donate button | Full-width button; tap → in-app Donate screen (currently "Coming Soon") |
+| Donate button | Full-width button — see **Donate button behaviour** below |
 
 - The entire section is hidden for `standard` families.
-- `donorCount` label updates after a successful donation (handled by Donate screen, not this screen).
+
+**Donate button behaviour (canonical — interim, no wallet yet):**
+
+Tapping **Donate** does **not** open a payment/wallet screen this phase. Instead it **opens a chat with the charity family**, pre-filled with a Vietnamese support message — the same messaging mechanic as Lost Pet **"I saw"** (`screen_19`) and Rescue **"Inquire to Adopt"** (`screen_26`).
+
+- Not logged in → **redirect to Login** (return here after).
+- Logged in → **"Send as…"** (self / active family) → `StartThread (BI)` `{ receiverType: FAMILY, receiverId: family.id, senderType: USER | FAMILY }` → open the thread in **Messages** (`screen_10`), **pre-filled** with:
+  > *"Chào {familyName}, mình muốn ủng hộ cho hoạt động cứu trợ của nhà mình ạ 🐾 Cho mình hỏi có thể đóng góp bằng cách nào được không?"*
+- Reuses an existing thread if one exists (no duplicate).
+- **Hidden** for members of this charity family (can't message your own family — `screen_10` rule).
+- `donorCount` is **not** updated by this interim flow (no real donation happens yet); it stays a future field, to be driven by the wallet/donation flow when that ships (see Open Items).
+
+> This canonical behaviour is referenced by every other Donate button — Explore (`screen_1`), Profile Settings (`screen_5`), Search (`screen_11`), Following (`screen_16`), and Rescue Detail (`screen_26`).
 
 ---
 
@@ -840,5 +852,11 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 | 5 | `randomCount = 0` display | Hide from stats line and hide Random Pets row |
 | 6 | Parents navigation | Bottom sheet popup (not a separate screen) |
 | 7 | Random pets navigation | Separate Random Pet Posts screen |
-| 8 | Donate button destination | In-app Donate screen (currently "Coming Soon") |
+| 8 | Donate button (interim) | No wallet yet — opens a **chat** with the charity, pre-filled with a Vietnamese support message (same mechanic as "I saw" / "Inquire to Adopt"); `donorCount` not yet driven by it |
 | 9 | Pets list layout threshold | ≤ 5 pets: vertical list; > 5 pets: horizontal scroll, 5 per column |
+
+---
+
+## Open Items (next steps)
+
+- **Donate — wallet / real donations**: the interim Donate opens a chat only. A later phase adds an actual donation flow (in-app wallet / transfer), at which point `donorCount` is driven by completed donations and a **donate count** (how many people tapped Donate / donated, akin to rescue `inquiriesCount`) can be tracked. Not built this phase.

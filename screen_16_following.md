@@ -56,7 +56,7 @@ Each row contains:
   - No Undo tap (or toast dismissed) → `UnfollowFamily mutation (E)` confirmed
 
 **Donate button** (`type = charity` only):
-- Tap → navigate to Donate screen for that family (currently "Coming Soon")
+- Tap → **opens a chat** with that charity family (pre-filled VN support message) — interim, no wallet; canonical in `screen_3`. Login required; hidden for members of that charity.
 
 ---
 

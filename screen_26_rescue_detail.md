@@ -144,7 +144,7 @@ The bar adapts to the viewer:
 - **Hidden** for members of the posting charity (you can't inquire about your own listing — mirrors the Lost Pet "I saw" rule).
 
 **Donate**:
-- Opens the family's **Donate screen** for the posting charity (currently a "Coming Soon" page, same as the Donate button elsewhere — `screen_3` / `screen_5`).
+- **Opens a chat** with the posting charity, pre-filled with a Vietnamese support message — interim, no wallet (canonical behaviour in `screen_3` → Donate button behaviour). Same messaging mechanic as **Inquire to Adopt** above.
 - Tapping while logged out → **redirect to Login**.
 
 **Mark Adopted** / **Edit** (charity-active viewer): see `screen_27` (`CloseRescue (CP)` / Edit via `UpdateRescue (CS)`).
@@ -453,7 +453,7 @@ Tap [Inquire to Adopt]
 | 3 | Visibility | Public / web-viewable (optional auth); deep-linkable via `shareUrl` |
 | 4 | Acting requires login | Inquire / Donate → redirect to Login when logged out |
 | 5 | Inquire | `InquireRescue (CR)` — records an idempotent inquiry (feeds `inquiriesCount`) **and** opens a thread to the charity (`screen_10`), pre-filled; hidden for own-charity members |
-| 6 | Donate | Reuses the charity's Donate screen (currently "Coming Soon") |
+| 6 | Donate | Interim — opens a chat with the charity (pre-filled VN message), no wallet yet; canonical in `screen_3` |
 | 7 | Map | **Map with a pin** at `lat`/`lng` (consistent with all other More screens); tap → open device map. No street-address field (city label + pin only); no separate Directions button |
 | 8 | goodToKnow | **Free text ≤ 60** with admin hint + counter (not a fixed checklist); single-line `…` |
 | 9 | Adopted | `status = ADOPTED` removes it from all in-app entry points; reachable only via shared/deep link; never hard-deleted; renders adopted state |

@@ -112,7 +112,7 @@ Navigates to **Following screen**:
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 - `standard` family → **Following button** only
 - `charity` family → **Following button** + **Donate button**
-  - Tap Donate → in-app Donate screen for that family (currently "Coming Soon")
+  - Tap Donate → **opens a chat** with that charity (pre-filled VN support message) — interim, no wallet; canonical in `screen_3`. Login required; hidden for members of that charity.
 
 **Unfollow:**
 - Tap **Following button** → unfollow
