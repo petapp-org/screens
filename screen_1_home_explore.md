@@ -561,6 +561,8 @@ mutation DismissFamilySuggestion($familyId: ID!) {
 
 Follow a family.
 
+> **Result shape (ADR-0025):** the `FollowFamily`/`UnfollowFamily`/`LovePost`/`UnlovePost` mutations return the **affected entity** — select `family { social { … } }` (follow) or `post { isLoved loveCount }` (love) and read the new state from it (normalized cache updates, no refetch needed). The legacy flat fields (`familyId`/`alreadyFollowing`/`wasFollowing` on follow, `postId`/`alreadyLoved`/`wasLoved` on love) are `@deprecated` and will be removed in R+1.
+
 > **Triggers notification:** fires a `NEW_FOLLOWER` notification to the followed family's members (see screen_22 — Notifications screen). Unfollowing (E) does not notify.
 
 **Auth:** Required → returns GraphQL error with code `UNAUTHORIZED` if not logged in
@@ -569,9 +571,11 @@ Follow a family.
 ```graphql
 mutation FollowFamily($familyId: ID!) {
   followFamily(familyId: $familyId) {
-    social {
-      isFollowedByMe
-      followersCount
+    family {
+      social {
+        isFollowedByMe
+        followersCount
+      }
     }
   }
 }
@@ -587,9 +591,11 @@ mutation FollowFamily($familyId: ID!) {
 {
   "data": {
     "followFamily": {
-      "social": {
-        "isFollowedByMe": true,
-        "followersCount": 3601
+      "family": {
+        "social": {
+          "isFollowedByMe": true,
+          "followersCount": 3601
+        }
       }
     }
   }
@@ -616,9 +622,11 @@ Unfollow a family.
 ```graphql
 mutation UnfollowFamily($familyId: ID!) {
   unfollowFamily(familyId: $familyId) {
-    social {
-      isFollowedByMe
-      followersCount
+    family {
+      social {
+        isFollowedByMe
+        followersCount
+      }
     }
   }
 }
@@ -634,9 +642,11 @@ mutation UnfollowFamily($familyId: ID!) {
 {
   "data": {
     "unfollowFamily": {
-      "social": {
-        "isFollowedByMe": false,
-        "followersCount": 3600
+      "family": {
+        "social": {
+          "isFollowedByMe": false,
+          "followersCount": 3600
+        }
       }
     }
   }
@@ -665,8 +675,10 @@ Love a post.
 ```graphql
 mutation LovePost($postId: ID!) {
   lovePost(postId: $postId) {
-    isLoved
-    loveCount
+    post {
+      isLoved
+      loveCount
+    }
   }
 }
 ```
@@ -681,8 +693,10 @@ mutation LovePost($postId: ID!) {
 {
   "data": {
     "lovePost": {
-      "isLoved": true,
-      "loveCount": 288
+      "post": {
+        "isLoved": true,
+        "loveCount": 288
+      }
     }
   }
 }
@@ -707,8 +721,10 @@ Un-love a post.
 ```graphql
 mutation UnlovePost($postId: ID!) {
   unlovePost(postId: $postId) {
-    isLoved
-    loveCount
+    post {
+      isLoved
+      loveCount
+    }
   }
 }
 ```
@@ -723,8 +739,10 @@ mutation UnlovePost($postId: ID!) {
 {
   "data": {
     "unlovePost": {
-      "isLoved": false,
-      "loveCount": 287
+      "post": {
+        "isLoved": false,
+        "loveCount": 287
+      }
     }
   }
 }

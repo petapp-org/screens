@@ -89,7 +89,7 @@ User scrolls to bottom
 ```
 User taps Love button on a post in this list
   └─> Optimistic: remove post from list
-        └─> UnlovePost mutation (G) { postId }
+        └─> UnlovePost mutation (G) { post { isLoved loveCount } }
               ├─ Success → post removed confirmed
               └─ Error → re-insert post, show error toast
 ```

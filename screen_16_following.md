@@ -133,7 +133,7 @@ User taps Following button on a row
               │     └─> FollowFamily mutation (D) { familyId }
               │           └─> Success → re-insert row; dismiss toast
               └─> No Undo (timeout or dismiss)
-                    └─> UnfollowFamily mutation (E) { familyId } confirmed
+                    └─> UnfollowFamily mutation (E) { family { social { isFollowedByMe } } } confirmed
 ```
 
 ---
