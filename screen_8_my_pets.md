@@ -176,7 +176,7 @@ Parents                                    [× close]
 🐾  Rescues                                 [>]
 ```
 
-- **Shown only when the active family is a charity** (`family.type = charity`). Hidden for all non-charity families.
+- **Shown only when the active family is a charity** (`family.familyType = charity`). Hidden for all non-charity families.
 - Tap → navigate to **Manage Rescues** (`screen_27`) — the charity's Open / Adopted rescue listings, where they post, edit, mark adopted, or reopen.
 - Available to all charity members (owner + parents), consistent with the post/close permission (member of the charity while it's active).
 - No new endpoint here — Manage Rescues uses its own queries/mutations (`MyRescues CN`, `CloseRescue CP`, `ReopenRescue CQ`, `UpdateRescue CS`, `CreateRescue CO`).

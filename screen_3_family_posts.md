@@ -24,7 +24,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
   │     ├── N pets  [· N randoms — only if > 0]  · N followers
   │     └── [Follow button]  [Message button]
   │
-  ├── Charity Section  ← only shown when type = charity
+  ├── Charity Section  ← only shown when familyType = charity
   │     ├── [♡ icon]  shortDescription
   │     ├── [♡ icon]  "N people have helped"
   │     └── [Donate button — full width]
@@ -83,7 +83,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - `petCount = 1` (public pet) → show that pet's avatar
 - `petCount ≥ 2` (public pets) → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
 - Only **public pets** (`isPublic = true`) are included in the stacked display — private pets are never shown to non-members
-- `type = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
+- `familyType = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**
 - Not following → button label "Follow"; tap → `FollowFamily mutation (D)` (requires login → redirect to Login)
@@ -96,7 +96,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 ---
 
-### 2. Charity Section *(only rendered when `type = charity`)*
+### 2. Charity Section *(only rendered when `familyType = charity`)*
 
 Displayed between the Family Info Card and the Pets List.
 
@@ -737,8 +737,8 @@ User taps Parents row
 | `petCount = 0` | Show default family avatar; no pets list section |
 | `petCount = 1` | Show single pet avatar (no stacking animation) |
 | `petCount ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
-| `type = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
-| `type = standard` | No ribbon; no Charity Section |
+| `familyType = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
+| `familyType = standard` | No ribbon; no Charity Section |
 | `petCount ≤ 5` | Pets list: single vertical column |
 | `petCount > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
 | `about` is null or empty | Hide About section entirely |

@@ -58,7 +58,7 @@ The unread state is fetched separately (not bundled in the feed response) — th
 |-----|-------------------------|-------------|---------------|
 | Latest | `ALL` | Newest posts across all families, sorted by `createdAt` desc | No |
 | Follow | `FOLLOW` | Posts from families the current user follows | Yes — redirect to Login if not authenticated |
-| Rescue | `RESCUE` | Posts from families with `type = charity` | No |
+| Rescue | `RESCUE` | Posts from families with `familyType = charity` | No |
 
 **Inputs:**
 - `filter`: `ExploreFilter` — `ALL` | `FOLLOW` | `RESCUE` (tab mapping above; `sort` defaults to `LATEST`)
@@ -441,7 +441,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 - On web: hovering the time text shows a tooltip with the full datetime (e.g. `"06/06/2026 13:00"`)
   - Bottom-right: location as `cityCode - countryCode` (omit if `location` is null)
 - `filter: FOLLOWING` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
-- `filter: RESCUE` returns posts from families where `family.type = CHARITY`
+- `filter: RESCUE` returns posts from families where `family.familyType = CHARITY`
 - `isLoved` is always `false` when unauthenticated
 - Server enforces privacy rules before returning results — unauthenticated callers only receive `PUBLIC` posts; `FOLLOWERS` posts are filtered based on the caller's follow list
 
