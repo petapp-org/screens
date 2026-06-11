@@ -110,8 +110,8 @@ Navigates to **Following screen**:
 - Tap anywhere on the row (except action buttons) → **Family Posts screen**
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
-- `standard` family → **Following button** only
-- `charity` family → **Following button** + **Donate button**
+- `STANDARD` family → **Following button** only
+- `CHARITY` family → **Following button** + **Donate button**
   - Tap Donate → **opens a chat** with that charity (pre-filled VN support message) — interim, no wallet; canonical in `screen_3`. Login required; hidden for members of that charity.
 
 **Unfollow:**

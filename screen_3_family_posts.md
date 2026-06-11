@@ -24,7 +24,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
   │     ├── N pets  [· N randoms — only if > 0]  · N followers
   │     └── [Follow button]  [Message button]
   │
-  ├── Charity Section  ← only shown when familyType = charity
+  ├── Charity Section  ← only shown when familyType = CHARITY
   │     ├── [♡ icon]  shortDescription
   │     ├── [♡ icon]  "N people have helped"
   │     └── [Donate button — full width]
@@ -67,11 +67,11 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `randomCount` | Number of media items where `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Does NOT count media with no breed or species detected. Hidden from stats line when `0`. |
 | `randomPostCount` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
-| `familyType` | `standard` \| `charity` |
+| `familyType` | `STANDARD` \| `CHARITY` |
 | `social.isFollowedByMe` | Boolean (false when unauthenticated) |
 | `bio` | Free-text description |
 | `shortDescription` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
-| `donorCount` | Number of people who have donated. Only meaningful when `familyType = charity`; `null` for standard families. |
+| `donorCount` | Number of people who have donated. Only meaningful when `familyType = CHARITY`; `null` for standard families. |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
@@ -83,7 +83,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - `petCount = 1` (public pet) → show that pet's avatar
 - `petCount ≥ 2` (public pets) → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
 - Only **public pets** (`isPublic = true`) are included in the stacked display — private pets are never shown to non-members
-- `familyType = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
+- `familyType = CHARITY` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**
 - Not following → button label "Follow"; tap → `FollowFamily mutation (D)` (requires login → redirect to Login)
@@ -96,7 +96,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 ---
 
-### 2. Charity Section *(only rendered when `familyType = charity`)*
+### 2. Charity Section *(only rendered when `familyType = CHARITY`)*
 
 Displayed between the Family Info Card and the Pets List.
 
@@ -746,8 +746,8 @@ User taps Parents row
 | `petCount = 0` | Show default family avatar; no pets list section |
 | `petCount = 1` | Show single pet avatar (no stacking animation) |
 | `petCount ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
-| `familyType = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
-| `familyType = standard` | No ribbon; no Charity Section |
+| `familyType = CHARITY` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
+| `familyType = STANDARD` | No ribbon; no Charity Section |
 | `petCount ≤ 5` | Pets list: single vertical column |
 | `petCount > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
 | `bio` is null or empty | Hide About section entirely |

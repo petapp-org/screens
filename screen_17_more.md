@@ -753,7 +753,7 @@ query Events(
 
 > ⚠️ **GAP petapp-be#888:** backend has no browse-by-city rescue query (only `searchRescueCases(q!, lat/lng)`). Kept as-is, pending backend `rescuesByCity(... first, after)`.
 
-Returns **open** rescue listings for a city (pets posted for adoption by **charity families**). Used by both the **More → Rescue section** (`limit: 3`) and the full **Rescue screen** (`screen_25`, paginated + species filter + sort). All listings are created by charity families (`family.familyType = charity`).
+Returns **open** rescue listings for a city (pets posted for adoption by **charity families**). Used by both the **More → Rescue section** (`limit: 3`) and the full **Rescue screen** (`screen_25`, paginated + species filter + sort). All listings are created by charity families (`family.familyType = CHARITY`).
 
 **Auth:** Required.
 
@@ -852,7 +852,7 @@ query Rescues(
 - `sort`: `NEAREST` (distance asc) or `NEWEST` (`createdAt` desc). The More section always passes `NEAREST, limit: 3`.
 - `distanceKm` from `originLat`/`originLng` (user GPS); absent → server uses city centre.
 - `breed` / `ageText` are optional (admin/charity entered) — skip null parts in the row's line 2.
-- `charity` is always a `family.familyType = charity` (only charity families can post) → CHARITY badge always shown.
+- `charity` is always a `family.familyType = CHARITY` (only charity families can post) → CHARITY badge always shown.
 
 **Errors:**
 

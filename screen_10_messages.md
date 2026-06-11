@@ -76,7 +76,7 @@ Threads received by the user's **non-active** families are **not shown** at all.
 |---------|---------|
 | Last message preview | One line, truncated. May be my own message (rendered plainly — never bold; no special "You:" label). |
 | Time | Relative time of last message. |
-| CHARITY badge | Small badge next to a family name when that family `familyType = charity`. |
+| CHARITY badge | Small badge next to a family name when that family `familyType = CHARITY`. |
 
 **Unread indicator:** **bold** row text only. **No red dot** inside the screen (bold already conveys unread). The header **Messages icon** is red-dotted when there are any unread threads.
 
