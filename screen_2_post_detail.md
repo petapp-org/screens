@@ -162,7 +162,7 @@ query Post($id: ID!) {
       name
       avatarUrl
     }
-    caption
+    body
     location {
       city
       cityCode
@@ -187,10 +187,10 @@ query Post($id: ID!) {
       }
     }
     loveCount
-    commentCount
+    commentsCount
     isLoved
     isOwn
-    privacy
+    visibility
     createdAt
   }
 }
@@ -221,7 +221,7 @@ query Post($id: ID!) {
       "pets": [
         { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" }
       ],
-      "caption": "Bụi nằm chờ mama nấu cơm 🌕",
+      "body": "Bụi nằm chờ mama nấu cơm 🌕",
       "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
       "media": [
         {
@@ -238,10 +238,10 @@ query Post($id: ID!) {
         }
       ],
       "loveCount": 12,
-      "commentCount": 4,
+      "commentsCount": 4,
       "isLoved": false,
       "isOwn": false,
-      "privacy": "PUBLIC",
+      "visibility": "PUBLIC",
       "createdAt": "2026-06-06T08:00:00Z"
     }
   }
@@ -253,7 +253,7 @@ query Post($id: ID!) {
 | Status | Code | Scenario |
 |--------|------|----------|
 | `200` | `POST_NOT_FOUND` | Post does not exist or has been deleted |
-| `200` | `FORBIDDEN` | Post exists but viewer does not have permission (e.g. `privacy=PRIVATE`, not a family member) |
+| `200` | `FORBIDDEN` | Post exists but viewer does not have permission (e.g. `visibility=PRIVATE`, not a family member) |
 
 ---
 
@@ -510,8 +510,8 @@ User taps Delete on own comment  (button only visible when isDeletable = true)
 |------|--------------------|
 | Unauthenticated user | Can view post and all comments; tap input / Reply → redirect to Login |
 | Post not found (deleted) | Show "Post not found" error state with Back button |
-| Post `privacy=private`, viewer not a family member | Show `403` error state |
-| Post `privacy=followers`, viewer not following | Show `403` error state |
+| Post `visibility=private`, viewer not a family member | Show `403` error state |
+| Post `visibility=followers`, viewer not following | Show `403` error state |
 | Delete attempted after 10 min window or comment has replies | `403` returned; hide Delete button; show toast |
 | Comment deleted successfully | Removed from list; parent `replyCount` decremented if reply |
 | Input bar — replying context | Banner "Replying to @username ×" shown above input; tap × clears reply context |

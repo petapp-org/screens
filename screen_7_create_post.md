@@ -425,8 +425,8 @@ mutation SaveDraft($input: CreatePostInput!) {
 {
   "input": {
     "familyId": "fam_xyz",
-    "caption": "Pudding nằm chờ mama nấu cơm 🌕",
-    "privacy": "PUBLIC",
+    "body": "Pudding nằm chờ mama nấu cơm 🌕",
+    "visibility": "PUBLIC",
     "location": {
       "city": "Hồ Chí Minh",
       "cityCode": "HCM",
@@ -518,8 +518,8 @@ Publish the post.
 mutation CreatePost($input: CreatePostInput!) {
   createPost(input: $input) {
     id
-    caption
-    privacy
+    body
+    visibility
     location {
       city
       cityCode
@@ -547,8 +547,8 @@ mutation CreatePost($input: CreatePostInput!) {
 {
   "input": {
     "familyId": "fam_xyz",
-    "caption": "Pudding nằm chờ mama nấu cơm 🌕",
-    "privacy": "PUBLIC",
+    "body": "Pudding nằm chờ mama nấu cơm 🌕",
+    "visibility": "PUBLIC",
     "location": {
       "city": "Hồ Chí Minh",
       "cityCode": "HCM",

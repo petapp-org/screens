@@ -370,7 +370,7 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
         family { id name avatarUrl type }
         author { id displayName avatarUrl }
         pets { id name avatarUrl }
-        caption
+        body
         location { city cityCode country countryCode }
         media {
           id type url thumbnailUrl mimeType
@@ -378,9 +378,9 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
           mediaTag { type id species breed }
         }
         loveCount
-        commentCount
+        commentsCount
         isLoved
-        privacy
+        visibility
         createdAt
       }
     }
@@ -409,7 +409,7 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
             "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "type": "STANDARD" },
             "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "..." },
             "pets": [{ "id": "pet_111", "name": "Bụi", "avatarUrl": "..." }],
-            "caption": "Bụi nằm chờ mama 🌕",
+            "body": "Bụi nằm chờ mama 🌕",
             "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
             "media": [
               {
@@ -420,8 +420,8 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
                 "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }
               }
             ],
-            "loveCount": 42, "commentCount": 5,
-            "isLoved": false, "privacy": "PUBLIC",
+            "loveCount": 42, "commentsCount": 5,
+            "isLoved": false, "visibility": "PUBLIC",
             "createdAt": "2026-06-06T08:00:00Z"
           }
         }
@@ -538,7 +538,7 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
   "data": {
     "petPosts": {
       "pet": { "id": "pet_111", "name": "Bụi", "species": "Cat", "breed": "Orange Tabby Cat", "avatarUrl": "..." },
-      "posts": [ { "id": "post_abc", "caption": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentCount": 5, "privacy": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } ],
+      "posts": [ { "id": "post_abc", "body": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentsCount": 5, "visibility": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } ],
       "nextCursor": "cursor_xyz", "hasMore": true
     }
   }
@@ -591,7 +591,7 @@ query RandomPetPosts($familyId: ID!, $cursor: String, $limit: Int) {
   "data": {
     "randomPetPosts": {
       "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "randomCount": 10 },
-      "posts": [ { "id": "post_def", "caption": "Mèo lạ ghé thăm nhà 🐱", "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }], "loveCount": 18, "commentCount": 2, "privacy": "PUBLIC", "createdAt": "2026-06-05T10:00:00Z" } ],
+      "posts": [ { "id": "post_def", "body": "Mèo lạ ghé thăm nhà 🐱", "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }], "loveCount": 18, "commentsCount": 2, "visibility": "PUBLIC", "createdAt": "2026-06-05T10:00:00Z" } ],
       "nextCursor": "cursor_abc", "hasMore": true
     }
   }
@@ -626,7 +626,7 @@ query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
         family { id name avatarUrl type }
         author { id displayName avatarUrl }
         pets { id name avatarUrl }
-        caption
+        body
         location { city cityCode country countryCode }
         media {
           id type url thumbnailUrl mimeType
@@ -634,9 +634,9 @@ query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
           mediaTag { type id species breed }
         }
         loveCount
-        commentCount
+        commentsCount
         isLoved
-        privacy
+        visibility
         createdAt
       }
     }
@@ -659,10 +659,10 @@ query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
         {
           "node": {
             "id": "post_ghi",
-            "caption": "Bụi dậy sớm cùng tui 🌅",
+            "body": "Bụi dậy sớm cùng tui 🌅",
             "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }],
-            "loveCount": 34, "commentCount": 6,
-            "privacy": "PUBLIC", "createdAt": "2026-06-06T07:00:00Z"
+            "loveCount": 34, "commentsCount": 6,
+            "visibility": "PUBLIC", "createdAt": "2026-06-06T07:00:00Z"
           }
         }
       ],
