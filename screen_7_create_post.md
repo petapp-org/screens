@@ -357,7 +357,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
       nameEn
     }
     isPublic
-    gender
+    sex
     ageMonths
     avatarUrl
   }
@@ -375,7 +375,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
     "species": "Cat",
     "breed": "British Shorthair",
     "isPublic": true,
-    "gender": "FEMALE",
+    "sex": "FEMALE",
     "birthDate": "2024-01-15",
     "weightKg": 3.2,
     "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
@@ -393,7 +393,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
       "species": { "name": "Cat", "iconEmoji": "🐱" },
       "breed": { "nameVi": "Mèo lông ngắn Anh", "nameEn": "British Shorthair" },
       "isPublic": true,
-      "gender": "FEMALE",
+      "sex": "FEMALE",
       "ageMonths": 12,
       "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
     }

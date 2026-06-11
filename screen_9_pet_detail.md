@@ -558,7 +558,7 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
     }
     breedId
     isPublic
-    gender
+    sex
     ageMonths
     birthDate
     weightKg
@@ -588,7 +588,7 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
     "name": "Bụi Bụi",
     "species": "Cat",
     "isPublic": true,
-    "gender": "MALE",
+    "sex": "MALE",
     "birthDate": "2023-01-15",
     "weightKg": 4.5,
     "avatarUrl": "https://cdn.petapp.com/media/new_avatar.jpg",
@@ -609,7 +609,7 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
       "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" },
       "breedId": "breed_orange_tabby_cat",
       "isPublic": true,
-      "gender": "MALE",
+      "sex": "MALE",
       "ageMonths": 36,
       "birthDate": "2023-01-15",
       "weightKg": 4.5,
