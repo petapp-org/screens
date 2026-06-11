@@ -54,7 +54,7 @@ Requires login. Only the family owner can edit.
 ### 1. Avatar Picker
 
 - Tap → opens device image picker
-- Selected image uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "FAMILY_AVATAR", ... }] }` (screen_4) before form submission → use `list[0].publicUrl`; no AI scan
+- Selected image uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) before form submission → use `list[0].publicUrl`; no AI scan
 - Shows upload progress indicator on the avatar
 - On Create: optional (default avatar used if skipped)
 - On Update: always shows current avatar
@@ -436,7 +436,7 @@ mutation InviteFamilyMember($familyId: ID!, $phoneOrEmail: String!, $role: Famil
 {
   "familyId": "fam_001",
   "phoneOrEmail": "minh@example.com",
-  "role": "PARENT"
+  "role": "MEMBER"
 }
 ```
 
@@ -448,7 +448,7 @@ mutation InviteFamilyMember($familyId: ID!, $phoneOrEmail: String!, $role: Famil
       "id": "inv_001",
       "familyId": "fam_001",
       "invitedUserId": "user_002",
-      "role": "PARENT",
+      "role": "MEMBER",
       "status": "INVITED",
       "createdAt": "2026-01-01T00:00:00Z"
     }

@@ -348,8 +348,14 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
   createPet(familyId: $familyId, input: $input) {
     id
     name
-    species
-    breed
+    species {
+      name
+      iconEmoji
+    }
+    breed {
+      nameVi
+      nameEn
+    }
     isPublic
     gender
     ageMonths
@@ -384,8 +390,8 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
     "createPet": {
       "id": "pet_222",
       "name": "Snowball",
-      "species": "Cat",
-      "breed": "British Shorthair",
+      "species": { "name": "Cat", "iconEmoji": "🐱" },
+      "breed": { "nameVi": "Mèo lông ngắn Anh", "nameEn": "British Shorthair" },
       "isPublic": true,
       "gender": "FEMALE",
       "ageMonths": 12,

@@ -139,7 +139,7 @@ Fetch the full story for a pet — months → days → posts, each post carrying
 query PetStory($petId: ID!) {
   petStory(petId: $petId) {
     pet { id name avatarUrl }
-    photoCount             # this pet's PHOTO media count → header "{n} photos"
+    photoCount             # this pet's IMAGE media count → header "{n} photos"
     videoCount             # this pet's VIDEO media count → header "{n} videos" (omit if 0)
     firstYear
     lastYearLabel          # "now" if there's a post this year, else the year
@@ -155,7 +155,7 @@ query PetStory($petId: ID!) {
           postedAt
           petMedia {       # THIS pet's media in the post, in post order; [0] = cover
             url
-            type           # PHOTO | VIDEO
+            type           # IMAGE | VIDEO
             thumbnailUrl   # for video cover
           }
         }
@@ -193,9 +193,9 @@ query PetStory($petId: ID!) {
               "label": "Tue, Mar 8",
               "posts": [
                 { "postId": "post_a1", "postedAt": "2022-03-08T09:00:00Z",
-                  "petMedia": [ { "url": "…/a1_1.jpg", "type": "PHOTO", "thumbnailUrl": null } ] },
+                  "petMedia": [ { "url": "…/a1_1.jpg", "type": "IMAGE", "thumbnailUrl": null } ] },
                 { "postId": "post_a2", "postedAt": "2022-03-08T15:00:00Z",
-                  "petMedia": [ { "url": "…/a2_1.jpg", "type": "PHOTO", "thumbnailUrl": null } ] },
+                  "petMedia": [ { "url": "…/a2_1.jpg", "type": "IMAGE", "thumbnailUrl": null } ] },
                 { "postId": "post_a3", "postedAt": "2022-03-08T18:00:00Z",
                   "petMedia": [ { "url": "…/a3_v.mp4", "type": "VIDEO", "thumbnailUrl": "…/a3_thumb.jpg" } ] }
               ]

@@ -141,7 +141,7 @@ Each pet row:
 | `id` | Pet ID |
 | `avatarUrl` | Pet avatar |
 | `name` | Pet name |
-| `breed` | Breed name (may be truncated with `...` if long) |
+| `breed` | `BreedGQL` — use `breed.nameVi` (Vietnamese) or `breed.nameEn` for display (may be truncated with `...` if long); `null` if unknown |
 | `sex` | `male` \| `female` \| `unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `postCount` | Total posts linked to this pet |
@@ -276,7 +276,10 @@ query Family($id: ID!) {
       id
       name
       avatarUrl
-      breed
+      breed {
+        nameVi
+        nameEn
+      }
       sex
       ageMonths
       postCount
@@ -326,7 +329,7 @@ query Family($id: ID!) {
           "id": "pet_111",
           "name": "Bụi",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-          "breed": "Orange Tabby Cat",
+          "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" },
           "sex": "MALE",
           "ageMonths": 36,
           "postCount": 47
@@ -335,7 +338,7 @@ query Family($id: ID!) {
           "id": "pet_222",
           "name": "Chao",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
-          "breed": "Vietnamese Native",
+          "breed": { "nameVi": "Mèo nội địa Việt Nam", "nameEn": "Vietnamese Native" },
           "sex": "FEMALE",
           "ageMonths": 24,
           "postCount": 38
@@ -517,8 +520,14 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
     pet {
       id
       name
-      breed
-      species
+      breed {
+        nameVi
+        nameEn
+      }
+      species {
+        name
+        iconEmoji
+      }
       avatarUrl
     }
     posts {
@@ -537,7 +546,7 @@ query PetPosts($petId: ID!, $cursor: String, $limit: Int) {
 {
   "data": {
     "petPosts": {
-      "pet": { "id": "pet_111", "name": "Bụi", "species": "Cat", "breed": "Orange Tabby Cat", "avatarUrl": "..." },
+      "pet": { "id": "pet_111", "name": "Bụi", "species": { "name": "Cat", "iconEmoji": "🐱" }, "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" }, "avatarUrl": "..." },
       "posts": [ { "id": "post_abc", "body": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentsCount": 5, "visibility": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } ],
       "nextCursor": "cursor_xyz", "hasMore": true
     }

@@ -900,14 +900,14 @@ Delete post (author/family member only).
 
 **Operation:**
 ```graphql
-mutation DeletePost($postId: ID!) {
-  deletePost(postId: $postId)
+mutation DeletePost($id: ID!) {
+  deletePost(id: $id)
 }
 ```
 
 **Variables:**
 ```json
-{ "postId": "post_abc123" }
+{ "id": "post_abc123" }
 ```
 
 **Response `200 OK`:**

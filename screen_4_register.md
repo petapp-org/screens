@@ -97,7 +97,7 @@ Shown once after a new account is created via any method.
 - Show a persistent helper text below the field: *"⚠️ Your username cannot be changed after you create your account."*
 
 **Submit:**
-- If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "USER_AVATAR", ... }] }` → use `list[0].publicUrl` (no AI scan — avatars are never scanned)
+- If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` → use `list[0].publicUrl` (no AI scan — avatars are never scanned)
 - `UpdateMyProfile mutation (AE)` `{ displayName, username, avatarUrl }`
 - On success → navigate to the **post-login target** (return target if redirected here, else Explore)
 
@@ -402,10 +402,10 @@ input SignUploadBatchItemInput {
 
 **Variables (single upload — wrap as one-element list):**
 ```json
-{ "items": [{ "ownerId": "user_001", "mediaType": "IMAGE", "visibility": "PUBLIC", "contentType": "image/jpeg", "fileSizeBytes": 204800, "purpose": "USER_AVATAR" }] }
+{ "items": [{ "ownerId": "user_001", "mediaType": "IMAGE", "visibility": "PUBLIC", "contentType": "image/jpeg", "fileSizeBytes": 204800, "purpose": "AVATAR" }] }
 ```
 
-`purpose` enum: `USER_AVATAR` | `FAMILY_AVATAR` | `PET_AVATAR` | `POST_MEDIA`
+`purpose` enum: `AVATAR` | `POST_PHOTO` | `POST_VIDEO` | `COVER_PHOTO` | `PRODUCT` | `HEALTH_DOC` | `KYC_DOC` | `LOST_PET`
 
 **Client flow:** call this → `PUT` the file bytes to `presignedUrl` (from `list[0]`) → use `publicUrl` (from `list[0]`) in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass the media id to `IdentifyPetFromMedia (AT)` to detect/match a pet.
 

@@ -419,16 +419,17 @@ If any condition fails → `FORBIDDEN` error.
 
 **Operation:**
 ```graphql
-mutation DeleteComment($input: DeleteCommentInput!) {
-  deleteComment(input: $input) {
-    success
+mutation DeleteComment($commentId: ID!) {
+  deleteComment(commentId: $commentId) {
+    commentId
+    deleted
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "input": { "commentId": "comment_001" } }
+{ "commentId": "comment_001" }
 ```
 
 **Response `200 OK`:**
@@ -436,7 +437,8 @@ mutation DeleteComment($input: DeleteCommentInput!) {
 {
   "data": {
     "deleteComment": {
-      "success": true
+      "commentId": "comment_001",
+      "deleted": true
     }
   }
 }

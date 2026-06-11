@@ -61,8 +61,8 @@ Male · 3 years · 47 posts
 | Field | Display |
 |-------|---------|
 | `name` | Pet name |
-| `species` | Species e.g. `"cat"`, `"dog"`, `"bird"` |
-| `breed` | Breed name, e.g. `"British Shorthair"` — `null` if unknown |
+| `species` | `SpeciesGQL` — nested object; use `species.name` for display (e.g. `"Cat"`) and `species.iconEmoji` for icon |
+| `breed` | `BreedGQL` — nested object; use `breed.nameVi` for Vietnamese display (e.g. `"Mèo lông ngắn Anh"`), `breed.nameEn` for English — `null` if unknown |
 | `isPublic` | `true` / `false` — shown as a 🔒 lock badge next to pet name when `false` |
 | `sex` | `Male` / `Female` / `Unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
@@ -231,7 +231,7 @@ Opened from `[...]` → "Edit Pet". Owner only.
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| Avatar | No | Replace pet avatar — upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "PET_AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan |
+| Avatar | No | Replace pet avatar — upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan |
 | Name | Yes | Pet display name |
 | Public | Yes | Toggle `isPublic` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
 | Species | Yes | Read-only if set by AI scan; editable if entered manually |
@@ -289,7 +289,7 @@ DESCRIPTION *
 
 > **Submit** is enabled only when **all required fields** are set: a pet, ≥ 1 photo, a map location, a last-seen time, and a non-empty description.
 
-**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "MISSING_PHOTO", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan (missing photos are never scanned).
+**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan (missing photos are never scanned).
 
 **On submit → `ReportMissing mutation (BE)`:**
 - `pet.missingStatus` set with the full shape: `lastSeenLocation` (+ `lat`/`lng`), `lastSeenAt`, `description`, ordered `photos` (cover first), `reportedBy` (the caller), `reportedAt`.
@@ -339,8 +339,14 @@ query Pet($petId: ID!) {
   pet(petId: $petId) {
     id
     name
-    species
-    breed
+    species {
+      name
+      iconEmoji
+    }
+    breed {
+      nameVi
+      nameEn
+    }
     breedId
     isPublic
     sex
@@ -416,8 +422,8 @@ query Pet($petId: ID!) {
     "pet": {
       "id": "pet_111",
       "name": "Bụi",
-      "species": "Cat",
-      "breed": "Orange Tabby Cat",
+      "species": { "name": "Cat", "iconEmoji": "🐱" },
+      "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" },
       "breedId": "breed_orange_tabby_cat",
       "isPublic": true,
       "sex": "MALE",
@@ -542,8 +548,14 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
   updatePet(petId: $petId, input: $input) {
     id
     name
-    species
-    breed
+    species {
+      name
+      iconEmoji
+    }
+    breed {
+      nameVi
+      nameEn
+    }
     breedId
     isPublic
     gender
@@ -593,8 +605,8 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
     "updatePet": {
       "id": "pet_111",
       "name": "Bụi Bụi",
-      "species": "Cat",
-      "breed": "Orange Tabby Cat",
+      "species": { "name": "Cat", "iconEmoji": "🐱" },
+      "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" },
       "breedId": "breed_orange_tabby_cat",
       "isPublic": true,
       "gender": "MALE",
@@ -636,25 +648,21 @@ Soft-delete a pet.
 
 **Operation:**
 ```graphql
-mutation DeletePet($id: ID!) {
-  deletePet(id: $id) {
-    success
-  }
+mutation DeletePet($petId: ID!) {
+  deletePet(petId: $petId)
 }
 ```
 
 **Variables:**
 ```json
-{ "id": "pet_111" }
+{ "petId": "pet_111" }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "deletePet": {
-      "success": true
-    }
+    "deletePet": true
   }
 }
 ```
@@ -723,7 +731,7 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
 ```
 
 - `lat`/`lng` come from the map pin; `city`/`cityCode`/`country`/`countryCode` are reverse-geocoded (client may send what it resolved, server may re-validate). The server derives **`cityShortName`** (curated short label) — the client need not send it; it is returned on read for display on Lost Pets rows / detail.
-- `photos` are pre-uploaded `publicUrl`s from `SignUploadBatch (BV)` `{ items: [{ purpose: "MISSING_PHOTO", ... }] }` (`list[0].publicUrl`); **at least 1 required**; order is preserved; index 0 is the cover.
+- `photos` are pre-uploaded `publicUrl`s from `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (`list[0].publicUrl`); **at least 1 required**; order is preserved; index 0 is the cover.
 - `description` is **required** and must be non-empty.
 
 **Variables:**
@@ -872,7 +880,7 @@ User taps [Report Missing]  (Pet Detail → pet already in context)
   └─> Report Missing form (full screen, Section 8)
         ├─ [from Lost Pets banner] pick pet first (active family, incl. private)
         └─> drag map pin (location *) + pick When * + photos (optional, set cover) + description
-              └─> upload photos (SignUploadBatch, MISSING_PHOTO)
+              └─> upload photos (SignUploadBatch, LOST_PET)
                     └─> ReportMissing mutation (BE)
                           └─> success → missing banner appears; followers notified;
                               report visible in Lost Pets + Lost Pet Detail

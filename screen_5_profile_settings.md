@@ -149,7 +149,7 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `username` (shown greyed out with note "Username cannot be changed")
-- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "USER_AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan
+- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan
 - `UpdateMyProfile mutation (AK)` `{ displayName, avatarUrl }`
 
 **Phone & Email:**
@@ -246,7 +246,7 @@ query Me {
           "avatarUrl": "https://cdn.petapp.com/families/fam_abc/avatar.jpg",
           "familyType": "STANDARD",
           "isPrimary": false,
-          "role": "PARENT"
+          "role": "MEMBER"
         }
       ]
     }
