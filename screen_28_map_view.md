@@ -99,7 +99,7 @@ Tap a card (body)                   →  open that item's Detail screen (per cat
 | Category | Card content |
 |----------|--------------|
 | Lost Pets | avatar · `{name} ({family})` · `{species}·{breed}` · **Missing** |
-| Pet Friendly | photo · `{name}` · `★{avgRating}` · `{distanceKm}km` · open/closed (`highlightText`) |
+| Pet Friendly | photo · `{name}` · `★{ratingAvg}` · `{distanceKm}km` · open/closed (`highlightText`) |
 | Events | date-chip · `{title}` · `{weekday}·{start}–{end}` · `{price}` |
 | Rescue | photo · `{name}` · `{species}·{ageText}` · `{charity}` 🏷 |
 

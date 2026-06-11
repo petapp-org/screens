@@ -25,7 +25,7 @@ If logged in but no active family → show empty state with prompt to create or 
   │
   ├── Pet Rows (one per named pet, no pagination)
   │     ├── [avatar]  Name · Breed  [🔒 if private]
-  │     │             gender · age · N posts
+  │     │             sex · age · N posts
   │     │             [health status badge]
   │     │             [Story]  [>]
   │     └── (repeat for each pet)
@@ -93,7 +93,7 @@ Each row:
 | `isPublic` | 🔒 lock icon shown on row if `isPublic = false` (private pet) |
 | `name` | Pet name |
 | `breed` | Breed name (truncated with `...` if long) |
-| `gender` | `Male` / `Female` / `Unknown` |
+| `sex` | `Male` / `Female` / `Unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `postCount` | `N posts` |
 | `healthStatus` | Badge — see Health Status below |
@@ -252,7 +252,7 @@ query ActiveFamily {
       avatarUrl
       breed
       isPublic
-      gender
+      sex
       ageMonths
       postCount
       healthStatus
@@ -301,7 +301,7 @@ query ActiveFamily {
           "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
           "breed": "Orange Tabby Cat",
           "isPublic": true,
-          "gender": "MALE",
+          "sex": "MALE",
           "ageMonths": 36,
           "postCount": 47,
           "healthStatus": "NORMAL"
@@ -311,7 +311,7 @@ query ActiveFamily {
           "name": "Măng",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
           "breed": "Buckskin Pony",
-          "gender": "FEMALE",
+          "sex": "FEMALE",
           "ageMonths": 60,
           "postCount": 24,
           "healthStatus": "CONCERN"

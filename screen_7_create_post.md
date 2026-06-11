@@ -104,13 +104,13 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 ### 3. AI Scan Flow (per uploaded **photo**)
 
-> **Photos only.** Uploaded **videos are not AI-scanned** — they are tagged manually (§4, manual mode). Embedded media is auto-`random`. `ScanMedia (AT)` is never called for videos or embeds.
+> **Photos only.** Uploaded **videos are not AI-scanned** — they are tagged manually (§4, manual mode). Embedded media is auto-`random`. `IdentifyPetFromMedia (AT)` is never called for videos or embeds.
 
 **Purpose:** detect if a pet is present in the media, identify its species and breed, then attempt to match with named pets in the current family.
 
 ```
 User taps [AI Scan] on a media item
-  └─> ScanMedia mutation (AT)  { mediaUrl, familyId }
+  └─> IdentifyPetFromMedia mutation (AT)  { mediaId }
         └─> (loading state on thumbnail)
               ├─ Pet detected + match found in family
               │     └─> tag: { type=pet, id=pet_xxx, species="cat", breed="British Shorthair" }
@@ -244,14 +244,14 @@ Actions available depend on the current tag state:
 
 ## API Endpoints Required
 
-### AT. Mutation: `ScanMedia`
-Scan an **already-uploaded** media item for pet detection. The media is first uploaded via `RequestMediaUpload (BV)` (screen_4) — `mediaUrl` here is the `publicUrl` it returned. **Pet detection runs on uploaded photos only** — **videos and embeds are never scanned** (videos are tagged manually, embeds are auto-`random`); avatars (user/family/pet) are uploaded the same way but never scanned.
+### AT. Mutation: `IdentifyPetFromMedia`
+Scan an **already-uploaded** media item for pet detection. The media is first uploaded via `SignUploadBatch (BV)` (screen_4) — `mediaId` here is the id of the uploaded media record. **Pet detection runs on uploaded photos only** — **videos and embeds are never scanned** (videos are tagged manually, embeds are auto-`random`); avatars (user/family/pet) are uploaded the same way but never scanned.
 **Auth:** Required
 
 **Operation:**
 ```graphql
-mutation ScanMedia($input: ScanMediaInput!) {
-  scanMedia(input: $input) {
+mutation IdentifyPetFromMedia($mediaId: ID!) {
+  identifyPetFromMedia(mediaId: $mediaId) {
     detected
     species
     breed
@@ -268,11 +268,7 @@ mutation ScanMedia($input: ScanMediaInput!) {
 **Variables:**
 ```json
 {
-  "input": {
-    "mediaUrl": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
-    "familyId": "fam_xyz",
-    "skipPetMatch": false
-  }
+  "mediaId": "media_tmp_001"
 }
 ```
 
@@ -282,7 +278,7 @@ Pet detected + matched to family pet:
 ```json
 {
   "data": {
-    "scanMedia": {
+    "identifyPetFromMedia": {
       "detected": true,
       "species": "Cat",
       "breed": "Orange Tabby Cat",
@@ -301,7 +297,7 @@ Pet detected + no family match:
 ```json
 {
   "data": {
-    "scanMedia": {
+    "identifyPetFromMedia": {
       "detected": true,
       "species": "Cat",
       "breed": "British Shorthair",
@@ -316,7 +312,7 @@ No pet detected:
 ```json
 {
   "data": {
-    "scanMedia": {
+    "identifyPetFromMedia": {
       "detected": false,
       "species": null,
       "breed": null,
@@ -330,14 +326,14 @@ No pet detected:
 **Notes:**
 - `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `mediaTag`.
 - Resulting `mediaTag` written to the post uses `{ type, id, species, breed }` (Screen 1 canonical structure).
-- In Random Pets context (`[+]` from Screen 8), call with `familyId` omitted or `skipPetMatch: true` — `matchedPet` is always `null`.
+- In Random Pets context (`[+]` from Screen 8), call without a `familyId` context — `matchedPet` is always `null`.
 
 **Errors:**
 
 | Status | Code | Scenario |
 |--------|------|----------|
-| `400` | `INVALID_MEDIA_URL` | URL is not reachable or not a supported media format |
-| `404` | `FAMILY_NOT_FOUND` | `familyId` does not exist |
+| `400` | `INVALID_MEDIA_ID` | Media ID does not exist or is not a supported media format |
+| `404` | `FAMILY_NOT_FOUND` | Associated family does not exist |
 | `504` | `AI_TIMEOUT` | AI scan service did not respond in time — client should retry |
 
 ---
@@ -675,7 +671,7 @@ User opens Create Post (e.g. from fab button)
         ├─ No active family → prompt to set in Profile Settings
         └─ Has active family → load draft (if exists) or empty form
               └─> Add media (upload photo/video or embed)
-                    ├─> Uploaded photo → tap AI Scan → ScanMedia mutation (AT)
+                    ├─> Uploaded photo → tap AI Scan → IdentifyPetFromMedia mutation (AT)
                     │         ├─ Match → badge auto-set to pet name
                     │         ├─ Breed detected → badge shows breed (accept or edit)
                     │         └─ No detection → badge "Random" (user can edit)

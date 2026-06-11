@@ -130,7 +130,7 @@ Each pet row:
 | `avatarUrl` | Pet avatar |
 | `name` | Pet name |
 | `breed` | Breed name (may be truncated with `...` if long) |
-| `gender` | `male` \| `female` \| `unknown` |
+| `sex` | `male` \| `female` \| `unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `postCount` | Total posts linked to this pet |
 
@@ -265,7 +265,7 @@ query Family($id: ID!) {
       name
       avatarUrl
       breed
-      gender
+      sex
       ageMonths
       postCount
     }
@@ -315,7 +315,7 @@ query Family($id: ID!) {
           "name": "Bụi",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
           "breed": "Orange Tabby Cat",
-          "gender": "MALE",
+          "sex": "MALE",
           "ageMonths": 36,
           "postCount": 47
         },
@@ -324,7 +324,7 @@ query Family($id: ID!) {
           "name": "Chao",
           "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
           "breed": "Vietnamese Native",
-          "gender": "FEMALE",
+          "sex": "FEMALE",
           "ageMonths": 24,
           "postCount": 38
         }

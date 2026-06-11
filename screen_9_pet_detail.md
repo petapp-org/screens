@@ -17,7 +17,7 @@ Accessible to: family members (owner + parents) — My Pets is always viewed by 
 
 [Pet identity row]
   Pet Name — Breed                                          [▶ Story]  [...]
-  gender · age · N posts
+  sex · age · N posts
 
 [Missing banner — only when status = missing]
   ⚠️ MISSING · Last seen HCM · 2 days ago        [Mark as Found]
@@ -64,7 +64,7 @@ Male · 3 years · 47 posts
 | `species` | Species e.g. `"cat"`, `"dog"`, `"bird"` |
 | `breed` | Breed name, e.g. `"British Shorthair"` — `null` if unknown |
 | `isPublic` | `true` / `false` — shown as a 🔒 lock badge next to pet name when `false` |
-| `gender` | `Male` / `Female` / `Unknown` |
+| `sex` | `Male` / `Female` / `Unknown` |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `postCount` | Total posts linked to this pet |
 
@@ -231,7 +231,7 @@ Opened from `[...]` → "Edit Pet". Owner only.
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| Avatar | No | Replace pet avatar — upload via `RequestMediaUpload (BV)` `{ purpose: "PET_AVATAR" }` (screen_4) → use returned `publicUrl`; no AI scan |
+| Avatar | No | Replace pet avatar — upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "PET_AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan |
 | Name | Yes | Pet display name |
 | Public | Yes | Toggle `isPublic` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
 | Species | Yes | Read-only if set by AI scan; editable if entered manually |
@@ -289,7 +289,7 @@ DESCRIPTION *
 
 > **Submit** is enabled only when **all required fields** are set: a pet, ≥ 1 photo, a map location, a last-seen time, and a non-empty description.
 
-**Upload:** each photo uploaded via `RequestMediaUpload (BV)` `{ purpose: "MISSING_PHOTO" }` (screen_4) → use the returned `publicUrl`; no AI scan (missing photos are never scanned).
+**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "MISSING_PHOTO", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan (missing photos are never scanned).
 
 **On submit → `ReportMissing mutation (BE)`:**
 - `pet.missingStatus` set with the full shape: `lastSeenLocation` (+ `lat`/`lng`), `lastSeenAt`, `description`, ordered `photos` (cover first), `reportedBy` (the caller), `reportedAt`.
@@ -335,15 +335,15 @@ Fetch full pet detail including all tab content.
 
 **Operation:**
 ```graphql
-query Pet($id: ID!) {
-  pet(id: $id) {
+query Pet($petId: ID!) {
+  pet(petId: $petId) {
     id
     name
     species
     breed
     breedId
     isPublic
-    gender
+    sex
     ageMonths
     birthday
     weightKg
@@ -406,7 +406,7 @@ query Pet($id: ID!) {
 
 **Variables:**
 ```json
-{ "id": "pet_111" }
+{ "petId": "pet_111" }
 ```
 
 **Response `200 OK`:**
@@ -420,7 +420,7 @@ query Pet($id: ID!) {
       "breed": "Orange Tabby Cat",
       "breedId": "breed_orange_tabby_cat",
       "isPublic": true,
-      "gender": "MALE",
+      "sex": "MALE",
       "ageMonths": 36,
       "birthday": "2023-01-15",
       "weightKg": 4.2,
@@ -723,7 +723,7 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
 ```
 
 - `lat`/`lng` come from the map pin; `city`/`cityCode`/`country`/`countryCode` are reverse-geocoded (client may send what it resolved, server may re-validate). The server derives **`cityShortName`** (curated short label) — the client need not send it; it is returned on read for display on Lost Pets rows / detail.
-- `photos` are pre-uploaded `publicUrl`s from `RequestMediaUpload (BV)` `{ purpose: "MISSING_PHOTO" }`; **at least 1 required**; order is preserved; index 0 is the cover.
+- `photos` are pre-uploaded `publicUrl`s from `SignUploadBatch (BV)` `{ items: [{ purpose: "MISSING_PHOTO", ... }] }` (`list[0].publicUrl`); **at least 1 required**; order is preserved; index 0 is the cover.
 - `description` is **required** and must be non-empty.
 
 **Variables:**
@@ -872,7 +872,7 @@ User taps [Report Missing]  (Pet Detail → pet already in context)
   └─> Report Missing form (full screen, Section 8)
         ├─ [from Lost Pets banner] pick pet first (active family, incl. private)
         └─> drag map pin (location *) + pick When * + photos (optional, set cover) + description
-              └─> upload photos (RequestMediaUpload, MISSING_PHOTO)
+              └─> upload photos (SignUploadBatch, MISSING_PHOTO)
                     └─> ReportMissing mutation (BE)
                           └─> success → missing banner appears; followers notified;
                               report visible in Lost Pets + Lost Pet Detail

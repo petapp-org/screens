@@ -195,7 +195,7 @@ LOCATION *      [ city — default theo charity, đổi được ]
 
 > **Submit** enabled only when required fields are set: ≥ 1 photo, species, a non-empty story, and a location.
 
-**Upload:** each photo via `RequestMediaUpload (BV)` `{ purpose: "RESCUE_PHOTO" }` (`screen_4`) → use the returned `publicUrl`; no AI scan.
+**Upload:** each photo via `SignUploadBatch (BV)` `{ items: [{ purpose: "RESCUE_PHOTO", ... }] }` (`screen_4`) → use `list[0].publicUrl`; no AI scan.
 
 **On submit → `CreateRescue (CO)`** (or `UpdateRescue (CS)` in edit mode):
 - Listing is created with `status = OPEN`, `charity` = the active charity family, `createdAt` = now.
@@ -206,7 +206,7 @@ LOCATION *      [ city — default theo charity, đổi được ]
 ## API Endpoints Required
 
 > All calls go to `POST /graphql`.
-> Reuses `Rescues (CL)` (`screen_17`) for listings, `RequestMediaUpload (BV)` (`screen_4`) for photos. New endpoints below. Messaging for Inquire builds on `StartThread (BI)` (`screen_10`).
+> Reuses `Rescues (CL)` (`screen_17`) for listings, `SignUploadBatch (BV)` (`screen_4`) for photos. New endpoints below. Messaging for Inquire builds on `StartThread (BI)` (`screen_10`).
 
 ---
 
@@ -419,7 +419,7 @@ Tap [Inquire to Adopt]
 
 ```
 [Post a Rescue] (screen_25 banner / screen_27) → Create Rescue Form
-  └─> upload photos (RequestMediaUpload, RESCUE_PHOTO)
+  └─> upload photos (SignUploadBatch, RESCUE_PHOTO)
         └─> CreateRescue (CO) → listing OPEN → visible in listings + Manage Rescues
 ```
 
