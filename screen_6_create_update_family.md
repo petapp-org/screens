@@ -215,7 +215,7 @@ mutation CreateFamily($input: CreateFamilyInput!) {
   "input": {
     "name": "Thao's Family",
     "tag": "thaofam",
-    "about": "Just me and a future pet or two. 🌱",
+    "bio": "Just me and a future pet or two. 🌱",
     "avatarUrl": "https://cdn.petapp.com/media/upload_xyz.jpg",
     "defaultPrivacy": "PUBLIC",
     "city": "Hồ Chí Minh",
@@ -264,7 +264,7 @@ mutation UpdateFamily($familyId: ID!, $input: UpdateFamilyInput!) {
   updateFamily(familyId: $familyId, input: $input) {
     id
     name
-    about
+    bio
     avatarUrl
     defaultPrivacy
     cityCode
@@ -279,7 +279,7 @@ mutation UpdateFamily($familyId: ID!, $input: UpdateFamilyInput!) {
   "familyId": "fam_001",
   "input": {
     "name": "Updated Name",
-    "about": "Updated description",
+    "bio": "Updated description",
     "avatarUrl": "https://cdn.petapp.com/...",
     "defaultPrivacy": "FOLLOWERS"
   }
@@ -293,7 +293,7 @@ mutation UpdateFamily($familyId: ID!, $input: UpdateFamilyInput!) {
     "updateFamily": {
       "id": "fam_001",
       "name": "Updated Name",
-      "about": "Updated description",
+      "bio": "Updated description",
       "avatarUrl": "https://cdn.petapp.com/...",
       "defaultPrivacy": "FOLLOWERS",
       "cityCode": "HCM",
@@ -574,7 +574,7 @@ mutation RemoveFamilyMember($familyId: ID!, $userId: ID!) {
 ```
 User taps "Create Family Page" in Profile Settings
   └─> Navigate to Create Family screen
-        └─> Fill in name, tag (real-time check), about, privacy
+        └─> Fill in name, tag (real-time check), bio, privacy
               └─> Optionally upload avatar (media upload endpoint)
                     └─> Optionally invite parents → SearchUsers query (AP) → InviteFamilyMember mutation (AQ)
                           └─> Tap "Create Family"

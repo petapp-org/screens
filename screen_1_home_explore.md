@@ -440,7 +440,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 
 - On web: hovering the time text shows a tooltip with the full datetime (e.g. `"06/06/2026 13:00"`)
   - Bottom-right: location as `cityCode - countryCode` (omit if `location` is null)
-- `filter: FOLLOWING` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
+- `filter: FOLLOW` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
 - `filter: RESCUE` returns posts from families where `family.familyType = CHARITY`
 - `isLoved` is always `false` when unauthenticated
 - Server enforces privacy rules before returning results — unauthenticated callers only receive `PUBLIC` posts; `FOLLOWERS` posts are filtered based on the caller's follow list
@@ -450,7 +450,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 | Code | Scenario |
 |------|----------|
 | `INVALID_FILTER` | Unknown filter value |
-| `UNAUTHORIZED` | `filter: FOLLOWING` without auth token |
+| `UNAUTHORIZED` | `filter: FOLLOW` without auth token |
 | `INVALID_CURSOR` | Cursor is malformed or expired |
 
 ---
@@ -1033,8 +1033,8 @@ Submit a new comment from the inline panel.
 
 **Operation:**
 ```graphql
-mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
-  createComment(postId: $postId, input: $input) {
+mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null) {
+  createComment(postId: $postId, body: $body, parentId: $parentId) {
     id
     author {
       id
@@ -1049,7 +1049,7 @@ mutation CreateComment($postId: ID!, $input: CreateCommentInput!) {
 
 **Variables:**
 ```json
-{ "postId": "post_abc123", "input": { "body": "Cute quá trời 😍" } }
+{ "postId": "post_abc123", "body": "Cute quá trời 😍", "parentId": null }
 ```
 
 **Response `200 OK`:**

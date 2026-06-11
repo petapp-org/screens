@@ -262,7 +262,7 @@ query ActiveFamily {
     }
     parents {
       id
-      name
+      displayName
       username
       avatarUrl
       role
@@ -321,9 +321,9 @@ query ActiveFamily {
         }
       ],
       "parents": [
-        { "id": "user_001", "name": "Minh Dang", "username": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
-        { "id": "user_002", "name": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "MEMBER", "status": "JOINED" },
-        { "id": "user_003", "name": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "MEMBER", "status": "INVITED" }
+        { "id": "user_001", "displayName": "Minh Dang", "username": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
+        { "id": "user_002", "displayName": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "MEMBER", "status": "JOINED" },
+        { "id": "user_003", "displayName": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "MEMBER", "status": "INVITED" }
       ]
     }
   }

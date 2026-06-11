@@ -376,7 +376,7 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
     "breed": "British Shorthair",
     "isPublic": true,
     "gender": "FEMALE",
-    "birthday": "2024-01-15",
+    "birthDate": "2024-01-15",
     "weightKg": 3.2,
     "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
   }
@@ -517,7 +517,7 @@ Publish the post.
 
 > **Triggers notification:** fires a `FAMILY_NEW_POST` notification to the family's **followers** (see screen_22 — Notifications screen), respecting post privacy (a `private` post notifies only family members; `followers`/`public` notify followers).
 >
-> **AI side-effects:** the post's media is scanned server-side; this may later raise a `HEALTH_ALERT` notification to the pet owner if a health concern is detected (see screen_9).
+> **AI side-effects:** the post's media is scanned server-side; this may later raise a `HEALTH_SIGNAL` notification to the pet owner if a health concern is detected (see screen_9).
 
 **Operation:**
 ```graphql

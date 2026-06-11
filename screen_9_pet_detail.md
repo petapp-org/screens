@@ -124,7 +124,7 @@ Shown only when `pet.missingStatus != null`.
 
 **Content:** HTML blob from latest post's health analysis.
 
-> **Triggers notification:** when the server-side AI analysis (run after a post is published, see screen_7 → `CreatePost`) detects a possible health concern, it fires a `HEALTH_ALERT` notification to the pet's family/owner (see screen_22 — Notifications screen). This is a server-side async event, not a client call.
+> **Triggers notification:** when the server-side AI analysis (run after a post is published, see screen_7 → `CreatePost`) detects a possible health concern, it fires a `HEALTH_SIGNAL` notification to the pet's family/owner (see screen_22 — Notifications screen). This is a server-side async event, not a client call.
 
 **Status states:**
 
@@ -351,7 +351,7 @@ query Pet($petId: ID!) {
     isPublic
     sex
     ageMonths
-    birthday
+    birthDate
     weightKg
     avatarUrl
     postCount
@@ -428,7 +428,7 @@ query Pet($petId: ID!) {
       "isPublic": true,
       "sex": "MALE",
       "ageMonths": 36,
-      "birthday": "2023-01-15",
+      "birthDate": "2023-01-15",
       "weightKg": 4.2,
       "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
       "postCount": 47,
@@ -560,7 +560,7 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
     isPublic
     gender
     ageMonths
-    birthday
+    birthDate
     weightKg
     avatarUrl
     postCount
@@ -589,7 +589,7 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
     "species": "Cat",
     "isPublic": true,
     "gender": "MALE",
-    "birthday": "2023-01-15",
+    "birthDate": "2023-01-15",
     "weightKg": 4.5,
     "avatarUrl": "https://cdn.petapp.com/media/new_avatar.jpg",
     "breed": "Orange Tabby Cat",
@@ -611,7 +611,7 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
       "isPublic": true,
       "gender": "MALE",
       "ageMonths": 36,
-      "birthday": "2023-01-15",
+      "birthDate": "2023-01-15",
       "weightKg": 4.5,
       "avatarUrl": "https://cdn.petapp.com/media/new_avatar.jpg",
       "postCount": 47,

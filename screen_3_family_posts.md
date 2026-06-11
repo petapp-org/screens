@@ -64,12 +64,12 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `avatarUrl` | Used as fallback / single avatar |
 | `petAvatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
 | `petCount` | Number of actual pets in the family |
-| `randomCount` | Number of media items where `mediaTag.type = "random" AND breed IS NOT NULL` — AI detected a breed but could not match to a named pet. Does NOT count media with no breed detected. Hidden from stats line when `0`. |
+| `randomCount` | Number of media items where `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Does NOT count media with no breed or species detected. Hidden from stats line when `0`. |
 | `randomPostCount` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
 | `familyType` | `standard` \| `charity` |
 | `social.isFollowedByMe` | Boolean (false when unauthenticated) |
-| `about` | Free-text description |
+| `bio` | Free-text description |
 | `shortDescription` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
 | `donorCount` | Number of people who have donated. Only meaningful when `familyType = charity`; `null` for standard families. |
 
@@ -197,8 +197,8 @@ Parents                          [× close]
 ### 4. About Section
 
 - Label: "ABOUT"
-- Body: `family.about` — free-text, multi-line
-- Hidden entirely if `about` is null or empty
+- Body: `family.bio` — free-text, multi-line
+- Hidden entirely if `bio` is null or empty
 
 ---
 
@@ -270,7 +270,7 @@ query Family($id: ID!) {
     familyType
     shortDescription
     donorCount
-    about
+    bio
     parentCount
     pets {
       id
@@ -322,7 +322,7 @@ query Family($id: ID!) {
       "familyType": "CHARITY",
       "shortDescription": "Home-based cat rescue",
       "donorCount": 184,
-      "about": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
+      "bio": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
       "parentCount": 1,
       "pets": [
         {
@@ -750,7 +750,7 @@ User taps Parents row
 | `familyType = standard` | No ribbon; no Charity Section |
 | `petCount ≤ 5` | Pets list: single vertical column |
 | `petCount > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
-| `about` is null or empty | Hide About section entirely |
+| `bio` is null or empty | Hide About section entirely |
 | `randomCount = 0` | Hide "randoms" from stats line; hide Random Pets row from pets list |
 | `randomCount > 0` | Show "N randoms" in stats line; show Random Pets row at bottom of pets list |
 | Story button | Hidden — Story (`screen_29`) is member-only; this screen's viewer is always a non-member |
