@@ -248,7 +248,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
           id
           name
           avatarUrl
-          type
+          familyType
         }
         author {
           id
@@ -317,7 +317,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
               "id": "fam_xyz",
               "name": "Pudding's Family",
               "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-              "type": "STANDARD"
+              "familyType": "STANDARD"
             },
             "author": {
               "id": "user_001",
@@ -473,7 +473,7 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
       isFollowedByMe
     }
     shortDescription
-    type
+    familyType
   }
 }
 ```
@@ -497,7 +497,7 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
           "isFollowedByMe": false
         },
         "shortDescription": "Rescue & rehome cats in HCM City",
-        "type": "CHARITY"
+        "familyType": "CHARITY"
       },
       {
         "id": "fam_normal_001",
@@ -508,14 +508,14 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
           "isFollowedByMe": false
         },
         "shortDescription": null,
-        "type": "STANDARD"
+        "familyType": "STANDARD"
       }
     ]
   }
 }
 ```
 
-**Note:** `shortDescription` is always present in the response but is `null` for `STANDARD` families. The client should only render the description line when `type = CHARITY` and `shortDescription` is non-null.
+**Note:** `shortDescription` is always present in the response but is `null` for `STANDARD` families. The client should only render the description line when `familyType = CHARITY` and `shortDescription` is non-null.
 
 `shortDescription` is a free-text field that the charity family admin fills in manually (via their family profile settings). It is not computed or auto-generated.
 
@@ -813,7 +813,7 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
       id
       name
       avatarUrl
-      type
+      familyType
     }
     author {
       id

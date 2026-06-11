@@ -118,7 +118,7 @@ query SearchFamilies($q: String!, $first: Int = 20, $after: String) {
         name
         tag
         avatarUrl
-        type
+        familyType
         location {
           city
           cityCode
@@ -158,7 +158,7 @@ query SearchUsers($q: String!, $first: Int = 20, $after: String) {
       node {
         id
         displayName
-        tag
+        username
         avatarUrl
       }
     }

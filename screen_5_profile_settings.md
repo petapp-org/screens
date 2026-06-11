@@ -176,10 +176,10 @@ DANGER ZONE
 - Single **"Delete My Account"** button (red, destructive style)
 - Tap → confirmation dialog: "Are you sure? This starts a 30-day deletion period." → Confirm → `RequestAccountDeletion mutation`
 - After confirm: log out immediately → redirect to Register/Login screen
-- Server sets `scheduledDeletionAt = now + 30 days`
+- Server sets `scheduledAt = now + 30 days` and `status = PENDING` on the deletion request
 
 **Reactivation (within 30 days):**
-- User logs in via OAuth → server detects `scheduledDeletionAt` is set → clears `scheduledDeletionAt` → account fully restored
+- User logs in via OAuth → server detects a pending deletion request (`status = PENDING`) → clears it (sets `status` back to cancelled / removes the record) → account fully restored
 - Show toast on login: "Welcome back! Your account deletion has been cancelled."
 
 ---
@@ -207,8 +207,8 @@ query Me {
       name
       tag
       avatarUrl
-      type
-      isActive
+      familyType
+      isPrimary
       role
     }
   }
@@ -235,8 +235,8 @@ query Me {
           "name": "Minh's Family",
           "tag": "minhfamily",
           "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-          "type": "STANDARD",
-          "isActive": true,
+          "familyType": "STANDARD",
+          "isPrimary": true,
           "role": "OWNER"
         },
         {
@@ -244,8 +244,8 @@ query Me {
           "name": "Cecilia's Family",
           "tag": "ceciliafam",
           "avatarUrl": "https://cdn.petapp.com/families/fam_abc/avatar.jpg",
-          "type": "STANDARD",
-          "isActive": false,
+          "familyType": "STANDARD",
+          "isPrimary": false,
           "role": "PARENT"
         }
       ]
@@ -319,7 +319,7 @@ query MyLovedPosts($after: String) {
       cursor
       node {
         id
-        family { id name avatarUrl type }
+        family { id name avatarUrl familyType }
         author { id displayName avatarUrl }
         pets { id name avatarUrl }
         body
@@ -356,7 +356,7 @@ query MyLovedPosts($after: String) {
           "cursor": "cursor_token_here",
           "node": {
             "id": "post_001",
-            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg", "type": "STANDARD" },
+            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg", "familyType": "STANDARD" },
             "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg" },
             "pets": [ { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" } ],
             "body": "Bụi nằm chờ mama nấu cơm 🌕",
@@ -401,7 +401,7 @@ query MyFollowing($cursor: String, $limit: Int) {
       name
       tag
       avatarUrl
-      type
+      familyType
       city
       country
       social {
@@ -433,7 +433,7 @@ query MyFollowing($cursor: String, $limit: Int) {
           "name": "Daily Cats",
           "tag": "dailycats",
           "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-          "type": "STANDARD",
+          "familyType": "STANDARD",
           "city": "Internet",
           "country": "",
           "social": {
@@ -560,7 +560,7 @@ Invalidate the current user's refresh token server-side and end the session.
 ```graphql
 mutation Logout($sessionId: String!, $refreshToken: String!) {
   logout(sessionId: $sessionId, refreshToken: $refreshToken) {
-    success
+    revoked
   }
 }
 ```
@@ -578,7 +578,7 @@ mutation Logout($sessionId: String!, $refreshToken: String!) {
 {
   "data": {
     "logout": {
-      "success": true
+      "revoked": true
     }
   }
 }
@@ -601,7 +601,8 @@ Schedule the current user's account for deletion after a 30-day grace period.
 ```graphql
 mutation RequestAccountDeletion {
   requestAccountDeletion {
-    scheduledDeletionAt
+    status
+    scheduledAt
   }
 }
 ```
@@ -616,16 +617,17 @@ mutation RequestAccountDeletion {
 {
   "data": {
     "requestAccountDeletion": {
-      "scheduledDeletionAt": "2026-07-07T12:00:00Z"
+      "status": "PENDING",
+      "scheduledAt": "2026-07-07T12:00:00Z"
     }
   }
 }
 ```
 
 **Side effects:**
-- Sets `scheduledDeletionAt = now + 30 days` on the user record
+- Sets `scheduledAt = now + 30 days` and `status = PENDING` on the account deletion request
 - Caller is immediately logged out client-side after receiving response
-- User logging back in within 30 days via OAuth cancels the deletion (`scheduledDeletionAt` cleared); show toast "Welcome back! Your account deletion has been cancelled."
+- User logging back in within 30 days via OAuth cancels the deletion (`status` cleared back to cancelled); show toast "Welcome back! Your account deletion has been cancelled."
 
 **Errors:**
 

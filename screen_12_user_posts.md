@@ -36,7 +36,7 @@ Accessible without login — unauthenticated users see only `public` posts.
 |-------|---------|
 | `avatarUrl` | User avatar (circular) |
 | `displayName` | User's display name (bold) |
-| `tag` | `@tag` in muted text below name |
+| `username` | `@username` in muted text below name |
 
 No follow button — following is per-family, not per-user.  
 No message button — messaging is per-family thread, not user-to-user.

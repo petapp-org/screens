@@ -204,7 +204,7 @@ mutation CreateFamily($input: CreateFamilyInput!) {
     tag
     avatarUrl
     defaultPrivacy
-    isActive
+    isPrimary
   }
 }
 ```
@@ -236,7 +236,7 @@ mutation CreateFamily($input: CreateFamilyInput!) {
       "tag": "thaofam",
       "avatarUrl": "https://cdn.petapp.com/families/fam_new/avatar.jpg",
       "defaultPrivacy": "PUBLIC",
-      "isActive": true
+      "isPrimary": true
     }
   }
 }

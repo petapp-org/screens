@@ -150,7 +150,7 @@ query Post($id: ID!) {
       id
       name
       avatarUrl
-      type
+      familyType
     }
     author {
       id
@@ -211,7 +211,7 @@ query Post($id: ID!) {
         "id": "fam_xyz",
         "name": "Minh's Family",
         "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-        "type": "STANDARD"
+        "familyType": "STANDARD"
       },
       "author": {
         "id": "user_001",
