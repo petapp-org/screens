@@ -106,7 +106,7 @@ Displayed between the Family Info Card and the Pets List.
 | `donorCount` | Displayed as `"♡ 184 people have helped"` |
 | Donate button | Full-width button — see **Donate button behaviour** below |
 
-- The entire section is hidden for `standard` families.
+- The entire section is hidden for `STANDARD` families.
 
 **Donate button behaviour (canonical — interim, no wallet yet):**
 
