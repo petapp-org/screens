@@ -67,7 +67,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `randomCount` | Number of media items where `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Does NOT count media with no breed or species detected. Hidden from stats line when `0`. |
 | `randomPostCount` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
-| `familyType` | `STANDARD` \| `CHARITY` |
+| `familyType` | `NORMAL` \| `CHARITY` |
 | `social.isFollowedByMe` | Boolean (false when unauthenticated) |
 | `bio` | Free-text description |
 | `shortDescription` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
@@ -106,7 +106,7 @@ Displayed between the Family Info Card and the Pets List.
 | `donorCount` | Displayed as `"♡ 184 people have helped"` |
 | Donate button | Full-width button — see **Donate button behaviour** below |
 
-- The entire section is hidden for `STANDARD` families.
+- The entire section is hidden for `NORMAL` families.
 
 **Donate button behaviour (canonical — interim, no wallet yet):**
 
@@ -409,7 +409,7 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
         {
           "node": {
             "id": "post_abc",
-            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "familyType": "STANDARD" },
+            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "familyType": "NORMAL" },
             "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "..." },
             "pets": [{ "id": "pet_111", "name": "Bụi", "avatarUrl": "..." }],
             "body": "Bụi nằm chờ mama 🌕",
@@ -747,7 +747,7 @@ User taps Parents row
 | `petCount = 1` | Show single pet avatar (no stacking animation) |
 | `petCount ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
 | `familyType = CHARITY` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
-| `familyType = STANDARD` | No ribbon; no Charity Section |
+| `familyType = NORMAL` | No ribbon; no Charity Section |
 | `petCount ≤ 5` | Pets list: single vertical column |
 | `petCount > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
 | `bio` is null or empty | Hide About section entirely |

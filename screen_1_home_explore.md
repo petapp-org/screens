@@ -195,13 +195,13 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 | `avatarUrl` | Family avatar | all |
 | `social.followersCount` | Raw number | all |
 | `shortDescription` | Free-text description set by the family | **charity only** — hidden for standard families |
-| `familyType` | `STANDARD` \| `CHARITY` | all (drives UI logic) |
+| `familyType` | `NORMAL` \| `CHARITY` | all (drives UI logic) |
 | `social.isFollowedByMe` | Boolean | all |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
 **Buttons per family:**
-- `STANDARD` type → **Follow** button only
+- `NORMAL` type → **Follow** button only
 - `CHARITY` type → **Follow** button + **Donate** button
 
 **Donate button behaviour:** (interim — no wallet yet)
@@ -317,7 +317,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
               "id": "fam_xyz",
               "name": "Pudding's Family",
               "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-              "familyType": "STANDARD"
+              "familyType": "NORMAL"
             },
             "author": {
               "id": "user_001",
@@ -508,14 +508,14 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
           "isFollowedByMe": false
         },
         "shortDescription": null,
-        "familyType": "STANDARD"
+        "familyType": "NORMAL"
       }
     ]
   }
 }
 ```
 
-**Note:** `shortDescription` is always present in the response but is `null` for `STANDARD` families. The client should only render the description line when `familyType = CHARITY` and `shortDescription` is non-null.
+**Note:** `shortDescription` is always present in the response but is `null` for `NORMAL` families. The client should only render the description line when `familyType = CHARITY` and `shortDescription` is non-null.
 
 `shortDescription` is a free-text field that the charity family admin fills in manually (via their family profile settings). It is not computed or auto-generated.
 
@@ -1154,7 +1154,7 @@ User taps "..." on a post
 | Post media type is `embedded` | Show video embed player (YouTube iframe / native player); `thumbnailUrl` as poster |
 | Suggested widget — 0 families returned | Widget is hidden entirely; not shown at all |
 | Family type is `CHARITY` | Show both **Follow** and **Donate** buttons |
-| Family type is `STANDARD` | Show **Follow** button only |
+| Family type is `NORMAL` | Show **Follow** button only |
 | Tapping Donate | Opens a chat with the charity (pre-filled VN support message) — interim, no wallet; see `screen_3` |
 | User already follows a suggested family | Should not appear in suggestions (server filters when authenticated) |
 | Unauthenticated user on Latest feed | Only `public` posts returned by server |
