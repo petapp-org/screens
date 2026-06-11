@@ -60,12 +60,12 @@ Search by: `name`, `@tag`
 
 ### Users tab
 
-Search by: `display name`, `@tag`
+Search by: `display name`, `@username`
 
 **Each result row:**
 ```
 [User avatar]  Display name
-               @tag
+               @username
 ```
 
 - Tap row → **User Posts screen**
@@ -225,8 +225,8 @@ query SearchPets($q: String!, $first: Int = 20, $after: String) {
 
 | Case | Behaviour |
 |------|-----------|
-| Query matches both name and @tag | Return all matches regardless of which field matched |
-| User searches their own @tag | They appear in Users results normally |
+| Query matches both name and handle (`@tag` for families / `@username` for users) | Return all matches regardless of which field matched |
+| User searches their own @username | They appear in Users results normally |
 | Pet has no breed (breed=null) | Still searchable by species only |
 | Family is charity | Show CHARITY badge + Donate button in result row |
 | User already follows a family in results | Follow button shows "Following" state |
@@ -241,6 +241,6 @@ query SearchPets($q: String!, $first: Int = 20, $after: String) {
 | 1 | Auth required | Yes — unauth redirected to Login |
 | 2 | Min characters | 2 characters |
 | 3 | Search scope | Families, Users, Pets only — no post search (caption full-text search too broad to index) |
-| 4 | Search criteria | Families: name/@tag; Users: name/@tag; Pets: breed/species |
+| 4 | Search criteria | Families: name/@tag; Users: name/@username; Pets: breed/species |
 | 5 | Result display | Tabbed — one tab per entity type |
 | 6 | Pet privacy | Only pets with `isPublic = true` AND at least 1 visible post returned |

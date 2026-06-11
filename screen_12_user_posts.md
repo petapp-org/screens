@@ -13,13 +13,13 @@ Accessible without login — unauthenticated users see only `public` posts.
 ```
 [Header]
   Left: Back button
-  Center: @tag (static)
+  Center: @username (static)
 
 [Scrollable area]
   ├── User Info Card
   │     ├── [Avatar]
   │     ├── Display name
-  │     └── @tag
+  │     └── @username
   │
   └── Posts section
         ├── "POSTS"  [Grid view icon]  [List view icon]
