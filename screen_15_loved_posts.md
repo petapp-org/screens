@@ -54,7 +54,7 @@ Reuses endpoint defined in `screen_5_profile_settings.md`.
 
 See full definition in `screen_5_profile_settings.md` → **Section: AH. Query: MyLovedPosts**.
 
-**Variables:** `{ "cursor": null, "limit": 10 }`
+**Variables:** `{ "after": null }`
 
 Unlove uses existing endpoints from `screen_1_home_explore.md`:
 
@@ -70,7 +70,7 @@ See full definition in `screen_1_home_explore.md` → **Section: G. Mutation: Un
 
 ```
 User taps Activity → Loves in Profile Settings
-  └─> MyLovedPosts query (AH) { limit: 10 }
+  └─> MyLovedPosts query (AH) { first: 20, after: null }
         └─> 200 → render post list
               └─> list empty → show empty state
 ```
@@ -79,9 +79,9 @@ User taps Activity → Loves in Profile Settings
 
 ```
 User scrolls to bottom
-  └─> MyLovedPosts query (AH) { cursor: <nextCursor>, limit: 10 }
+  └─> MyLovedPosts query (AH) { first: 20, after: pageInfo.endCursor }
         └─> Append new posts
-              └─> hasMore=false → show "No more posts" state
+              └─> pageInfo.hasNextPage=false → show "No more posts" state
 ```
 
 ### Un-love a Post
