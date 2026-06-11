@@ -31,7 +31,7 @@ Requires login (member context).
 ```
 [Header]
   ←   (avatar) Bụi's Story                         [ ▶ Play ]
-      26 photos · 2022 – now
+      26 photos · 2 videos · 2022 – now
 
 [MAR 2022 ▾]                                        ← month group header (collapse/expand)
   ● Tue, Mar 8 · 3 posts                            ← row = one day (timeline dot)
@@ -59,10 +59,10 @@ Requires login (member context).
 |---------|---------|
 | Back | Returns to the entry screen (My Pets / Pet Detail) |
 | Pet avatar + `{name}'s Story` | e.g. `"Bụi's Story"` |
-| Sub-label | `"{N} photos · {yearRange}"` — `N` = total media items of this pet across the story (what **Play** iterates); `yearRange` = `"{firstYear} – now"` (or `"{firstYear} – {lastYear}"`) |
+| Sub-label | `"{photoCount} photos · {videoCount} videos · {yearRange}"` — counts split by media type; `yearRange` = `"{firstYear} – now"` (or `"{firstYear} – {lastYear}"`) |
 | **[▶ Play]** | Top-right — starts the slideshow (Section 4) |
 
-> The sub-label counts **media items** (photos + videos), so it matches what Play shows. (The grid below shows one **cover per post**, which may be fewer.)
+> The sub-label counts **media items** split by type (e.g. `"26 photos · 2 videos"`). A type with **0** is **omitted** (e.g. `"26 photos · 2022 – now"` when there are no videos). The total (`photoCount + videoCount`) = what **Play** iterates. (The grid below shows one **cover per post**, which may be fewer.)
 
 ---
 
@@ -139,7 +139,8 @@ Fetch the full story for a pet — months → days → posts, each post carrying
 query PetStory($petId: ID!) {
   petStory(petId: $petId) {
     pet { id name avatarUrl }
-    totalMediaCount        # sum of petMedia across all posts → header "N photos" + Play length
+    photoCount             # this pet's PHOTO media count → header "{n} photos"
+    videoCount             # this pet's VIDEO media count → header "{n} videos" (omit if 0)
     firstYear
     lastYearLabel          # "now" if there's a post this year, else the year
     months {
@@ -168,7 +169,7 @@ query PetStory($petId: ID!) {
 - `months` ordered **oldest-first**; `days` oldest-first within a month; `posts` oldest-first within a day.
 - `posts[].petMedia` is **only this pet's** media in that post (filtered by `media_tag` = this pet), preserving the post's media order; `petMedia[0]` is the square cover.
 - **Square cover** = `petMedia[0]` (use `thumbnailUrl` + ▶ badge when `type = VIDEO`).
-- **Play playlist** = concatenate every `petMedia` across all posts in chronological order; length = `totalMediaCount`.
+- **Play playlist** = concatenate every `petMedia` across all posts in chronological order; length = `photoCount + videoCount`.
 - Only posts with ≥ 1 media tagged to this pet are returned; soft-deleted posts/media excluded.
 
 **Response `200 OK` (excerpt):**
@@ -177,7 +178,8 @@ query PetStory($petId: ID!) {
   "data": {
     "petStory": {
       "pet": { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" },
-      "totalMediaCount": 26,
+      "photoCount": 26,
+      "videoCount": 2,
       "firstYear": 2022,
       "lastYearLabel": "now",
       "months": [
@@ -285,7 +287,7 @@ Tap "↑ Newest" pill        → scroll to bottom (newest); label flips to "↓ 
 | 5 | Tap square | Open Post Detail with `focusPetId` → media reordered (this pet first) |
 | 6 | Play | This pet's media oldest→newest; **photo 3s** (Ken Burns), **video first 5s**; IG-style controls |
 | 7 | Order + jump | Always **oldest-first**; floating position-aware pill jumps to Newest/Oldest |
-| 8 | Header count | `{totalMediaCount} photos` = media items (matches Play); grid shows one cover per post |
+| 8 | Header count | Split by type: `"{photoCount} photos · {videoCount} videos · {yearRange}"` (omit a 0 type); total = Play length; grid shows one cover per post |
 | 9 | What counts | Posts tagging this pet (named, not random); soft-deleted excluded |
 | 10 | Entry points | My Pets pet row + Pet Detail; **not** Family Posts (non-member view) |
 
