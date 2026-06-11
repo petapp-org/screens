@@ -32,7 +32,7 @@ A rescue listing is a **standalone entity** created by a charity family — **no
 | | `story` | ✅ | Longer free text — background, temperament, adoption notes |
 | **Location** | `city` | ✅ | Defaults to the charity family's city; editable. Picked from supported Cities (`CA`) → derives `cityShortName`/`cityCode`/`country`/`countryCode` |
 | | `lat` / `lng` | ✅ | Map pin → distance; defaults to charity location, draggable |
-| **Owner** | `charity` | ✅ | The posting charity family (`type = charity`); rendered with CHARITY badge |
+| **Owner** | `charity` | ✅ | The posting charity family (`familyType = charity`); rendered with CHARITY badge |
 | **Status** | `status` | ✅ | `OPEN` / `ADOPTED` — only `OPEN` appears in public listings |
 | **Computed** | `distanceKm` | — | From caller origin (GPS or city centre); display-only |
 | | `inquiriesCount` | — | Distinct users who tapped Inquire to Adopt (see `InquireRescue (CR)`) |
@@ -449,7 +449,7 @@ Tap [Inquire to Adopt]
 | # | Question | Decision |
 |---|----------|----------|
 | 1 | Entity | Standalone **rescue listing** (not a named family pet); no health/AI/posts |
-| 2 | Who can post | **Charity families only** (`type = charity`), while that charity is the active family |
+| 2 | Who can post | **Charity families only** (`familyType = charity`), while that charity is the active family |
 | 3 | Visibility | Public / web-viewable (optional auth); deep-linkable via `shareUrl` |
 | 4 | Acting requires login | Inquire / Donate → redirect to Login when logged out |
 | 5 | Inquire | `InquireRescue (CR)` — records an idempotent inquiry (feeds `inquiriesCount`) **and** opens a thread to the charity (`screen_10`), pre-filled; hidden for own-charity members |

@@ -43,7 +43,7 @@ Each row contains:
 | `@tag` | Below family name, muted |
 | City, Country | Below tag, muted |
 | **Following button** | Right side — always shown |
-| **Donate button** | Right side — shown only when `type = charity` |
+| **Donate button** | Right side — shown only when `familyType = charity` |
 
 **Row tap (anywhere except buttons):** → navigate to **Family Posts screen** for that family.
 
@@ -55,7 +55,7 @@ Each row contains:
   - Tap Undo → `FollowFamily mutation (D)` → re-add row at same position; toast dismissed
   - No Undo tap (or toast dismissed) → `UnfollowFamily mutation (E)` confirmed
 
-**Donate button** (`type = charity` only):
+**Donate button** (`familyType = charity` only):
 - Tap → **opens a chat** with that charity family (pre-filled VN support message) — interim, no wallet; canonical in `screen_3`. Login required; hidden for members of that charity.
 
 ---
@@ -146,7 +146,7 @@ User taps Following button on a row
 | All families unfollowed during session | Empty state appears inline after last row removed |
 | Undo after toast dismissed early | Not possible — Undo button only active while toast is visible (5s window) |
 | Unfollow API error | Re-insert row at original position; show error toast |
-| `type = charity` family | Show Donate button alongside Following button |
+| `familyType = charity` family | Show Donate button alongside Following button |
 | Family deleted after user followed it | Server returns it filtered out; gap in list is silent |
 
 ---

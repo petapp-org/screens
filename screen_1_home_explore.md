@@ -58,7 +58,7 @@ The unread state is fetched separately (not bundled in the feed response) — th
 |-----|-------------------------|-------------|---------------|
 | Latest | `ALL` | Newest posts across all families, sorted by `createdAt` desc | No |
 | Follow | `FOLLOW` | Posts from families the current user follows | Yes — redirect to Login if not authenticated |
-| Rescue | `RESCUE` | Posts from families with `type = charity` | No |
+| Rescue | `RESCUE` | Posts from families with `familyType = charity` | No |
 
 **Inputs:**
 - `filter`: `ExploreFilter` — `ALL` | `FOLLOW` | `RESCUE` (tab mapping above; `sort` defaults to `LATEST`)
@@ -248,7 +248,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
           id
           name
           avatarUrl
-          type
+          familyType
         }
         author {
           id
@@ -317,7 +317,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
               "id": "fam_xyz",
               "name": "Pudding's Family",
               "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-              "type": "STANDARD"
+              "familyType": "STANDARD"
             },
             "author": {
               "id": "user_001",
@@ -441,7 +441,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 - On web: hovering the time text shows a tooltip with the full datetime (e.g. `"06/06/2026 13:00"`)
   - Bottom-right: location as `cityCode - countryCode` (omit if `location` is null)
 - `filter: FOLLOWING` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
-- `filter: RESCUE` returns posts from families where `family.type = CHARITY`
+- `filter: RESCUE` returns posts from families where `family.familyType = CHARITY`
 - `isLoved` is always `false` when unauthenticated
 - Server enforces privacy rules before returning results — unauthenticated callers only receive `PUBLIC` posts; `FOLLOWERS` posts are filtered based on the caller's follow list
 
@@ -473,7 +473,7 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
       isFollowedByMe
     }
     shortDescription
-    type
+    familyType
   }
 }
 ```
@@ -497,7 +497,7 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
           "isFollowedByMe": false
         },
         "shortDescription": "Rescue & rehome cats in HCM City",
-        "type": "CHARITY"
+        "familyType": "CHARITY"
       },
       {
         "id": "fam_normal_001",
@@ -508,14 +508,14 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
           "isFollowedByMe": false
         },
         "shortDescription": null,
-        "type": "STANDARD"
+        "familyType": "STANDARD"
       }
     ]
   }
 }
 ```
 
-**Note:** `shortDescription` is always present in the response but is `null` for `STANDARD` families. The client should only render the description line when `type = CHARITY` and `shortDescription` is non-null.
+**Note:** `shortDescription` is always present in the response but is `null` for `STANDARD` families. The client should only render the description line when `familyType = CHARITY` and `shortDescription` is non-null.
 
 `shortDescription` is a free-text field that the charity family admin fills in manually (via their family profile settings). It is not computed or auto-generated.
 
@@ -813,7 +813,7 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
       id
       name
       avatarUrl
-      type
+      familyType
     }
     author {
       id
@@ -937,60 +937,79 @@ Fetch comments for the inline comment panel. Returns comments sorted `createdAt 
 
 **Operation:**
 ```graphql
-query PostComments($postId: ID!, $limit: Int, $cursor: String) {
-  postComments(postId: $postId, limit: $limit, cursor: $cursor) {
-    comments {
-      id
-      author {
-        id
-        displayName
-        avatarUrl
+query PostComments($postId: ID!, $first: Int = 20, $after: String) {
+  post(id: $postId) {
+    id
+    commentsCount
+    comments(first: $first, after: $after) {
+      edges {
+        cursor
+        node {
+          id
+          author {
+            id
+            displayName
+            avatarUrl
+          }
+          body
+          createdAt
+        }
       }
-      body
-      createdAt
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
-    totalCount
-    nextCursor
-    hasMore
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "postId": "post_abc123", "limit": 10, "cursor": null }
+{ "postId": "post_abc123", "first": 10, "after": null }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "postComments": {
-      "comments": [
-        {
-          "id": "comment_001",
-          "author": {
-            "id": "user_002",
-            "displayName": "Bella",
-            "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+    "post": {
+      "id": "post_abc123",
+      "commentsCount": 34,
+      "comments": {
+        "edges": [
+          {
+            "cursor": "eyJpZCI6ImNvbW1lbnRfMDAxIn0=",
+            "node": {
+              "id": "comment_001",
+              "author": {
+                "id": "user_002",
+                "displayName": "Bella",
+                "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+              },
+              "body": "Cute quá trời 😍",
+              "createdAt": "2026-06-06T07:00:00Z"
+            }
           },
-          "body": "Cute quá trời 😍",
-          "createdAt": "2026-06-06T07:00:00Z"
-        },
-        {
-          "id": "comment_002",
-          "author": {
-            "id": "user_003",
-            "displayName": "Quang",
-            "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
-          },
-          "body": "Mắt to ghê 👀",
-          "createdAt": "2026-06-06T07:15:00Z"
+          {
+            "cursor": "eyJpZCI6ImNvbW1lbnRfMDAyIn0=",
+            "node": {
+              "id": "comment_002",
+              "author": {
+                "id": "user_003",
+                "displayName": "Quang",
+                "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+              },
+              "body": "Mắt to ghê 👀",
+              "createdAt": "2026-06-06T07:15:00Z"
+            }
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": true,
+          "endCursor": "eyJpZCI6ImNvbW1lbnRfMDAyIn0="
         }
-      ],
-      "totalCount": 34,
-      "nextCursor": "eyJpZCI6ImNvbW1lbnRfMDAxIn0=",
-      "hasMore": true
+      }
     }
   }
 }

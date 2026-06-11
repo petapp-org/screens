@@ -24,7 +24,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
   │     ├── N pets  [· N randoms — only if > 0]  · N followers
   │     └── [Follow button]  [Message button]
   │
-  ├── Charity Section  ← only shown when type = charity
+  ├── Charity Section  ← only shown when familyType = charity
   │     ├── [♡ icon]  shortDescription
   │     ├── [♡ icon]  "N people have helped"
   │     └── [Donate button — full width]
@@ -67,11 +67,11 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `randomCount` | Number of media items where `mediaTag.type = "random" AND breed IS NOT NULL` — AI detected a breed but could not match to a named pet. Does NOT count media with no breed detected. Hidden from stats line when `0`. |
 | `randomPostCount` | Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
-| `type` | `standard` \| `charity` |
+| `familyType` | `standard` \| `charity` |
 | `social.isFollowedByMe` | Boolean (false when unauthenticated) |
 | `about` | Free-text description |
 | `shortDescription` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
-| `donorCount` | Number of people who have donated. Only meaningful when `type = charity`; `null` for standard families. |
+| `donorCount` | Number of people who have donated. Only meaningful when `familyType = charity`; `null` for standard families. |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
@@ -83,7 +83,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 - `petCount = 1` (public pet) → show that pet's avatar
 - `petCount ≥ 2` (public pets) → show stacked overlapping pet avatars (up to 5); auto-rotates through them on a timer (client-side animation only, no API call)
 - Only **public pets** (`isPublic = true`) are included in the stacked display — private pets are never shown to non-members
-- `type = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
+- `familyType = charity` → show a **"CHARITY" ribbon badge** overlaid on the avatar (top-left corner)
 
 **Follow button:**
 - Not following → button label "Follow"; tap → `FollowFamily mutation (D)` (requires login → redirect to Login)
@@ -96,7 +96,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 
 ---
 
-### 2. Charity Section *(only rendered when `type = charity`)*
+### 2. Charity Section *(only rendered when `familyType = charity`)*
 
 Displayed between the Family Info Card and the Pets List.
 
@@ -267,7 +267,7 @@ query Family($id: ID!) {
       followersCount
       isFollowedByMe
     }
-    type
+    familyType
     shortDescription
     donorCount
     about
@@ -316,7 +316,7 @@ query Family($id: ID!) {
         "followersCount": 287,
         "isFollowedByMe": false
       },
-      "type": "CHARITY",
+      "familyType": "CHARITY",
       "shortDescription": "Home-based cat rescue",
       "donorCount": 184,
       "about": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
@@ -367,7 +367,7 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
     edges {
       node {
         id
-        family { id name avatarUrl type }
+        family { id name avatarUrl familyType }
         author { id displayName avatarUrl }
         pets { id name avatarUrl }
         body
@@ -406,7 +406,7 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
         {
           "node": {
             "id": "post_abc",
-            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "type": "STANDARD" },
+            "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "familyType": "STANDARD" },
             "author": { "id": "user_001", "displayName": "Minh Tuan", "avatarUrl": "..." },
             "pets": [{ "id": "pet_111", "name": "Bụi", "avatarUrl": "..." }],
             "body": "Bụi nằm chờ mama 🌕",
@@ -457,7 +457,7 @@ query FamilyParents($familyId: ID!) {
     parents {
       id
       displayName
-      tag
+      username
       avatarUrl
     }
     totalCount
@@ -479,13 +479,13 @@ query FamilyParents($familyId: ID!) {
         {
           "id": "user_001",
           "displayName": "Minh Dang",
-          "tag": "minhdang",
+          "username": "minhdang",
           "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
         },
         {
           "id": "user_002",
           "displayName": "Cecilia Tran",
-          "tag": "ceciliatran",
+          "username": "ceciliatran",
           "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
         }
       ],
@@ -623,7 +623,7 @@ query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
     edges {
       node {
         id
-        family { id name avatarUrl type }
+        family { id name avatarUrl familyType }
         author { id displayName avatarUrl }
         pets { id name avatarUrl }
         body
@@ -737,8 +737,8 @@ User taps Parents row
 | `petCount = 0` | Show default family avatar; no pets list section |
 | `petCount = 1` | Show single pet avatar (no stacking animation) |
 | `petCount ≥ 2` | Stack up to 5 pet avatars; rotate through them on timer (client-side only) |
-| `type = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
-| `type = standard` | No ribbon; no Charity Section |
+| `familyType = charity` | Show "CHARITY" ribbon on avatar; show Charity Section (shortDescription, donorCount, Donate button) |
+| `familyType = standard` | No ribbon; no Charity Section |
 | `petCount ≤ 5` | Pets list: single vertical column |
 | `petCount > 5` | Pets list: horizontal scroll, 5 rows per column, next column peeks on right edge |
 | `about` is null or empty | Hide About section entirely |
@@ -828,7 +828,7 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 |-------|---------|
 | `avatarUrl` | User avatar |
 | `displayName` | User's display name |
-| `tag` | `@tag` |
+| `username` | `@username` |
 
 **Posts:**
 - No filter tabs; no Suggested Families widget

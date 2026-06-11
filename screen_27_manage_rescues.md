@@ -4,7 +4,7 @@
 
 A **charity family's** management view for the rescue listings it has posted — split into **Open** and **Adopted**, with quick actions to edit a listing, mark it adopted, or reopen it. This is where a charity closes a rescue once a pet finds a home.
 
-**Access:** only members of a **charity family** (`type = charity`), and only while **that charity is their active family**. A charity member whose active family is something else must switch active family first (mirrors the post/close permission rule). Non-charity users never reach this screen.
+**Access:** only members of a **charity family** (`familyType = charity`), and only while **that charity is their active family**. A charity member whose active family is something else must switch active family first (mirrors the post/close permission rule). Non-charity users never reach this screen.
 
 Navigated to from:
 - **My Pets** (`screen_8`) → **Rescues** row (shown only when the active family is a charity),
