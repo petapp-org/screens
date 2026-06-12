@@ -231,17 +231,17 @@ Opened from `[...]` → "Edit Pet". Owner only.
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| Avatar | No | Replace pet avatar — upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan |
+| Avatar | No | Replace pet avatar — upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → send `list[0].mediaId` as `primaryMediaId` in the input (use `publicUrl` only for local preview); no AI scan |
 | Name | Yes | Pet display name |
 | Public | Yes | Toggle `isPublic` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
-| Species | Yes | Read-only if set by AI scan; editable if entered manually |
-| Breed | No | Read-only if set by AI scan; editable if entered manually; can be left blank |
-| Gender | Yes | `male` / `female` / `unknown` |
-| Birthday | No | Date picker |
-| Weight | No | Number + unit (kg) |
+| Species | Yes | Pick from species list → send `speciesId`. ⏳ Read-only-if-AI-scan lock pending petapp-be #970 |
+| Breed | No | Pick from breed catalog → send `breedId`; can be left blank. ⏳ Read-only-if-AI-scan lock pending petapp-be #970 |
+| Gender | Yes | `sex`: `MALE` / `FEMALE` / `UNKNOWN` (editable, petapp-be #972) |
+| Birthday | No | Date picker → `birthDate` |
+| Weight | No | Number + unit (kg) → `weightKg` (string) |
 
 - Submit → `UpdatePet mutation (BC)`
-- `species` and `breed` fields: if set by AI scan, shown as read-only with label *"Set by AI"*; owner can override by unlocking (tap lock icon → confirmation)
+- ⏳ **Pending petapp-be #970**: `species`/`breed` "Set by AI" read-only + unlock-to-override (`forceBreedUpdate`) not enforced yet (needs `breedSource` field). Until then both are freely editable.
 
 ---
 
@@ -586,14 +586,13 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
   "petId": "pet_111",
   "input": {
     "name": "Bụi Bụi",
-    "species": "Cat",
+    "speciesId": "species_cat",
     "isPublic": true,
     "sex": "MALE",
     "birthDate": "2023-01-15",
-    "weightKg": 4.5,
-    "avatarUrl": "https://cdn.petapp.com/media/new_avatar.jpg",
-    "breed": "Orange Tabby Cat",
-    "forceBreedUpdate": false
+    "weightKg": "4.5",
+    "primaryMediaId": "media_new_avatar",
+    "breedId": "breed_orange_tabby_cat"
   }
 }
 ```
@@ -625,8 +624,9 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
 ```
 
 **Notes:**
-- `breed` field: if was set by AI scan (`breedSource = "AI"`), override requires explicit `forceBreedUpdate: true` in input
-- Changing `breed` triggers re-generation of Food/Behavior/Med/Vax tabs (queued)
+- **Input uses IDs, not display strings** (matches backend `UpdatePetInput`, petapp-be #972): send `speciesId`/`breedId` (from petpedia/breed catalog, picked via the species/breed pickers) and `primaryMediaId` (the `mediaId` returned by `SignUploadBatch`, **not** the CDN `publicUrl`). Read-side response keeps nested `species`/`breed` objects + `avatarUrl`.
+- All input fields optional/partial — omit = no change. `sex` editable now (petapp-be #972).
+- ⏳ **Pending (petapp-be #970)** — not yet enforced by backend: `forceBreedUpdate` flag + breed AI-lock (`breedSource = "AI"` → read-only until override) + breed-change triggering Food/Behavior/Med/Vax re-generation. These require a `breedSource` field that doesn't exist yet. Until shipped, breed is freely editable and the client should not send `forceBreedUpdate`.
 
 **Errors:**
 
@@ -635,9 +635,8 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
 | `403` | `NOT_OWNER` | Caller is a parent, not the owner |
 | `403` | `NOT_FAMILY_MEMBER` | Caller is not a member of this pet's family |
 | `404` | `PET_NOT_FOUND` | Pet does not exist or is soft-deleted |
-| `409` | `BREED_AI_LOCKED` | Attempt to change AI-set breed without `forceBreedUpdate: true` |
-| `422` | `INVALID_SPECIES` | Provided species value does not exist in the DB |
-| `422` | `INVALID_BREED` | Provided breed does not belong to the given species |
+| `404` | `NOT_FOUND` | `breedId` does not exist in the breed catalog |
+| `409` | `BREED_AI_LOCKED` | ⏳ Pending #970 — change AI-set breed without `forceBreedUpdate: true` (not enforced yet) |
 
 ---
 
