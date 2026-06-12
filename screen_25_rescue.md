@@ -133,7 +133,7 @@ Full, paginated list of open listings in the selected city (after the active fil
 | species · breed · age · gender | `species`, `breed`, `ageText`, `gender` | ` · `-joined; **skip any null** (breed/age optional); gender `♀`/`♂`/Unknown |
 | `charityName` + CHARITY badge | `charity.name` | the posting charity family; badge always shown |
 
-- **Pagination:** infinite scroll via `Rescues (CL)` `cursor`.
+- **Pagination:** infinite scroll via `Rescues (CL)` `after` (ADR-0023).
 - **Tap a row** → **Rescue Detail** (`screen_26`).
 - **Empty state** (filter matches nothing): *"No rescues match this filter."* (banner + map + chips stay visible).
 
@@ -143,6 +143,8 @@ Full, paginated list of open listings in the selected city (after the active fil
 
 > All calls go to `POST /graphql`. **Auth:** Required.
 > **No new query for the list** — reuses `Rescues (CL)` + `Cities (CA)` from `screen_17` (list + map pins + filter + sort + pagination). The detail, create form, and management live in `screen_26` / `screen_27`.
+
+> ⚠️ **GAP petapp-be#429 (epic #888):** Rescue listing domain **chưa build** — không có type `RescueListing`, không có query `rescues`/`rescue`, không có mutation `createRescue`/`closeRescue`/`reopenRescue`/`updateRescue`/`inquireRescue` trong contract. Spec này là born-canonical proposal; client không được gọi `Rescues (CL)` hay các mutation liên quan cho đến khi GAP được giải quyết.
 
 ---
 

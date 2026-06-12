@@ -251,7 +251,7 @@ query GetLostPetReport($id: ID!) {
 |--------|------|----------|
 | `404` | `REPORT_NOT_FOUND` | Report does not exist |
 
-> **"I saw …" messaging:** uses `StartThread (BI)` (`screen_10`) — `{ receiverType: FAMILY, receiverId: family.id, senderType: USER | FAMILY }`, optional pre-filled body. No new endpoint.
+> **"I saw …" messaging:** uses `StartThread (BI)` (`screen_10`) — `{ receiverType: FAMILY, receiverId: family.id, senderType: USER | FAMILY }`, optional pre-filled body. No new endpoint. ⏳ GAP — `StartThread (BI)` chưa có ở backend (messaging chưa build, petapp-be#831, epic #403).
 
 ---
 

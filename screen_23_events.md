@@ -131,7 +131,7 @@ Full, paginated list of upcoming events in the selected city (after the active f
 - On → Off: un-fills; **no prompt**, no change to any calendar entry already added.
 - The row does **not** show the numeric count (kept compact); the full count lives on `screen_24`.
 
-- **Pagination:** infinite scroll via `Events (CI)` `cursor`.
+- **Pagination:** infinite scroll via `Events (CI)` `after` (ADR-0023).
 - **Tap a row** (anywhere except the Interested button) → **Event Detail** (`screen_24`).
 - **Empty state** (filter matches nothing): *"No events match this filter."* (map + chips stay visible).
 
@@ -141,6 +141,8 @@ Full, paginated list of upcoming events in the selected city (after the active f
 
 > All calls go to `POST /graphql`. **Auth:** Required.
 > **No new query for the list** — reuses `Events (CI)` + `Cities (CA)` from `screen_17` (list + filter + pagination). The Interested toggle reuses `SetEventInterest (CK)` from `screen_24`. The event detail lives in `screen_24`.
+
+> ⚠️ **GAP petapp-be#428 (epic #401):** Events domain **chưa build** — không có type `Event`, không có query `events`/`event`, không có mutation `setEventInterest` trong contract. Spec này là born-canonical proposal; client không được gọi `Events (CI)` hay `SetEventInterest (CK)` cho đến khi GAP được giải quyết.
 
 ---
 

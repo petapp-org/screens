@@ -166,6 +166,8 @@ query MyRescues($status: RescueStatus!, $first: Int! = 20, $after: String) {
 
 ### CP. Mutation: `CloseRescue`
 
+> ⏳ GAP petapp-be#429, epic #888 — `closeRescue` chưa có ở backend; rescue domain chưa build.
+
 Mark a listing as adopted. **Auth:** charity member, charity active.
 
 ```graphql
@@ -189,6 +191,8 @@ mutation CloseRescue($rescueId: ID!) {
 
 ### CQ. Mutation: `ReopenRescue`
 
+> ⏳ GAP petapp-be#429, epic #888 — `reopenRescue` chưa có ở backend; rescue domain chưa build.
+
 Reopen an adopted listing. **Auth:** charity member, charity active.
 
 ```graphql
@@ -211,6 +215,8 @@ mutation ReopenRescue($rescueId: ID!) {
 ---
 
 ### CS. Mutation: `UpdateRescue`
+
+> ⏳ GAP petapp-be#429, epic #888 — `updateRescue` chưa có ở backend; rescue domain chưa build.
 
 Edit a listing (Create Rescue form in edit mode). **Auth:** charity member, charity active.
 

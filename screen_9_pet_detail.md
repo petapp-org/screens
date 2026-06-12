@@ -289,7 +289,7 @@ DESCRIPTION *
 
 > **Submit** is enabled only when **all required fields** are set: a pet, ≥ 1 photo, a map location, a last-seen time, and a non-empty description.
 
-**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan (missing photos are never scanned).
+**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (screen_4) → cần hosted URL cho `photos` — ⏳ GAP petapp-be#906: `SignUploadBatchResultItem` chưa trả `publicUrl`; no AI scan (missing photos are never scanned).
 
 **On submit → `ReportMissing mutation (BE)`:**
 - `pet.missingStatus` set with the full shape: `lastSeenLocation` (+ `lat`/`lng`), `lastSeenAt`, `description`, ordered `photos` (cover first), `reportedBy` (the caller), `reportedAt`.
@@ -730,7 +730,7 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
 ```
 
 - `lat`/`lng` come from the map pin; `city`/`cityCode`/`country`/`countryCode` are reverse-geocoded (client may send what it resolved, server may re-validate). The server derives **`cityShortName`** (curated short label) — the client need not send it; it is returned on read for display on Lost Pets rows / detail.
-- `photos` are pre-uploaded `publicUrl`s from `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (`list[0].publicUrl`); **at least 1 required**; order is preserved; index 0 is the cover.
+- `photos` are pre-uploaded hosted URLs from `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` — ⏳ GAP petapp-be#906: chưa có `publicUrl` trên `SignUploadBatchResultItem`; **at least 1 required**; order is preserved; index 0 is the cover.
 - `description` is **required** and must be non-empty.
 
 **Variables:**

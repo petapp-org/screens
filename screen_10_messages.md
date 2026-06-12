@@ -10,6 +10,7 @@ Auth required. Accessible from the **Messages icon** (`✉`) in the Explore head
 The Messages icon shows a **red dot** (no number) whenever there is any **unread chat** — driven by `UnreadMessageCount (BL)`. (The separate **Notifications icon** `🔔` carries its own red dot from `UnreadNotificationCount (BU)`.) Inside the screen there is **no red dot**; unread threads are shown in **bold** instead.
 
 > **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `MarkFamilyPrimary (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats inbox: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
+> Trên contract, "active family" = **`me.primaryFamily`** — KHÔNG có query/field `activeFamily` riêng (bị bác ở reconcile petapp-be#877; issue #819 closed). Mọi chỗ spec này nói "active family" đều resolve từ `me { primaryFamily }`.
 
 ---
 
@@ -62,12 +63,12 @@ Threads received by the user's **non-active** families are **not shown** at all.
 
 | Type | Avatar | Title format | Example |
 |------|--------|--------------|---------|
-| **DM** | sender's user avatar | `{userName}` — **name only, no arrow** | `userA` |
-| **To active family** (individual sender) | sender's user avatar | `{userName} → {myActiveFamily}` | `userB → Pudding's Family` |
+| **DM** | sender's user avatar | `{displayName}` — **name only, no arrow** | `userA` |
+| **To active family** (individual sender) | sender's user avatar | `{displayName} → {myActiveFamily}` | `userB → Pudding's Family` |
 | **To active family** (family sender) | sender family avatar | `{senderFamily} · {member} → {myActiveFamily}` | `Family_Y · userC → Pudding's Family` |
 | **I sent to a family** | receiver family avatar | `you → {receiverFamily}` | `you → Family Z` |
 
-- `{myActiveFamily}` = the user's current active family name (constant across all type-2 rows; client fills it from the active-family context). Truncate with `…` if long.
+- `{myActiveFamily}` = the user's current active family name (constant across all type-2 rows; client fills it from `me.primaryFamily.name` — see Terminology). Truncate with `…` if long.
 - **Reading the type:** no arrow → **DM**; `… → {my active family}` → **received by my active family**; `you → …` → **I sent it**.
 
 **Other row elements:**
@@ -196,9 +197,13 @@ When the user **switches active family** (F → M, via `MarkFamilyPrimary (AG)` 
 
 All calls go to `POST /graphql`.
 
+> ⚠️ **GAP petapp-be#403 (epic):** Toàn bộ messaging domain (BG–BM) **chưa có ở backend** — không có type, query, hay mutation nào liên quan đến thread/message/chat trong contract hiện tại. Spec này là **born-canonical proposal** (đặt tên chuẩn, sẵn sàng cho codegen khi backend ship). Các operation riêng lẻ được track ở các issue con bên dưới.
+
 ---
 
 ### BG. Query: `MessageThreads`
+
+> ⏳ GAP petapp-be#829 — `messageThreads` chưa có ở backend.
 
 Fetch the Chats inbox for the current user. The server returns **only** the threads visible per the **Access & Active-Family Rules** (active-family-received + DMs + own-sent); non-active-family threads are excluded server-side. `unreadCount` is computed using the activation-timestamp rule.
 
@@ -214,7 +219,7 @@ query MessageThreads {
       id
       name
       avatarUrl
-      isCharity      # true → show CHARITY badge (family only)
+      familyType     # CHARITY → show CHARITY badge (family only); null for USER counterparts
     }
     direction        # INBOUND (received) | OUTBOUND (I sent it)
     lastMessage {
@@ -234,8 +239,8 @@ query MessageThreads {
 - `type = FAMILY_RECEIVED`, `lastMessage.senderType = USER` → title `{lastMessage.senderName} → {myActiveFamily}`, avatar = `counterpart.avatarUrl`.
 - `type = FAMILY_RECEIVED`, `lastMessage.senderType = FAMILY` → title `{lastMessage.senderFamilyName} · {lastMessage.senderName} → {myActiveFamily}`, avatar = `counterpart.avatarUrl`.
 - `type = FAMILY_SENT` → title `you → {counterpart.name}`, avatar = `counterpart.avatarUrl`.
-- `{myActiveFamily}` is supplied by the client from the active-family context (not in this response — it is the same family for every `FAMILY_RECEIVED` row).
-- `counterpart.isCharity = true` → show CHARITY badge next to the family name.
+- `{myActiveFamily}` is supplied by the client from `me.primaryFamily.name` (not in this response — it is the same family for every `FAMILY_RECEIVED` row).
+- `counterpart.familyType = CHARITY` → show CHARITY badge next to the family name.
 - `unreadCount > 0` → row bold.
 
 **Errors:**
@@ -247,6 +252,8 @@ query MessageThreads {
 ---
 
 ### BH. Query: `ThreadMessages`
+
+> ⏳ GAP petapp-be#830 — `threadMessages` chưa có ở backend.
 
 Fetch messages in a thread (paginated, **oldest first** — `sentAt asc`). Load earlier messages by passing the oldest known message cursor.
 
@@ -262,8 +269,8 @@ query ThreadMessages($threadId: ID!, $after: String, $first: Int) {
           id
           sender {
             userId
-            userName
-            userAvatarUrl
+            displayName
+            avatarUrl
             familyId
             familyName
           }
@@ -272,7 +279,7 @@ query ThreadMessages($threadId: ID!, $after: String, $first: Int) {
             id
             body
             sender {
-              userName
+              displayName
               familyName
             }
           }
@@ -303,8 +310,8 @@ query ThreadMessages($threadId: ID!, $after: String, $first: Int) {
               "id": "msg_001",
               "sender": {
                 "userId": "user_001",
-                "userName": "Minh Dang",
-                "userAvatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
+                "displayName": "Minh Dang",
+                "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg",
                 "familyId": null,
                 "familyName": null
               },
@@ -336,6 +343,8 @@ query ThreadMessages($threadId: ID!, $after: String, $first: Int) {
 
 ### BI. Mutation: `StartThread`
 
+> ⏳ GAP petapp-be#831 — `startThread` chưa có ở backend (xem thêm spec issue #858).
+
 Create or retrieve an existing thread between sender and receiver.
 
 **Auth:** Required
@@ -345,7 +354,7 @@ mutation StartThread($input: StartThreadInput!) {
   startThread(input: $input) {
     id
     type
-    counterpart { type id name avatarUrl isCharity }
+    counterpart { type id name avatarUrl familyType }
     direction
     unreadCount
   }
@@ -377,6 +386,8 @@ mutation StartThread($input: StartThreadInput!) {
 
 ### BJ. Mutation: `SendMessage`
 
+> ⏳ GAP petapp-be#832 — `sendMessage` chưa có ở backend.
+
 Send a message in a thread.
 
 **Auth:** Required
@@ -387,8 +398,8 @@ mutation SendMessage($threadId: ID!, $input: SendMessageInput!) {
     id
     sender {
       userId
-      userName
-      userAvatarUrl
+      displayName
+      avatarUrl
       familyId
       familyName
     }
@@ -396,7 +407,7 @@ mutation SendMessage($threadId: ID!, $input: SendMessageInput!) {
     repliedTo {
       id
       body
-      sender { userName familyName }
+      sender { displayName familyName }
     }
     sentAt
   }
@@ -427,6 +438,8 @@ mutation SendMessage($threadId: ID!, $input: SendMessageInput!) {
 
 ### BK. Mutation: `MarkThreadRead`
 
+> ⏳ GAP petapp-be#833 — `markThreadRead` chưa có ở backend.
+
 Mark a thread as read for the current user.
 
 **Auth:** Required
@@ -447,6 +460,8 @@ mutation MarkThreadRead($threadId: ID!) {
 ---
 
 ### BL. Query: `UnreadMessageCount`
+
+> ⏳ GAP petapp-be#836 — `unreadMessageCount` chưa có ở backend.
 
 Chats unread count — `> 0` drives the **Messages-icon red dot** (`✉`, header). Independent of the Notifications-icon dot (`UnreadNotificationCount (BU)`, `screen_22`).
 
@@ -470,6 +485,8 @@ query UnreadMessageCount {
 
 ### BM. Query: `SearchThreadMessages`
 
+> ⏳ GAP petapp-be#835 — `searchThreadMessages` chưa có ở backend.
+
 Server-side search across all messages in a thread.
 **Auth:** Required
 
@@ -486,7 +503,7 @@ query SearchThreadMessages($threadId: ID!, $q: String!, $after: String, $first: 
           sentAt
           sender {
             userId
-            userName
+            displayName
             familyId
             familyName
           }

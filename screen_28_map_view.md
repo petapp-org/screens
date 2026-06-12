@@ -110,7 +110,7 @@ Tap a card (body)                   →  open that item's Detail screen (per cat
 ## API Endpoints Required
 
 > All calls go to `POST /graphql`. **Auth:** Required.
-> **No new query** — reuses the source category's list query (`LostPets CB` / `PetFriendlyPlaces CD` / `Events CI` / `Rescues CL`) with the **same filter** and a **high `limit`** (or paged) to fetch all pins for the city. Each already returns `lat`/`lng` and the fields the mini-card needs.
+> **No new query** — reuses the source category's list query (`LostPets CB` / `PetFriendlyPlaces CD` / `Events CI` / `Rescues CL`) with the **same filter** and a **high `first`** (or paged) to fetch all pins for the city. Each already returns `lat`/`lng` and the fields the mini-card needs.
 
 > **Pins-only optimisation (future):** if a city ever returns a very large pin set, a lightweight `…Pins` query returning just `{ id, lat, lng, thumbnail }` could back the map, loading the full card on selection. Flagged in Open Items; not needed this phase.
 
@@ -123,7 +123,7 @@ Tap a card (body)                   →  open that item's Detail screen (per cat
 ```
 [Open map] on screen_18 / 20 / 23 / 25
   └─> Map View { category, cityCode, countryCode, filter, sort? }
-        └─> reuse the category's list query (CB/CD/CI/CL) with current filter, high limit
+        └─> reuse the category's list query (CB/CD/CI/CL) with current filter, high first
               ├─ items → themed pins + card carousel (first card selected)
               └─ empty → "No {category} in this area" overlay
 ```
@@ -180,7 +180,7 @@ Tap a chip / change sort (Rescue)
 | 3 | Pin ↔ card | **Two-way synced** carousel (swipe card pans to pin; tap pin scrolls to card); tap card → detail |
 | 4 | "Search this area" | **Not this phase** — loads the same city set as the list under the current filter (no pan re-query) |
 | 5 | Filter state | **Shared** with the source list (two-way); chips mirror the source screen |
-| 6 | Data | **Reuse** the category list query (`CB/CD/CI/CL`) with a high limit; no new endpoint |
+| 6 | Data | **Reuse** the category list query (`CB/CD/CI/CL`) with a high `first`; no new endpoint |
 | 7 | Map/List toggle | None — Back returns to the list |
 | 8 | Clustering + recenter | Cluster dense pins; `⊕` recenter to GPS (city centre fallback) |
 

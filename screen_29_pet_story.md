@@ -94,7 +94,7 @@ Within a month, each **day** that has ≥ 1 qualifying post is a **row** on a ve
 | > 3 | horizontal-scroll row of squares |
 
 - A square whose cover is a **video** shows a small **▶ badge**.
-- **Tap a square** → open **Post Detail** (`screen_2`) for that post, passing `focusPetId = this pet` so its media are reordered to the front.
+- **Tap a square** → open **Post Detail** (`screen_2`) for that post, passing `focusPetId = this pet` so its media are reordered to the front. ⏳ GAP — arg `focusPetId` chưa có trên `post` query (thuộc cụm pet-story #900; cần issue riêng nếu backend không gộp)
 
 ---
 
@@ -128,9 +128,13 @@ A fullscreen, auto-advancing slideshow of **this pet's media**, **oldest → new
 
 > All calls go to `POST /graphql`. **Auth:** Required (family member).
 
+> ⚠️ **GAP petapp-be#900 (+ product discussion #485):** Toàn bộ pet-story domain **chưa có ở backend** — không có query `petStory`, không có type `PetStoryMonth`/`PetStoryDay`/`PetStoryPost`, không có logic group-by-month/day. Spec này là **born-canonical proposal**; client không được gọi CT cho đến khi GAP được giải quyết.
+
 ---
 
 ### CT. Query: `PetStory`
+
+> ⏳ GAP petapp-be#900 — `petStory` chưa có ở backend (xem thêm product discussion #485).
 
 Fetch the full story for a pet — months → days → posts, each post carrying **this pet's** ordered media (cover = index 0; the flat sequence powers Play).
 
@@ -216,7 +220,7 @@ query PetStory($petId: ID!) {
 | `403` | `NOT_FAMILY_MEMBER` | Caller is not a member of the pet's family (Story is member-only) |
 | `404` | `PET_NOT_FOUND` | Pet does not exist or is soft-deleted |
 
-> **Post reorder:** opening a square uses the existing Post query (`screen_2` → `Post (M)`) with a new optional `focusPetId` — see `screen_2`. No new endpoint for that.
+> **Post reorder:** opening a square uses the existing Post query (`screen_2` → `Post (M)`) with a new optional `focusPetId` — see `screen_2`. No new endpoint for that. ⏳ GAP — arg `focusPetId` chưa có trên `post` query (thuộc cụm pet-story #900; cần issue riêng nếu backend không gộp)
 
 ---
 
@@ -235,7 +239,7 @@ My Pets / Pet Detail → [Story]   (member only)
 
 ```
 Tap a post square
-  └─> Post Detail (screen_2) { postId, focusPetId: thisPet }
+  └─> Post Detail (screen_2) { postId, focusPetId: thisPet }   # ⏳ GAP — focusPetId chưa có trên post query (#900)
         └─> media reordered so this pet's media are first
 ```
 
