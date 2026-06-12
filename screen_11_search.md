@@ -110,9 +110,11 @@ All calls go to `POST /graphql`.
 ### BN. Query: `SearchFamilies`
 
 ```graphql
-query SearchFamilies($q: String!, $first: Int = 20, $after: String) {
+query SearchFamilies($q: String!, $first: Int! = 20, $after: String) {
   searchFamilies(q: $q, first: $first, after: $after) {
     edges {
+      cursor
+      score         # Float! — relevance score (ADR-0026); node is nullable (null if index stale / entity deleted)
       node {
         id
         name
@@ -152,7 +154,7 @@ query SearchFamilies($q: String!, $first: Int = 20, $after: String) {
 ### BO. Query: `SearchUsers`
 
 ```graphql
-query SearchUsers($q: String!, $first: Int = 20, $after: String) {
+query SearchUsers($q: String!, $first: Int! = 20, $after: String) {
   searchUsers(q: $q, first: $first, after: $after) {
     edges {
       node {
@@ -185,9 +187,11 @@ query SearchUsers($q: String!, $first: Int = 20, $after: String) {
 ### BP. Query: `SearchPets`
 
 ```graphql
-query SearchPets($q: String!, $first: Int = 20, $after: String) {
+query SearchPets($q: String!, $first: Int! = 20, $after: String) {
   searchPets(q: $q, first: $first, after: $after) {
     edges {
+      cursor
+      score         # Float! — relevance score (ADR-0026); node is nullable (null if index stale / entity deleted)
       node {
         id
         name
@@ -218,6 +222,8 @@ query SearchPets($q: String!, $first: Int = 20, $after: String) {
 **Variables:** `{ "q": "british", "first": 20 }`
 
 **Note:** Only pets from public families are returned. Server filters based on family privacy settings.
+
+> **ADR-0026 null-guard:** `SearchFamilies` and `SearchPets` use typed search edges where `node` is **nullable** — client must null-check each edge's `node` before rendering (null means the index is stale or the entity has been deleted since indexing). `SearchUsers` uses a plain `UserConnection` and is not affected.
 
 **Errors:**
 

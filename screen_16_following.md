@@ -130,7 +130,7 @@ User taps Following button on a row
   └─> Optimistic: remove row
         └─> Show toast "Unfollowed [Name]" + Undo button (5s)
               ├─ Tap Undo
-              │     └─> FollowFamily mutation (D) { familyId }
+              │     └─> FollowFamily mutation (D) { family { id } }
               │           └─> Success → re-insert row; dismiss toast
               └─> No Undo (timeout or dismiss)
                     └─> UnfollowFamily mutation (E) { family { social { isFollowedByMe } } } confirmed

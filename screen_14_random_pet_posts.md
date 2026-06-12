@@ -4,6 +4,7 @@
 
 Post feed for all AI-detected but unmatched animals within a specific family — shows posts where at least one media frame has `mediaTag.type = "RANDOM"` with a detected breed or species.  
 Navigated to from: tapping **Random Pets row** in Family Posts (only when `randomCount > 0`); tapping **"View All →"** in the Random Pets section in My Pets (screen_8, only when random posts exist).  
+⏳ GAP petapp-be#773: `randomCount` is not yet a field on `Family` — entry-point guard and the count display are pending that backend issue.  
 Accessible without login — unauthenticated users see only `public` posts.
 
 ---
@@ -36,7 +37,7 @@ Accessible without login — unauthenticated users see only `public` posts.
 |-------|---------|
 | `avatarUrl` | Family avatar (circular) |
 | `name` | Family name (bold) |
-| `randomCount` | e.g. `"10 randoms"` (muted text) |
+| `randomCount` | e.g. `"10 randoms"` (muted text) — ⏳ GAP petapp-be#773 (field not yet on Family) |
 
 No follow/message buttons — this is a filtered view of a family's posts, not the full family profile. Tap family name → Family Posts screen for full profile.
 
@@ -59,7 +60,7 @@ No follow/message buttons — this is a filtered view of a family's posts, not t
 - Same server-side enforcement as Explore — unauthenticated sees `public` only
 - Server enforces — client receives only visible posts
 
-**Empty state:** Not applicable — both entry points are guarded by `randomCount > 0` / section only shown when posts exist.
+**Empty state:** Not applicable — both entry points are guarded by `randomCount > 0` / section only shown when posts exist (⏳ GAP petapp-be#773).
 
 ---
 
@@ -73,7 +74,7 @@ Reuses endpoint defined in `screen_3_family_posts.md`.
 
 See full definition in `screen_3_family_posts.md` → **Section: U. Query: RandomPetPosts**.
 
-**Variables:** `{ "familyId": "<familyId>", "limit": 10 }`
+**Variables:** `{ "familyId": "<familyId>", "first": 10 }`
 
 ---
 
@@ -119,10 +120,10 @@ User taps grid view icon
 
 | Case | Expected Behaviour |
 |------|--------------------|
-| Entry point guards | Both entry points check `randomCount > 0` before allowing navigation — empty state should never occur |
+| Entry point guards | Both entry points check `randomCount > 0` before allowing navigation — empty state should never occur (⏳ GAP petapp-be#773) |
 | Posts with mixed tags | A post may have some `type=PET` frames alongside `type=RANDOM` frames; it appears in this list if at least one frame is `RANDOM` with breed/species |
 | `mediaTag.type = "RANDOM"` on media frames | No pet badge shown; no navigation to Pet Posts from these frames |
-| Family changes between navigation events | If `randomCount` drops to 0 after navigation (race condition), list simply shows empty — acceptable edge case |
+| Family changes between navigation events | If `randomCount` drops to 0 after navigation (race condition), list simply shows empty — acceptable edge case (⏳ GAP petapp-be#773) |
 
 ---
 

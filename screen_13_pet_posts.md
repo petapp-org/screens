@@ -74,7 +74,7 @@ Reuses endpoint defined in `screen_3_family_posts.md`.
 
 See full definition in `screen_3_family_posts.md` → **Section: T. Query: PetPosts**.
 
-**Variables:** `{ "petId": "<petId>", "limit": 10 }`
+**Variables:** `{ "petId": "<petId>", "first": 10 }`
 
 ---
 
@@ -114,7 +114,7 @@ User taps grid view icon
 |------|--------------------|
 | All posts are private, viewer is not a member | Empty state: "No posts yet" |
 | Pet has no posts at all | Empty state: "No posts yet" |
-| Pet is private (`isPublic = false`) | Server returns `type=random` in mediaTag to non-members; pet badge is shown as random — Pet Posts screen is never navigated to from that badge for non-members |
+| Pet is private (`isPublic = false`) | Server returns `type=RANDOM` in mediaTag to non-members; pet badge is shown as random — Pet Posts screen is never navigated to from that badge for non-members |
 | `breed` is null | Show species name in the breed field; omit species sub-label |
 | Pet deleted (soft delete) | Pet still exists in DB; `PetPosts` query still returns data; pet info card still renders using stored data |
 | Tap same pet badge within this screen | No navigation — already on this pet's screen |
@@ -128,4 +128,4 @@ User taps grid view icon
 | 1 | Show post count in header | Not shown |
 | 2 | Show family info in header | Not shown — family name visible on each post card |
 | 3 | Default post view | List view |
-| 4 | Private pet visibility to non-members | mediaTag returns `type=random` → badge is not tappable to Pet Posts; non-members cannot reach this screen for private pets |
+| 4 | Private pet visibility to non-members | mediaTag returns `type=RANDOM` → badge is not tappable to Pet Posts; non-members cannot reach this screen for private pets |

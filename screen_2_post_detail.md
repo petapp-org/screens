@@ -44,10 +44,10 @@ Navigated to from: Explore feed (tap post body/media), inline comment panel ("Vi
 
 Identical to the canonical post card defined in `screen_1_home_explore.md` → **Section: Post Card**. All fields, layout rules, and interactions apply including:
 - Header: family avatar · family name (top-left) | `authorName · time` (top-right) | pets subtitle (bottom-left) | location (bottom-right, if set)
-- Media carousel with `N/Total` badge and per-frame pet badge (`mediaTag.type = "pet"` only)
+- Media carousel with `N/Total` badge and per-frame pet badge (`mediaTag.type = PET` only)
 - Tap **pet badge** → Pet Posts screen
 
-> **`focusPetId` (optional nav param):** when Post Detail is opened from a pet's **Story** (`screen_29`), it carries `focusPetId`. The media carousel is then **reordered client-side** so the media tagged to that pet (`mediaTag.type = PET`, `id = focusPetId`) come **first** (preserving their relative order), then the rest. No API change — uses the `media[].mediaTag` already returned by `Post (M)`. Without the param, media keep their original post order.
+> **`focusPetId` (optional nav param):** when Post Detail is opened from a pet's **Story** (`screen_29`), it carries `focusPetId`. The media carousel is then **reordered client-side** so the media tagged to that pet (`mediaTag.type = PET`, `petId = focusPetId`) come **first** (preserving their relative order), then the rest. No API change — uses the `media[].mediaTag` already returned by `Post (M)`. Without the param, media keep their original post order.
 - Tap **family name** → Family Posts screen
 - Tap **author name** → User Posts screen
 - Love button with optimistic update
@@ -175,20 +175,25 @@ query Post($id: ID!) {
       countryCode
     }
     media {
-      id
-      type
-      url
-      thumbnailUrl
-      mimeType
-      width
-      height
-      durationSeconds
-      provider
+      order
+      sourceType
+      embedUrl
+      embedProvider
       mediaTag {
         type
-        id
+        petId
         species
         breed
+      }
+      media {
+        id
+        type
+        thumbnailUrl
+        variants { size key contentType }
+        hlsUrl
+        blurhash
+        signedUrl
+        expiresAt
       }
     }
     loveCount
@@ -230,16 +235,21 @@ query Post($id: ID!) {
       "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
       "media": [
         {
-          "id": "media_001",
-          "type": "UPLOADED",
-          "url": "https://cdn.petapp.com/media/001.jpg",
-          "thumbnailUrl": null,
-          "mimeType": "image/jpeg",
-          "width": 1080,
-          "height": 1080,
-          "durationSeconds": null,
-          "provider": null,
-          "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }
+          "order": 1,
+          "sourceType": "UPLOADED",
+          "embedUrl": null,
+          "embedProvider": null,
+          "mediaTag": { "type": "PET", "petId": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" },
+          "media": {
+            "id": "media_001",
+            "type": "IMAGE",
+            "thumbnailUrl": null,
+            "variants": [{ "size": "1080x1080", "key": "media/001_1080.jpg", "contentType": "image/jpeg" }],
+            "hlsUrl": null,
+            "blurhash": "L6PZfSi_.AyE_3t7t7R**0o#DgR4",
+            "signedUrl": "https://cdn.petapp.com/media/001.jpg?token=abc",
+            "expiresAt": "2026-06-13T08:00:00Z"
+          }
         }
       ],
       "loveCount": 12,

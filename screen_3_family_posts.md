@@ -64,7 +64,7 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `avatarUrl` | Used as fallback / single avatar |
 | `petAvatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
 | `petCount` | Number of actual pets in the family |
-| `randomCount` | ⏳ GAP petapp-be#773 — not yet in contract. Number of media items where `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Hidden from stats line when `0`. |
+| `randomCount` | ⏳ GAP petapp-be#773 — not yet in contract. Number of media items where `mediaTag.type = RANDOM AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Hidden from stats line when `0`. |
 | `randomPostCount` | ⏳ GAP petapp-be#773 — not yet in contract. Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
 | `familyType` | `NORMAL` \| `CHARITY` |
@@ -225,9 +225,9 @@ The selected view persists for the session (client-side state).
 
 - 3-column equal-width grid, no gaps (or minimal gap)
 - Each cell shows the **thumbnail of the first media item** of the post:
-  - `uploaded` image → `media[0].url`
-  - `uploaded` video → `media[0].thumbnailUrl`
-  - `embedded` → `media[0].thumbnailUrl`
+  - `UPLOADED` image → `media[0].media.signedUrl`
+  - `UPLOADED` video → `media[0].media.thumbnailUrl`
+  - `EMBEDDED` → `media[0].media.thumbnailUrl`
 - If a post has multiple media items, show a small multi-media indicator icon on the cell (top-right corner)
 - Tap on any cell → navigates to **Post Detail screen** for that post
 - Same pagination as list view (load more on scroll)
@@ -377,9 +377,12 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
         body
         location { city cityCode country countryCode }
         media {
-          id type url thumbnailUrl mimeType
-          width height durationSeconds provider
-          mediaTag { type id species breed }
+          order
+          sourceType
+          embedUrl
+          embedProvider
+          mediaTag { type petId species breed }
+          media { id type thumbnailUrl variants { size key contentType } hlsUrl blurhash signedUrl expiresAt }
         }
         loveCount
         commentsCount
@@ -417,11 +420,10 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
             "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
             "media": [
               {
-                "id": "media_001", "type": "UPLOADED",
-                "url": "https://cdn.petapp.com/media/001.jpg",
-                "thumbnailUrl": null, "mimeType": "image/jpeg",
-                "width": 1080, "height": 1080, "durationSeconds": null, "provider": null,
-                "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }
+                "order": 1, "sourceType": "UPLOADED",
+                "embedUrl": null, "embedProvider": null,
+                "mediaTag": { "type": "PET", "petId": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" },
+                "media": { "id": "media_001", "type": "IMAGE", "thumbnailUrl": null, "variants": [{ "size": "1080x1080", "key": "media/001_1080.jpg", "contentType": "image/jpeg" }], "hlsUrl": null, "blurhash": "L6PZfSi_.AyE_3t7t7R**0o#DgR4", "signedUrl": "https://cdn.petapp.com/media/001.jpg?token=abc", "expiresAt": "2026-06-13T08:00:00Z" }
               }
             ],
             "loveCount": 42, "commentsCount": 5,
@@ -547,9 +549,12 @@ query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
         body
         location { city cityCode country countryCode }
         media {
-          id type url thumbnailUrl mimeType
-          width height durationSeconds provider
-          mediaTag { type id species breed }
+          order sourceType embedUrl embedProvider
+          mediaTag { type petId species breed }
+          media {
+            id type thumbnailUrl signedUrl hlsUrl variants blurhash
+            # ⏳ GAP #906: url mimeType width height durationSeconds — not yet in contract
+          }
         }
         loveCount
         commentsCount
@@ -574,18 +579,7 @@ query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
   "data": {
     "petFeed": {
       "edges": [
-        {
-          "cursor": "eyJpZCI6InBvc3RfYWJjIn0=",
-          "node": {
-            "id": "post_abc",
-            "body": "Bụi nằm chờ mama 🌕",
-            "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }],
-            "loveCount": 42,
-            "commentsCount": 5,
-            "visibility": "PUBLIC",
-            "createdAt": "2026-06-06T08:00:00Z"
-          }
-        }
+        { "cursor": "eyJpZCI6InBvc3RfYWJjIn0=", "node": { "id": "post_abc", "body": "Bụi nằm chờ mama 🌕", "media": [{ "order": 1, "sourceType": "UPLOADED", "embedUrl": null, "embedProvider": null, "mediaTag": { "type": "PET", "petId": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }, "media": { "id": "media_abc", "type": "IMAGE", "thumbnailUrl": null, "variants": [], "hlsUrl": null, "blurhash": null, "signedUrl": "https://cdn.petapp.com/media/abc.jpg?token=x", "expiresAt": "2026-06-13T08:00:00Z" } }], "loveCount": 42, "commentsCount": 5, "visibility": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } }
       ],
       "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfYWJjIn0=" }
     }
@@ -627,9 +621,12 @@ query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
         body
         location { city cityCode country countryCode }
         media {
-          id type url thumbnailUrl mimeType
-          width height durationSeconds provider
-          mediaTag { type id species breed }
+          order sourceType embedUrl embedProvider
+          mediaTag { type petId species breed }
+          media {
+            id type thumbnailUrl signedUrl hlsUrl variants blurhash
+            # ⏳ GAP #906: url mimeType width height durationSeconds — not yet in contract
+          }
         }
         loveCount
         commentsCount
@@ -654,18 +651,7 @@ query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
   "data": {
     "randomFeed": {
       "edges": [
-        {
-          "cursor": "eyJpZCI6InBvc3RfZGVmIn0=",
-          "node": {
-            "id": "post_def",
-            "body": "Mèo lạ ghé thăm nhà 🐱",
-            "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }],
-            "loveCount": 18,
-            "commentsCount": 2,
-            "visibility": "PUBLIC",
-            "createdAt": "2026-06-05T10:00:00Z"
-          }
-        }
+        { "cursor": "eyJpZCI6InBvc3RfZGVmIn0=", "node": { "id": "post_def", "body": "Mèo lạ ghé thăm nhà 🐱", "media": [{ "order": 1, "sourceType": "UPLOADED", "embedUrl": null, "embedProvider": null, "mediaTag": { "type": "RANDOM", "petId": null, "species": "Cat", "breed": "British Shorthair" }, "media": { "id": "media_def", "type": "IMAGE", "thumbnailUrl": null, "variants": [], "hlsUrl": null, "blurhash": null, "signedUrl": "https://cdn.petapp.com/media/def.jpg?token=y", "expiresAt": "2026-06-13T10:00:00Z" } }], "loveCount": 18, "commentsCount": 2, "visibility": "PUBLIC", "createdAt": "2026-06-05T10:00:00Z" } }
       ],
       "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfZGVmIn0=" }
     }
@@ -676,8 +662,8 @@ query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
 **Notes:**
 - `edges[].node` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
 - Family header data (name, avatar, randomCount) is fetched via Family query (Q) or is already available from the previous screen — it is not bundled into `randomFeed`.
-- Server filters: only posts where at least one media has `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
-- `mediaTag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
+- Server filters: only posts where at least one media has `mediaTag.type = RANDOM AND (breed IS NOT NULL OR species IS NOT NULL)`.
+- `mediaTag.type = RANDOM` → no pet badge shown on any media frame (client applies existing rules).
 
 **Errors:**
 
@@ -705,9 +691,12 @@ query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
         body
         location { city cityCode country countryCode }
         media {
-          id type url thumbnailUrl mimeType
-          width height durationSeconds provider
-          mediaTag { type id species breed }
+          order
+          sourceType
+          embedUrl
+          embedProvider
+          mediaTag { type petId species breed }
+          media { id type thumbnailUrl variants { size key contentType } hlsUrl blurhash signedUrl expiresAt }
         }
         loveCount
         commentsCount
@@ -736,7 +725,7 @@ query AuthorFeed($authorId: ID!, $first: Int = 20, $after: String) {
           "node": {
             "id": "post_ghi",
             "body": "Bụi dậy sớm cùng tui 🌅",
-            "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }],
+            "media": [{ "order": 1, "sourceType": "UPLOADED", "embedUrl": null, "embedProvider": null, "mediaTag": { "type": "PET", "petId": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" }, "media": { "id": "media_ghi", "type": "IMAGE", "thumbnailUrl": null, "variants": [], "hlsUrl": null, "blurhash": null, "signedUrl": "https://cdn.petapp.com/media/ghi.jpg?token=z", "expiresAt": "2026-06-13T07:00:00Z" } }],
             "loveCount": 34, "commentsCount": 6,
             "visibility": "PUBLIC", "createdAt": "2026-06-06T07:00:00Z"
           }
@@ -881,13 +870,13 @@ All canonical post card tap interactions apply (see `screen_1_home_explore.md` �
 | `randomCount` | e.g. `"10 randoms"` |
 
 **Posts:**
-- Scope: per-family only — all posts from this family where at least one media has `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`
+- Scope: per-family only — all posts from this family where at least one media has `mediaTag.type = RANDOM AND (breed IS NOT NULL OR species IS NOT NULL)`
 - No filter tabs; no Suggested Families widget
 - Sorted `createdAt` desc (newest first)
 - 10 posts per page, infinite scroll
 - Privacy rules: same server-side enforcement as Explore
 - Empty state: not applicable — both entry points are guarded (`randomCount > 0` / section hidden when 0 posts)
-- Post card follows canonical format (see `screen_1_home_explore.md` → Post Card); `mediaTag.type = "random"` → no pet badge shown on any media frame → no link to Pet Posts screen from within this screen
+- Post card follows canonical format (see `screen_1_home_explore.md` → Post Card); `mediaTag.type = RANDOM` → no pet badge shown on any media frame → no link to Pet Posts screen from within this screen
 - API: Query `RandomPetPosts` (endpoint U above)
 
 ---

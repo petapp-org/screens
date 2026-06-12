@@ -105,7 +105,7 @@ Single row pinned below the header.
 
 | Element | Description |
 |---------|-------------|
-| Pin icon + label | Current **selected city**, formatted `"{cityShortName}, {countryCode}"` (e.g. `"HCMC, VN"`). `cityShortName` is the curated short label (e.g. `HCMC`, `HN`, `Đà Lạt`) — distinct from `cityCode` (`HCM`) and the full `city` name shown in the picker. |
+| Pin icon + label | Current **selected city**, formatted `"{cityShortName}, {countryCode}"` (e.g. `"HCMC, VN"`). `cityShortName` is the curated short label (e.g. `HCMC`, `HN`, `Đà Lạt`) — distinct from `code` (`HCM`) and the full name (`nameVi` / `nameEn`) shown in the picker. |
 | Change button | Tap → opens **Choose Your City** bottom sheet |
 
 **Auto-detection (on app open / first visit to More):**
@@ -114,11 +114,11 @@ Single row pinned below the header.
 App requests location permission (OS prompt)
   ├─ Granted + position obtained
   │     └─> Compute nearest city: client-side haversine over the Cities list (CA)
-  │           ├─ Nearest is AVAILABLE   → set as selected city
+  │           ├─ Nearest is ACTIVE      → set as selected city
   │           └─ Nearest is COMING_SOON → set as selected city, but content is LOCKED
   │                                        (see "Coming-soon locked state" below)
   ├─ Denied / unavailable / timeout
-  │     └─> Default to HCMC, VN  (the only AVAILABLE city this phase)
+  │     └─> Default to HCMC, VN  (the only ACTIVE city this phase)
   └─ Permission already decided previously
         └─> Use last selected city from local storage (no re-prompt)
 ```
@@ -156,12 +156,12 @@ Choose Your City                                    [× close]
 | Element | Description |
 |---------|-------------|
 | Flag emoji | `flagEmoji` from the city record |
-| City name | Full display name (e.g. `"Ho Chi Minh City"`) |
-| Country | Sub-label (e.g. `"Vietnam"`) |
+| City name | Full display name — `nameVi` in Vietnamese locale, `nameEn` in English locale (e.g. `"Hồ Chí Minh"` / `"Ho Chi Minh City"`) |
+| Country | Sub-label derived from `countryCode` (e.g. `"VN"` → `"Vietnam"`) |
 | Trailing | `✓` checkmark on the **currently selected** city; `COMING SOON` pill on cities with `status = COMING_SOON` |
 
 **Selection rules:**
-- `AVAILABLE` rows → tappable. Tap → set as selected city, persist, close sheet, refresh sections.
+- `ACTIVE` rows → tappable. Tap → set as selected city, persist, close sheet, refresh sections.
 - `COMING_SOON` rows → **disabled** (greyed pill, no tap action). User cannot manually switch to a coming-soon city.
 - The currently selected city always shows the `✓` checkmark, even if it was auto-detected as a `COMING_SOON` city.
 
@@ -317,9 +317,9 @@ Shows **open rescue listings in the selected city** — pets that **charity fami
 
 ### CA. Query: `Cities`
 
-> ⚠️ **GAP petapp-be#888:** backend has no `cities` query yet (type `City` exists, no list query). Kept as-is, pending backend.
-
 Returns the list of supported cities with coordinates and availability — powers the **Choose Your City** picker and the **client-side nearest-city** detection. Fetched once and cached.
+
+**Shipped:** `cities: [City!]!` landed in petapp-be#852 / petapp-be#965.
 
 **Auth:** Optional (static reference data).
 
@@ -327,10 +327,10 @@ Returns the list of supported cities with coordinates and availability — power
 ```graphql
 query Cities {
   cities {
-    city
+    code
+    nameVi
+    nameEn
     cityShortName
-    cityCode
-    country
     countryCode
     flagEmoji
     lat
@@ -346,21 +346,21 @@ query Cities {
   "data": {
     "cities": [
       {
-        "city": "Ho Chi Minh City",
+        "code": "HCM",
+        "nameVi": "Hồ Chí Minh",
+        "nameEn": "Ho Chi Minh City",
         "cityShortName": "HCMC",
-        "cityCode": "HCM",
-        "country": "Vietnam",
         "countryCode": "VN",
         "flagEmoji": "🇻🇳",
         "lat": 10.7769,
         "lng": 106.7009,
-        "status": "AVAILABLE"
+        "status": "ACTIVE"
       },
       {
-        "city": "Hà Nội",
+        "code": "HN",
+        "nameVi": "Hà Nội",
+        "nameEn": "Hanoi",
         "cityShortName": "HN",
-        "cityCode": "HN",
-        "country": "Vietnam",
         "countryCode": "VN",
         "flagEmoji": "🇻🇳",
         "lat": 21.0278,
@@ -368,10 +368,10 @@ query Cities {
         "status": "COMING_SOON"
       },
       {
-        "city": "Singapore",
+        "code": "SG",
+        "nameVi": "Singapore",
+        "nameEn": "Singapore",
         "cityShortName": "Singapore",
-        "cityCode": "SG",
-        "country": "Singapore",
         "countryCode": "SG",
         "flagEmoji": "🇸🇬",
         "lat": 1.3521,
@@ -384,9 +384,10 @@ query Cities {
 ```
 
 **Notes:**
-- `status`: `AVAILABLE` | `COMING_SOON`.
+- `status`: `ACTIVE` | `COMING_SOON` | `INACTIVE` (enum `CityStatus`).
+- UI displays `nameVi` or `nameEn` depending on locale; `cityShortName` is the curated short label for compact display (e.g. `HCMC`, `HN`).
 - `lat` / `lng` = city centre, used by the client to pick the nearest city via haversine distance. No separate "nearest city" endpoint is needed (the list is small and cached).
-- Ordering is server-defined (AVAILABLE first, then a curated coming-soon order as in the mockup).
+- Ordering is server-defined (`ACTIVE` first, then a curated coming-soon order as in the mockup).
 
 ---
 
@@ -924,7 +925,7 @@ User taps More tab
               ├─ stored city exists → use it
               └─ no stored city → request location permission
                     ├─ granted → Cities (CA) → nearest by haversine
-                    │      ├─ AVAILABLE   → set + fetch sections
+                    │      ├─ ACTIVE       → set + fetch sections
                     │      └─ COMING_SOON → set + show LOCKED state
                     └─ denied/fail → default HCMC, VN → fetch sections
                           └─> fetch all 4 sections in parallel (each first: 3):
@@ -939,7 +940,7 @@ User taps More tab
 
 ```
 User taps Change → Choose Your City sheet (Cities CA, cached)
-  ├─ tap AVAILABLE city → persist + close → refetch all sections for new city
+  ├─ tap ACTIVE city → persist + close → refetch all sections for new city
   └─ tap COMING_SOON city → no-op (disabled)
 ```
 
@@ -1005,7 +1006,7 @@ User taps a Rescue row (section)
 
 | # | Question | Decision |
 |---|----------|----------|
-| 1 | City reference data shape | Each city carries `lat`/`lng` (centre) + `status` (`AVAILABLE`/`COMING_SOON`); nearest computed client-side via haversine |
+| 1 | City reference data shape | Each city carries `lat`/`lng` (centre) + `status` (`ACTIVE`/`COMING_SOON`/`INACTIVE`); nearest computed client-side via haversine |
 | 2 | Location permission denied | Default to HCMC, VN |
 | 3 | Nearest city is `COMING_SOON` | Show the detected city but lock content ("coming soon"); prompt to Change |
 | 4 | Manual selection of `COMING_SOON` city | Disabled in picker |
@@ -1013,7 +1014,7 @@ User taps a Rescue row (section)
 | 6 | Distance chips (`1km/5km`) | Filter **within** the selected city; require real GPS (`distanceKm`); disabled without GPS |
 | 7 | Reporting entry point | Not in the More hub section — reports filed from `screen_9` (Pet Detail → Report Missing button, below the category tabs) or the Lost Pets screen banner (`screen_18`) |
 | 8 | Pet Friendly | Active this phase — section (max 3 nearest in city) + full screen (`screen_20`) + place detail with reviews (`screen_21`). |
-| 9 | City display label | Add `cityShortName` (curated short label, e.g. `HCMC` / `Đà Lạt` / `HN`) used in the location bar + lost-pet rows + Lost Pet Detail; `cityCode` stays for keys/logic, full `city` shown in the picker |
+| 9 | City display label | `cityShortName` (curated short label, e.g. `HCMC` / `Đà Lạt` / `HN`) used in the location bar + lost-pet rows + Lost Pet Detail; `code` is the city key for args/logic; `nameVi`/`nameEn` are locale-aware full names shown in the picker |
 | 10 | "Other" species filter | `LostPetsFilter.species` accepts an `OTHER` sentinel = any species not `CAT`/`DOG` |
 | 11 | Events | Active this phase — section (max 3 soonest in city) + full screen (`screen_23`) + event detail (`screen_24`). **Admin-entered**, not charity/family-hosted. Sorted by `startAt` asc (upcoming only); distance is display-only, not a sort key. |
 | 12 | Event countdown | `now < startAt` → `Starts in {N}d/{N}h`; `startAt ≤ now ≤ endAt` → `Ends in {N}h` / `Happening now`; ended events are filtered out |

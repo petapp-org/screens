@@ -130,15 +130,15 @@ Shown only when `pet.missingStatus != null`.
 
 | Status | Display | Color | Meaning |
 |--------|---------|-------|---------|
-| `checking` | Spinner + *"Analyzing latest post…"* | Blue | AI processing in queue; no result yet |
-| `no_data` | *"No health data detected"* | Grey | AI processed but could not extract health info from media |
-| `good` | `GOOD` badge | Green | All health indicators look excellent |
-| `normal` | `NORMAL` badge | Green (light) | Healthy baseline, nothing concerning |
-| `concern` | `CONCERN` badge | Amber | Some indicators warrant attention |
-| `bad` | `BAD` badge | Orange | Multiple concerning indicators; recommend vet visit |
-| `critical` | `CRITICAL` badge | Red | Urgent signs detected; see a vet immediately |
+| `CHECKING` | Spinner + *"Analyzing latest post…"* | Blue | AI processing in queue; no result yet |
+| `NO_DATA` | *"No health data detected"* | Grey | AI processed but could not extract health info from media |
+| `GOOD` | `GOOD` badge | Green | All health indicators look excellent |
+| `NORMAL` | `NORMAL` badge | Green (light) | Healthy baseline, nothing concerning |
+| `CONCERN` | `CONCERN` badge | Amber | Some indicators warrant attention |
+| `BAD` | `BAD` badge | Orange | Multiple concerning indicators; recommend vet visit |
+| `CRITICAL` | `CRITICAL` badge | Red | Urgent signs detected; see a vet immediately |
 
-When status is `checking` or `no_data`: show status message only, no HTML blob.  
+When status is `CHECKING` or `NO_DATA`: show status message only, no HTML blob.  
 When status is a result state: render HTML blob below the status badge.
 
 **Health content includes** (AI-generated, inside HTML blob):
@@ -161,8 +161,8 @@ Status states (same logic as Health):
 
 | Status | Display |
 |--------|---------|
-| `checking` | *"Generating food guide…"* |
-| `no_data` | *"No food data available for this breed"* |
+| `CHECKING` | *"Generating food guide…"* |
+| `NO_DATA` | *"No food data available for this breed"* |
 | *(populated)* | HTML blob rendered |
 
 ---
@@ -307,20 +307,20 @@ Triggered after a post is published that links to a pet (new or existing):
 Post published → mediaTag.type = pet → pet identified/created
   │
   ├─ Health analysis (per post)  [server-side async process — not a client API call]
-  │     └─> pet.healthStatus = "checking" while in queue
+  │     └─> pet.healthStatus = "CHECKING" while in queue
   │           └─> Complete → update pet health record + status
-  │           └─> No result → pet.healthStatus = "no_data"
+  │           └─> No result → pet.healthStatus = "NO_DATA"
   │
   └─ Breed data (if breed not yet generated)  [server-side async process — not a client API call]
         └─> All 3 tabs (Food, Behavior, Med/Vax) generated in parallel
               └─> Stored as HTML blobs on breed record
-              └─> pet tab statuses update from "checking" → populated
+              └─> pet tab statuses update from "CHECKING" → populated
 ```
 
 **Status during processing:**
-- `checking` is set immediately when the pet is linked to a new post
+- `CHECKING` is set immediately when the pet is linked to a new post
 - Individual tabs update independently as each generation completes
-- Health tab can be `checking` while Food tab is already populated (or vice versa)
+- Health tab can be `CHECKING` while Food tab is already populated (or vice versa)
 
 ---
 
@@ -858,8 +858,8 @@ User taps pet row in My Pets
   └─> Pet query (BA) + PetsByFamily query (BB)
         └─> Render pet identity + missing banner (if applicable)
               └─> Default tab: Health
-                    ├─ status=checking → show spinner
-                    ├─ status=no_data  → show "No data" message
+                    ├─ status=CHECKING → show spinner
+                    ├─ status=NO_DATA  → show "No data" message
                     └─ status=result   → render HTML blob
 ```
 
@@ -903,10 +903,10 @@ User taps [Delete Bụi]
 
 | Case | Expected Behaviour |
 |------|--------------------|
-| Pet has no posts yet | All tabs show `checking` until first post is published and AI processes |
-| AI processed but no health extracted | `health.status = no_data`; Health tab shows "No health data detected" |
+| Pet has no posts yet | All tabs show `CHECKING` until first post is published and AI processes |
+| AI processed but no health extracted | `health.status = NO_DATA`; Health tab shows "No health data detected" |
 | Breed data already exists for this breed | Food/Behavior/Med/Vac generated from cache; no AI call needed |
-| Owner changes breed via Edit Pet | Queues re-generation of all 3 breed tabs; statuses reset to `checking` |
+| Owner changes breed via Edit Pet | Queues re-generation of all 3 breed tabs; statuses reset to `CHECKING` |
 | Pet is `missing` | Missing banner shown; `MISSING` badge shown in pet switcher and My Pets row |
 | Non-owner parent | Edit / Delete / Mark as Found actions hidden; can still Report Missing |
 | Soft-deleted pet accessed via direct link | `404 PET_NOT_FOUND` |

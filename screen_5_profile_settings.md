@@ -176,10 +176,10 @@ DANGER ZONE
 - Single **"Delete My Account"** button (red, destructive style)
 - Tap → confirmation dialog: "Are you sure? This starts a 30-day deletion period." → Confirm → `RequestAccountDeletion mutation`
 - After confirm: log out immediately → redirect to Register/Login screen
-- Server sets `scheduledAt = now + 30 days` and `status = PENDING` on the deletion request
+- Server sets `scheduledAt = now + 30 days` and `status = SCHEDULED` on the deletion request
 
 **Reactivation (within 30 days):**
-- User logs in via OAuth → server detects a pending deletion request (`status = PENDING`) → clears it (sets `status` back to cancelled / removes the record) → account fully restored
+- User logs in via OAuth → server detects a pending deletion request (`status = SCHEDULED`) → clears it (sets `status` back to `NONE` / removes the record) → account fully restored
 - Show toast on login: "Welcome back! Your account deletion has been cancelled."
 
 ---
@@ -209,7 +209,7 @@ query Me {
       avatarUrl
       familyType
       isPrimary
-      role
+      viewerRole
     }
   }
 }
@@ -237,7 +237,7 @@ query Me {
           "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
           "familyType": "NORMAL",
           "isPrimary": true,
-          "role": "OWNER"
+          "viewerRole": "OWNER"
         },
         {
           "id": "fam_abc",
@@ -246,7 +246,7 @@ query Me {
           "avatarUrl": "https://cdn.petapp.com/families/fam_abc/avatar.jpg",
           "familyType": "NORMAL",
           "isPrimary": false,
-          "role": "MEMBER"
+          "viewerRole": "MEMBER"
         }
       ]
     }
@@ -324,7 +324,14 @@ query MyLovedPosts($after: String) {
         pets { id name avatarUrl }
         body
         location { city cityCode country countryCode }
-        media { id url mimeType width height durationSeconds }
+        media {
+          order
+          sourceType
+          embedUrl
+          embedProvider
+          mediaTag { type petId species breed }
+          media { id type thumbnailUrl variants { size key contentType } hlsUrl blurhash signedUrl expiresAt }
+        }
         loveCount
         commentsCount
         isLoved
@@ -361,7 +368,16 @@ query MyLovedPosts($after: String) {
             "pets": [ { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" } ],
             "body": "Bụi nằm chờ mama nấu cơm 🌕",
             "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
-            "media": [ { "id": "media_001", "url": "https://cdn.petapp.com/media/001.jpg", "mimeType": "image/jpeg", "width": 1080, "height": 1080, "durationSeconds": null } ],
+            "media": [
+              {
+                "order": 1,
+                "sourceType": "UPLOADED",
+                "embedUrl": null,
+                "embedProvider": null,
+                "mediaTag": { "type": "PET", "petId": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" },
+                "media": { "id": "media_001", "type": "IMAGE", "thumbnailUrl": null, "variants": [{ "size": "1080x1080", "key": "media/001_1080.jpg", "contentType": "image/jpeg" }], "hlsUrl": null, "blurhash": "L6PZfSi_.AyE_3t7t7R**0o#DgR4", "signedUrl": "https://cdn.petapp.com/media/001.jpg?token=abc", "expiresAt": "2026-06-13T08:00:00Z" }
+              }
+            ],
             "loveCount": 24,
             "commentsCount": 3,
             "isLoved": true,
@@ -508,6 +524,8 @@ query MyContactInfo {
 Update the current user's editable profile fields. All fields are optional; only provided fields are updated.  
 **Auth:** Required
 
+> Same backend mutation as `AE. UpdateMyProfile` in screen_4 (Profile Setup). screen_4 additionally passes `$username` at first-time setup; `username` is read-only after that and is omitted here.
+
 **Operation:**
 ```graphql
 mutation UpdateMyProfile($displayName: String, $avatarUrl: String) {
@@ -626,7 +644,7 @@ mutation RequestAccountDeletion {
 {
   "data": {
     "requestAccountDeletion": {
-      "status": "PENDING",
+      "status": "SCHEDULED",
       "scheduledAt": "2026-07-07T12:00:00Z"
     }
   }
@@ -634,9 +652,9 @@ mutation RequestAccountDeletion {
 ```
 
 **Side effects:**
-- Sets `scheduledAt = now + 30 days` and `status = PENDING` on the account deletion request
+- Sets `scheduledAt = now + 30 days` and `status = SCHEDULED` on the account deletion request
 - Caller is immediately logged out client-side after receiving response
-- User logging back in within 30 days via OAuth cancels the deletion (`status` cleared back to cancelled); show toast "Welcome back! Your account deletion has been cancelled."
+- User logging back in within 30 days via OAuth cancels the deletion (`status` cleared back to `NONE`); show toast "Welcome back! Your account deletion has been cancelled."
 
 **Errors:**
 

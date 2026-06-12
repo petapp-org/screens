@@ -54,7 +54,7 @@ Requires login. Only the family owner can edit.
 ### 1. Avatar Picker
 
 - Tap → opens device image picker
-- Selected image uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) before form submission → use `list[0].publicUrl`; no AI scan
+- Selected image uploaded via `signUploadBatch` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) before form submission → take `SignUploadBatchResultItem.mediaId` from the result → pass as `avatarMediaId` in the create/update input; no AI scan
 - Shows upload progress indicator on the avatar
 - On Create: optional (default avatar used if skipped)
 - On Update: always shows current avatar
@@ -128,7 +128,7 @@ Show ✓ (green) if available, ✗ (red) + "Tag already taken" if not.
 [Avatar]  [Invited name]  [INVITED]       [Cancel]
 ```
 - INVITED badge highlighted (e.g. amber/orange colour)
-- Tap Cancel → `CancelParentInvite mutation (AR)` → row removed
+- Tap Cancel → `CancelFamilyInvite mutation (AR)` → row removed
 
 **Invite Another Parent row** (always last):
 ```
@@ -170,12 +170,14 @@ Dropdown with 3 options. Determines the **default privacy** applied to new posts
 
 | Option | Value | Description shown in UI |
 |--------|-------|--------------------------|
-| Public | `public` | Anyone can view your posts |
-| Followers only | `followers` | Only your followers can view your posts |
-| Family only | `private` | Only family members can view your posts |
+| Public | `PUBLIC` | Anyone can view your posts |
+| Followers only | `FOLLOWERS` | Only your followers can view your posts |
+| Family only | `PRIVATE` | Only family members can view your posts |
 
-- Default on Create: `public`
+- Default on Create: `PUBLIC`
 - Selecting an option updates the displayed description text below
+
+> ⏳ GAP petapp-be#812 — `defaultPrivacy` chưa có trong contract (cả input lẫn type Family). KHÔNG gửi field này trong createFamily/updateFamily hiện tại; UI có thể render dropdown nhưng giá trị chỉ lưu client-side cho tới khi backend ship #812.
 
 ---
 
@@ -202,9 +204,13 @@ mutation CreateFamily($input: CreateFamilyInput!) {
     id
     name
     tag
-    avatarUrl
-    defaultPrivacy
+    avatarMediaId
+    isPublic
     isPrimary
+    location {
+      cityCode
+      countryCode
+    }
   }
 }
 ```
@@ -216,8 +222,8 @@ mutation CreateFamily($input: CreateFamilyInput!) {
     "name": "Thao's Family",
     "tag": "thaofam",
     "bio": "Just me and a future pet or two. 🌱",
-    "avatarUrl": "https://cdn.petapp.com/media/upload_xyz.jpg",
-    "defaultPrivacy": "PUBLIC",
+    "avatarMediaId": "media_xyz",
+    "isPublic": true,
     "city": "Hồ Chí Minh",
     "cityCode": "HCM",
     "country": "Việt Nam",
@@ -225,6 +231,8 @@ mutation CreateFamily($input: CreateFamilyInput!) {
   }
 }
 ```
+
+> **Avatar upload flow:** call `signUploadBatch` first → take `SignUploadBatchResultItem.mediaId` → pass as `avatarMediaId`. Do not pass a URL directly.
 
 **Response `200 OK`:**
 ```json
@@ -234,9 +242,13 @@ mutation CreateFamily($input: CreateFamilyInput!) {
       "id": "fam_new",
       "name": "Thao's Family",
       "tag": "thaofam",
-      "avatarUrl": "https://cdn.petapp.com/families/fam_new/avatar.jpg",
-      "defaultPrivacy": "PUBLIC",
-      "isPrimary": true
+      "avatarMediaId": "media_xyz",
+      "isPublic": true,
+      "isPrimary": true,
+      "location": {
+        "cityCode": "HCM",
+        "countryCode": "VN"
+      }
     }
   }
 }
@@ -265,10 +277,8 @@ mutation UpdateFamily($familyId: ID!, $input: UpdateFamilyInput!) {
     id
     name
     bio
-    avatarUrl
-    defaultPrivacy
-    cityCode
-    countryCode
+    avatarMediaId
+    isPublic
   }
 }
 ```
@@ -280,11 +290,15 @@ mutation UpdateFamily($familyId: ID!, $input: UpdateFamilyInput!) {
   "input": {
     "name": "Updated Name",
     "bio": "Updated description",
-    "avatarUrl": "https://cdn.petapp.com/...",
-    "defaultPrivacy": "FOLLOWERS"
+    "avatarMediaId": "media_abc",
+    "isPublic": false
   }
 }
 ```
+
+> **Avatar upload flow:** call `signUploadBatch` first → take `SignUploadBatchResultItem.mediaId` → pass as `avatarMediaId`. Do not pass a URL directly.
+
+> **Location note:** `UpdateFamilyInput` does NOT include location fields (`city`/`cityCode`/`country`/`countryCode`). City/country can only be set at create time via `CreateFamilyInput`. To update location, a separate admin operation is required (not exposed to clients).
 
 **Response `200 OK`:**
 ```json
@@ -294,10 +308,8 @@ mutation UpdateFamily($familyId: ID!, $input: UpdateFamilyInput!) {
       "id": "fam_001",
       "name": "Updated Name",
       "bio": "Updated description",
-      "avatarUrl": "https://cdn.petapp.com/...",
-      "defaultPrivacy": "FOLLOWERS",
-      "cityCode": "HCM",
-      "countryCode": "VN"
+      "avatarMediaId": "media_abc",
+      "isPublic": false
     }
   }
 }
@@ -475,24 +487,23 @@ mutation InviteFamilyMember($familyId: ID!, $phoneOrEmail: String!, $role: Famil
 
 ---
 
-### AR. Mutation: `CancelParentInvite`
+### AR. Mutation: `CancelFamilyInvite`
 Cancel a pending parent invite.
 **Auth:** Required (owner only)
 
+> **inviteId** is the `FamilyInvitation.id` value the client already holds from the invitations list (fetched when loading the Edit Family screen). Pass that id directly.
+
 **Operation:**
 ```graphql
-mutation CancelParentInvite($familyId: ID!, $userId: ID!) {
-  cancelParentInvite(familyId: $familyId, userId: $userId) {
-    success
-  }
+mutation CancelFamilyInvite($inviteId: ID!) {
+  cancelFamilyInvite(inviteId: $inviteId)
 }
 ```
 
 **Variables:**
 ```json
 {
-  "familyId": "fam_001",
-  "userId": "user_002"
+  "inviteId": "inv_001"
 }
 ```
 
@@ -500,9 +511,7 @@ mutation CancelParentInvite($familyId: ID!, $userId: ID!) {
 ```json
 {
   "data": {
-    "cancelParentInvite": {
-      "success": true
-    }
+    "cancelFamilyInvite": true
   }
 }
 ```
@@ -512,7 +521,7 @@ mutation CancelParentInvite($familyId: ID!, $userId: ID!) {
 | Status | Code | Scenario |
 |--------|------|----------|
 | `403` | `FORBIDDEN` | Caller is not the family owner |
-| `404` | `INVITE_NOT_FOUND` | No pending invite exists for this user |
+| `404` | `INVITE_NOT_FOUND` | No pending invite exists with this id |
 
 ---
 
@@ -574,8 +583,8 @@ mutation RemoveFamilyMember($familyId: ID!, $userId: ID!) {
 ```
 User taps "Create Family Page" in Profile Settings
   └─> Navigate to Create Family screen
-        └─> Fill in name, tag (real-time check), bio, privacy
-              └─> Optionally upload avatar (media upload endpoint)
+        └─> Fill in name, tag (real-time check), bio, defaultPrivacy (client-side until #812)
+              └─> Optionally upload avatar via signUploadBatch → avatarMediaId
                     └─> Optionally invite parents → SearchUsers query (AP) → InviteFamilyMember mutation (AQ)
                           └─> Tap "Create Family"
                                 └─> CreateFamily mutation (AM)
@@ -618,4 +627,4 @@ Owner taps Edit in Family Posts screen
 | Invite search — user already in family or invited | Excluded from results (server filters) |
 | Remove owner row | Not possible; Remove button not shown for owner row |
 | Cancel all invites then submit | Allowed — family created with owner only |
-| Privacy change on Update | Only affects new posts from that point forward; existing posts keep their own privacy |
+| Privacy (`defaultPrivacy`) change on Update | Only affects new posts from that point forward; existing posts keep their own privacy. Note: `isPublic` controls family page visibility (separate concept) |
