@@ -97,7 +97,7 @@ Shown once after a new account is created via any method.
 - Show a persistent helper text below the field: *"⚠️ Your username cannot be changed after you create your account."*
 
 **Submit:**
-- If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` → use `list[0].publicUrl` (no AI scan — avatars are never scanned)
+- If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` → use `list[0].mediaId` as `avatarMediaId` in the next mutation (no AI scan — avatars are never scanned; see ⏳ GAP petapp-be#906)
 - `UpdateMyProfile mutation (AE)` `{ displayName, username, avatarUrl }`
 - On success → navigate to the **post-login target** (return target if redirected here, else Explore)
 
@@ -116,6 +116,7 @@ type AuthTokens {
   sessionId: ID!
   user: User!
   isNewUser: Boolean!
+  accountReactivated: Boolean!   # true khi account đang scheduled-deletion được kích hoạt lại khi login (petapp-be#918)
 }
 
 type User {
@@ -288,7 +289,7 @@ mutation SocialLogin($provider: AuthProvider!, $token: String!, $deviceId: Strin
 Update user profile fields (used for Profile Setup after first registration and for later edits).
 **Auth:** Required
 
-Same backend op as UpdateMe (screen_5) — both first-time Profile Setup and later edits use `updateMyProfile`.
+Same backend mutation as `AK. UpdateMyProfile` in screen_5 — screen_4 additionally passes `$username` (the only time username is writable; it becomes read-only after Profile Setup). screen_5's `AK` omits `$username` since the field cannot be changed post-registration.
 
 **Operation:**
 ```graphql
@@ -381,12 +382,15 @@ The mutation is a batch: wrap a single upload as a one-element `items` list and 
 ```graphql
 mutation SignUploadBatch($items: [SignUploadBatchItemInput!]!) {
   signUploadBatch(items: $items) {
+    mediaId           # ID of the created media object — use as avatarMediaId / primaryMediaId
     presignedUrl      # pre-signed PUT URL — client uploads the raw bytes here
-    publicUrl      # final hosted URL to store on the profile/family/pet/post
     expiresIn
+    error
   }
 }
 ```
+
+> ⏳ GAP petapp-be#906 (`publicUrl` does not exist on `SignUploadBatchResultItem`; avatar upload uses `mediaId` → pass as `avatarMediaId` / `primaryMediaId` in the follow-up mutation).
 
 **`SignUploadBatchItemInput`:**
 ```graphql
@@ -407,7 +411,7 @@ input SignUploadBatchItemInput {
 
 `purpose` enum: `AVATAR` | `POST_PHOTO` | `POST_VIDEO` | `COVER_PHOTO` | `PRODUCT` | `HEALTH_DOC` | `KYC_DOC` | `LOST_PET`
 
-**Client flow:** call this → `PUT` the file bytes to `presignedUrl` (from `list[0]`) → use `publicUrl` (from `list[0]`) in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass the media id to `IdentifyPetFromMedia (AT)` to detect/match a pet.
+**Client flow:** call this → `PUT` the file bytes to `presignedUrl` (from `list[0]`) → use `mediaId` (from `list[0]`) as `avatarMediaId` / `primaryMediaId` in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass `mediaId` to `IdentifyPetFromMedia (AT)` to detect/match a pet.
 
 **Response `200 OK`:**
 ```json
@@ -415,9 +419,10 @@ input SignUploadBatchItemInput {
   "data": {
     "signUploadBatch": [
       {
+        "mediaId": "media_abc123",
         "presignedUrl": "https://storage.petapp.com/upload/abc123?sig=...",
-        "publicUrl": "https://cdn.petapp.com/media/abc123.jpg",
-        "expiresIn": 300
+        "expiresIn": 300,
+        "error": null
       }
     ]
   }

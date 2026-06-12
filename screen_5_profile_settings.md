@@ -176,10 +176,10 @@ DANGER ZONE
 - Single **"Delete My Account"** button (red, destructive style)
 - Tap → confirmation dialog: "Are you sure? This starts a 30-day deletion period." → Confirm → `RequestAccountDeletion mutation`
 - After confirm: log out immediately → redirect to Register/Login screen
-- Server sets `scheduledAt = now + 30 days` and `status = PENDING` on the deletion request
+- Server sets `scheduledAt = now + 30 days` and `status = SCHEDULED` on the deletion request
 
 **Reactivation (within 30 days):**
-- User logs in via OAuth → server detects a pending deletion request (`status = PENDING`) → clears it (sets `status` back to cancelled / removes the record) → account fully restored
+- User logs in via OAuth → server detects a pending deletion request (`status = SCHEDULED`) → clears it (sets `status` back to `NONE` / removes the record) → account fully restored
 - Show toast on login: "Welcome back! Your account deletion has been cancelled."
 
 ---
@@ -209,7 +209,7 @@ query Me {
       avatarUrl
       familyType
       isPrimary
-      role
+      viewerRole
     }
   }
 }
@@ -237,7 +237,7 @@ query Me {
           "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
           "familyType": "NORMAL",
           "isPrimary": true,
-          "role": "OWNER"
+          "viewerRole": "OWNER"
         },
         {
           "id": "fam_abc",
@@ -246,7 +246,7 @@ query Me {
           "avatarUrl": "https://cdn.petapp.com/families/fam_abc/avatar.jpg",
           "familyType": "NORMAL",
           "isPrimary": false,
-          "role": "MEMBER"
+          "viewerRole": "MEMBER"
         }
       ]
     }
@@ -508,6 +508,8 @@ query MyContactInfo {
 Update the current user's editable profile fields. All fields are optional; only provided fields are updated.  
 **Auth:** Required
 
+> Same backend mutation as `AE. UpdateMyProfile` in screen_4 (Profile Setup). screen_4 additionally passes `$username` at first-time setup; `username` is read-only after that and is omitted here.
+
 **Operation:**
 ```graphql
 mutation UpdateMyProfile($displayName: String, $avatarUrl: String) {
@@ -626,7 +628,7 @@ mutation RequestAccountDeletion {
 {
   "data": {
     "requestAccountDeletion": {
-      "status": "PENDING",
+      "status": "SCHEDULED",
       "scheduledAt": "2026-07-07T12:00:00Z"
     }
   }
@@ -634,9 +636,9 @@ mutation RequestAccountDeletion {
 ```
 
 **Side effects:**
-- Sets `scheduledAt = now + 30 days` and `status = PENDING` on the account deletion request
+- Sets `scheduledAt = now + 30 days` and `status = SCHEDULED` on the account deletion request
 - Caller is immediately logged out client-side after receiving response
-- User logging back in within 30 days via OAuth cancels the deletion (`status` cleared back to cancelled); show toast "Welcome back! Your account deletion has been cancelled."
+- User logging back in within 30 days via OAuth cancels the deletion (`status` cleared back to `NONE`); show toast "Welcome back! Your account deletion has been cancelled."
 
 **Errors:**
 
