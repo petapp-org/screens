@@ -148,7 +148,7 @@ Parents                                    [× close]
 | Row | Badges | Message icon `[✉]` | Action | Who can see action |
 |-----|--------|--------------------|--------|--------------------|
 | Owner (self) | `YOU` + `OWNER` | Hidden (can't DM yourself) | None | — |
-| Accepted parent | `MEMBER` | Shown — opens a DM | Remove | Owner only |
+| Accepted parent | `PARENT` | Shown — opens a DM | Remove | Owner only |
 | Pending invite | `INVITED` | Hidden (not a member yet) | Cancel | Owner only |
 
 **Message icon `[✉]` (accepted co-parents only):**
@@ -239,7 +239,7 @@ query MyPetsHeader {
       avatarUrl
       petAvatars            # ordered public pet avatars (up to 5)
       petCount
-      viewerRole            # FamilyRole: OWNER | ADMIN | MEMBER
+      viewerRole            # FamilyRole: OWNER | ADMIN | MEMBER | PARENT
       location {            # replaces flat city/cityCode/country/countryCode
         city
         cityCode
@@ -297,8 +297,8 @@ query MyPetsList($familyId: ID!) {        # familyId = me.primaryFamily.id from 
         "social": { "followersCount": 287 },
         "members": [
           { "userId": "user_001", "displayName": "Minh Dang", "username": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
-          { "userId": "user_002", "displayName": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "MEMBER", "status": "JOINED" },
-          { "userId": "user_003", "displayName": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "MEMBER", "status": "INVITED" }
+          { "userId": "user_002", "displayName": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "PARENT", "status": "JOINED" },
+          { "userId": "user_003", "displayName": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "PARENT", "status": "INVITED" }
         ]
       }
     }
@@ -320,7 +320,7 @@ query MyPetsList($familyId: ID!) {        # familyId = me.primaryFamily.id from 
 
 **Notes:**
 - `me.primaryFamily` is `null` if the user has no primary family → render empty state (replaces the `ACTIVE_FAMILY_NOT_SET` error).
-- `viewerRole` (`OWNER` | `ADMIN` | `MEMBER`) controls the Edit button + Parents-popup management actions.
+- `viewerRole` (`OWNER` | `ADMIN` | `MEMBER` | `PARENT`) controls the Edit button + Parents-popup management actions.
 - `members` is included in query 1 to avoid a separate call when opening the Parents bottom sheet.
 - `petsByFamily` enforces privacy: members see all pets; non-members see only `isPublic: true`.
 - `postCount` (per-pet) is now implemented (petapp-be #901) — `Pet.postCount: Int!`, a cross-service resolver counting posts tagged with the pet (via `post_pets`), batched through a DataLoader to avoid N+1 when listing pets. Used for the `N posts` sub-label.
@@ -457,7 +457,7 @@ User taps Manage Parents
 |------|--------------------|
 | No active family | Empty state: family card area shows "No active family" + "Go to Settings" button |
 | `randomCount = 0` | Hide "randoms" from stats line; RANDOM PETS section shows empty state |
-| `viewerRole = parent` (not owner) | Edit button hidden; Parents popup is read-only (no Remove/Cancel/Invite actions) |
+| `viewerRole = PARENT` (not owner) | Edit button hidden; Parents popup is read-only (no Remove/Cancel/Invite actions) |
 | `healthStatus = CONCERN` | Amber `CONCERN` badge on pet row |
 | Story button | Opens the pet's Story (`screen_29`) |
 | No pets in family | Pet rows section shows empty state: "No pets yet — create a post to add pets" |

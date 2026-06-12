@@ -54,7 +54,7 @@ Reuses endpoint defined in `screen_5_profile_settings.md`.
 
 See full definition in `screen_5_profile_settings.md` → **Section: AH. Query: MyLovedPosts**.
 
-**Variables:** `{ "after": null }`
+**Variables:** `{ "first": 20, "after": null }`
 
 Unlove uses existing endpoints from `screen_1_home_explore.md`:
 
