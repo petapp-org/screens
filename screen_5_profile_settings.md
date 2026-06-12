@@ -149,8 +149,8 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `username` (shown greyed out with note "Username cannot be changed")
-- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → cần hosted URL để truyền vào `updateMyProfile(avatarUrl: String)` — ⏳ GAP petapp-be#906: `SignUploadBatchResultItem` chưa trả `publicUrl`, flow bị chặn cho tới khi #906 ship (hoặc mutation đổi sang nhận `mediaId`); no AI scan
-- `UpdateMyProfile mutation (AK)` `{ displayName, avatarUrl }`
+- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → dùng `list[0].mediaId` truyền vào `avatarMediaId` của `updateMyProfile` (petapp-be#979 / issue #976 / epic #906; publicUrl bị bác — không ship); no AI scan
+- `UpdateMyProfile mutation (AK)` `{ displayName, avatarMediaId }` (petapp-be#979 / issue #976)
 
 **Phone & Email:**
 - Shows current phone number (client masks for display, e.g. `+84 *** *** 567`)
@@ -528,20 +528,22 @@ Update the current user's editable profile fields. All fields are optional; only
 
 **Operation:**
 ```graphql
-mutation UpdateMyProfile($displayName: String, $avatarUrl: String) {
-  updateMyProfile(displayName: $displayName, avatarUrl: $avatarUrl) {
+mutation UpdateMyProfile($displayName: String, $avatarMediaId: String) {
+  updateMyProfile(displayName: $displayName, avatarMediaId: $avatarMediaId) {
     id
     displayName
     avatarUrl
   }
 }
+# ⚠️ Updated petapp-be#979 (issue #976, epic #906): input dùng avatarMediaId (mediaId), không avatarUrl/publicUrl.
+# avatarUrl trong selection set là output field (signed URL đọc) — giữ nguyên.
 ```
 
 **Variables:**
 ```json
 {
   "displayName": "Minh Dang",
-  "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+  "avatarMediaId": "<media-uuid>"
 }
 ```
 

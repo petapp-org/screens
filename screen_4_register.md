@@ -98,7 +98,7 @@ Shown once after a new account is created via any method.
 
 **Submit:**
 - If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` → use `list[0].mediaId` as `avatarMediaId` in the next mutation (no AI scan — avatars are never scanned; see ⏳ GAP petapp-be#906)
-- `UpdateMyProfile mutation (AE)` `{ displayName, username, avatarUrl }`
+- `UpdateMyProfile mutation (AE)` `{ displayName, username, avatarMediaId }` — truyền `list[0].mediaId` vào `avatarMediaId` (petapp-be#976 / petapp-be#979; xem AE)
 - On success → navigate to the **post-login target** (return target if redirected here, else Explore)
 
 ---
@@ -293,19 +293,21 @@ Same backend mutation as `AK. UpdateMyProfile` in screen_5 — screen_4 addition
 
 **Operation:**
 ```graphql
-mutation UpdateMyProfile($displayName: String, $username: String, $avatarUrl: String) {
-  updateMyProfile(displayName: $displayName, username: $username, avatarUrl: $avatarUrl) {
+mutation UpdateMyProfile($displayName: String, $username: String, $avatarMediaId: String) {
+  updateMyProfile(displayName: $displayName, username: $username, avatarMediaId: $avatarMediaId) {
     id
     displayName
     username
     avatarUrl
   }
 }
+# ⚠️ Updated petapp-be#979 (issue #976, epic #906): input dùng avatarMediaId (mediaId), không avatarUrl/publicUrl.
+# avatarUrl trong selection set là output field (signed URL đọc) — giữ nguyên.
 ```
 
 **Variables:**
 ```json
-{ "displayName": "Minh Dang", "username": "minhdang", "avatarUrl": "https://..." }
+{ "displayName": "Minh Dang", "username": "minhdang", "avatarMediaId": "<media-uuid>" }
 ```
 
 **Response `200 OK`:**
@@ -390,7 +392,7 @@ mutation SignUploadBatch($items: [SignUploadBatchItemInput!]!) {
 }
 ```
 
-> ⏳ GAP petapp-be#906 (`publicUrl` does not exist on `SignUploadBatchResultItem`; avatar upload uses `mediaId` → pass as `avatarMediaId` / `primaryMediaId` in the follow-up mutation).
+> ⚠️ Updated petapp-be#906/#976: `publicUrl` không tồn tại trên `SignUploadBatchResultItem` và đã bị bác (petapp-be#906 closed). Avatar/profile/pet/family upload dùng `mediaId` → truyền làm `avatarMediaId` / `primaryMediaId` trong mutation tiếp theo. publicUrl deprecated/not shipped.
 
 **`SignUploadBatchItemInput`:**
 ```graphql
