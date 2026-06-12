@@ -195,7 +195,7 @@ LOCATION *      [ city — default theo charity, đổi được ]
 
 > **Submit** enabled only when required fields are set: ≥ 1 photo, species, a non-empty story, and a location.
 
-**Upload:** each photo via `SignUploadBatch (BV)` `{ items: [{ purpose: "RESCUE_PHOTO", ... }] }` (`screen_4`) → use `list[0].publicUrl`; no AI scan.
+**Upload:** each photo via `SignUploadBatch (BV)` `{ items: [{ purpose: "RESCUE_PHOTO", ... }] }` (`screen_4`) → use `list[0].publicUrl`; no AI scan. ⏳ GAP petapp-be#908 — `RESCUE_PHOTO` chưa có trong `MediaPurposeGQL` (các giá trị hiện tại: AVATAR, COVER_PHOTO, POST_PHOTO, POST_VIDEO, PRODUCT, HEALTH_DOC, KYC_DOC, LOST_PET).
 
 **On submit → `CreateRescue (CO)`** (or `UpdateRescue (CS)` in edit mode):
 - Listing is created with `status = OPEN`, `charity` = the active charity family, `createdAt` = now.
@@ -206,11 +206,13 @@ LOCATION *      [ city — default theo charity, đổi được ]
 ## API Endpoints Required
 
 > All calls go to `POST /graphql`.
-> Reuses `Rescues (CL)` (`screen_17`) for listings, `SignUploadBatch (BV)` (`screen_4`) for photos. New endpoints below. Messaging for Inquire builds on `StartThread (BI)` (`screen_10`).
+> Reuses `Rescues (CL)` (`screen_17`) for listings, `SignUploadBatch (BV)` (`screen_4`) for photos. New endpoints below. Messaging for Inquire builds on `StartThread (BI)` (`screen_10`). ⏳ GAP — `StartThread (BI)` chưa có ở backend (messaging chưa build, petapp-be#831, epic #403).
 
 ---
 
 ### CM. Query: `Rescue`
+
+> ⏳ GAP petapp-be#429 — `rescue` query chưa có ở backend; rescue domain chưa build (epic #888).
 
 Fetch a single rescue listing for the detail screen.
 
@@ -301,6 +303,8 @@ query Rescue($rescueId: ID!, $originLat: Float, $originLng: Float) {
 
 ### CO. Mutation: `CreateRescue`
 
+> ⏳ GAP petapp-be#429 — `createRescue` mutation và `RescueInput` chưa có ở backend; rescue domain chưa build (epic #888).
+
 Create a new rescue listing. **Auth:** Required — caller must be a member of a **charity** family **and that charity is their active family**.
 
 **Operation:**
@@ -345,9 +349,11 @@ mutation CreateRescue($input: RescueInput!) {
 
 ### CR. Mutation: `InquireRescue`
 
+> ⏳ GAP petapp-be#429 — `inquireRescue` mutation và `InquireRescueInput` chưa có ở backend; rescue domain chưa build (epic #888).
+
 Register the caller's interest to adopt **and** create/return the message thread to the charity. **Auth:** Required.
 
-> **Triggers notification:** on the caller's **first** inquiry for this listing, fires a `RESCUE_INQUIRY` notification to the posting charity's members (see `screen_22`). Idempotent — re-inquiring does not re-notify.
+> **Triggers notification:** on the caller's **first** inquiry for this listing, fires a `RESCUE_INQUIRY` notification to the posting charity's members (see `screen_22`). Idempotent — re-inquiring does not re-notify. ⏳ GAP — `RESCUE_INQUIRY` chưa có trong `NotificationCategory` (các giá trị hiện tại: UNSPECIFIED, CARE_REMINDER, VACCINE_DUE, HEALTH_SIGNAL, SYSTEM); liên quan petapp-be#913 / epic #435.
 
 **Operation:**
 ```graphql

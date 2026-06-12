@@ -161,6 +161,8 @@ Tap [ ♡ Interested · 48 ]
 
 ### CJ. Query: `Event`
 
+> ⏳ GAP petapp-be#428, epic #401 — `event` query chưa có ở backend; events domain chưa build.
+
 Fetch a single event for the detail screen, including the viewer's interest state.
 
 **Operation:**
@@ -241,6 +243,8 @@ query Event($eventId: ID!, $originLat: Float, $originLng: Float) {
 ---
 
 ### CK. Mutation: `SetEventInterest`
+
+> ⏳ GAP petapp-be#428, epic #401 — `setEventInterest` mutation và `SetEventInterestInput` chưa có ở backend; events domain chưa build.
 
 Set or clear the caller's Interested state for an event.
 
