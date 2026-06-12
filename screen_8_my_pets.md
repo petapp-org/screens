@@ -273,6 +273,7 @@ query MyPetsList($familyId: ID!) {        # familyId = me.primaryFamily.id from 
     isPublic
     sex                      # PetSex: MALE | FEMALE | UNKNOWN
     ageMonths                # Int — client formats "3 years" / "5 months" per locale
+    postCount                # Int! — số post gắn pet (resolver cross-service, batched DataLoader)
   }
 }
 ```
@@ -310,8 +311,8 @@ query MyPetsList($familyId: ID!) {        # familyId = me.primaryFamily.id from 
 {
   "data": {
     "petsByFamily": [
-      { "id": "pet_111", "name": "Bụi", "avatarUrl": "...", "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" }, "isPublic": true, "sex": "MALE", "ageMonths": 36 },
-      { "id": "pet_222", "name": "Măng", "avatarUrl": "...", "breed": { "nameVi": "Ngựa buckskin", "nameEn": "Buckskin Pony" }, "isPublic": false, "sex": "FEMALE", "ageMonths": 60 }
+      { "id": "pet_111", "name": "Bụi", "avatarUrl": "...", "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" }, "isPublic": true, "sex": "MALE", "ageMonths": 36, "postCount": 12 },
+      { "id": "pet_222", "name": "Măng", "avatarUrl": "...", "breed": { "nameVi": "Ngựa buckskin", "nameEn": "Buckskin Pony" }, "isPublic": false, "sex": "FEMALE", "ageMonths": 60, "postCount": 3 }
     ]
   }
 }
@@ -322,7 +323,8 @@ query MyPetsList($familyId: ID!) {        # familyId = me.primaryFamily.id from 
 - `viewerRole` (`OWNER` | `ADMIN` | `MEMBER`) controls the Edit button + Parents-popup management actions.
 - `members` is included in query 1 to avoid a separate call when opening the Parents bottom sheet.
 - `petsByFamily` enforces privacy: members see all pets; non-members see only `isPublic: true`.
-- Dropped vs the old `activeFamily` shape (counter-canonical): `gender`→`sex`, server-side `ageDisplay`→client-formatted `ageMonths`, `parents`→`members`, `randomCount` (random-media tag is a separate deferred feature — see AZ), and per-pet `postCount`/`healthStatus` (not yet implemented; `healthStatus` would aggregate from the health/AI service — file a separate Pet issue if the screen needs it).
+- `postCount` (per-pet) is now implemented (petapp-be #901) — `Pet.postCount: Int!`, a cross-service resolver counting posts tagged with the pet (via `post_pets`), batched through a DataLoader to avoid N+1 when listing pets. Used for the `N posts` sub-label.
+- Dropped vs the old `activeFamily` shape (counter-canonical): `gender`→`sex`, server-side `ageDisplay`→client-formatted `ageMonths`, `parents`→`members`, `randomCount` (random-media tag is a separate deferred feature — see AZ), and per-pet `healthStatus` (not yet implemented; `healthStatus` would aggregate from the health/AI service — file a separate Pet issue if the screen needs it).
 
 **Errors:**
 
