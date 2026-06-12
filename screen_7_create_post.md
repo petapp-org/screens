@@ -172,7 +172,7 @@ Actions available depend on the current tag state:
 | Name | Yes | Pet's display name |
 | Species | Yes | Pre-filled from scan; **select from DB option list** (not free text) |
 | Breed | No | Pre-filled from scan; **select from DB option list** filtered by selected species |
-| Color | No | Text input (can pre-fill from AI scan `color` if returned) |
+| Color | No | Text input (⚠️ `color` không còn trong `IdentifyPetResult` — pre-fill màu tạm không khả dụng; xem note AT §§ Notes bên trên) |
 | Gender | Yes | `male` / `female` / `unknown` |
 | Birthday | No | Date picker |
 | Weight | No | Number + unit (kg) |
@@ -329,6 +329,7 @@ No animal detected (all confidences near zero):
 
 **Notes:**
 - **Client-side matching:** so sánh `speciesId`/`breedId` trả về với danh sách pets của user để tìm khớp (e.g. một pet có cùng speciesId và breedId). Contract chỉ trả raw AI output — không có `matchedPet` hay logic matching phía server.
+- ⚠️ Rule cũ: AI trả `color` để pre-fill màu lông trong Create Pet form. Contract `IdentifyPetResult` hiện KHÔNG có `color` — pre-fill màu tạm không khả dụng (client có thể parse từ `rawLabel` làm fallback, e.g. "orange tabby cat"). Chưa có issue backend track việc thêm `color` — cần mở issue nếu muốn giữ rule này.
 - Resulting `mediaTag` written to the post uses `{ type, petId, species, breed }` (canonical MediaTag structure (#940/ADR-0027)).
 - In Random Pets context (`[+]` from Screen 8), call without a `familyId` context — matching against family pets is skipped; client treats all results as unmatched.
 
