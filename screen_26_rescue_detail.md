@@ -195,7 +195,7 @@ LOCATION *      [ city — default theo charity, đổi được ]
 
 > **Submit** enabled only when required fields are set: ≥ 1 photo, species, a non-empty story, and a location.
 
-**Upload:** each photo via `SignUploadBatch (BV)` `{ items: [{ purpose: "RESCUE_PHOTO", ... }] }` (`screen_4`) → use `list[0].publicUrl`; no AI scan. ⏳ GAP petapp-be#908 — `RESCUE_PHOTO` chưa có trong `MediaPurposeGQL` (các giá trị hiện tại: AVATAR, COVER_PHOTO, POST_PHOTO, POST_VIDEO, PRODUCT, HEALTH_DOC, KYC_DOC, LOST_PET).
+**Upload:** each photo via `SignUploadBatch (BV)` `{ items: [{ purpose: "RESCUE_PHOTO", ... }] }` (`screen_4`) → use `list[0].mediaId` (⏳ GAP petapp-be#906 — chưa có `publicUrl`; xem `screen_4`); no AI scan. ⏳ GAP petapp-be#908 — `RESCUE_PHOTO` chưa có trong `MediaPurposeGQL` (các giá trị hiện tại: AVATAR, COVER_PHOTO, POST_PHOTO, POST_VIDEO, PRODUCT, HEALTH_DOC, KYC_DOC, LOST_PET).
 
 **On submit → `CreateRescue (CO)`** (or `UpdateRescue (CS)` in edit mode):
 - Listing is created with `status = OPEN`, `charity` = the active charity family, `createdAt` = now.
