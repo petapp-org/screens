@@ -222,124 +222,113 @@ All posts belonging to the active family, same as Family Posts screen (Screen 3)
 
 > Most data for this screen reuses existing endpoints. New endpoints listed below. All calls go to `POST /graphql`.
 
-### AY. Query: `ActiveFamily`
+### AY. Query: active family for My Pets (`me.primaryFamily` + `petsByFamily`)
 
-Fetch the active family with full detail for the My Pets screen.  
-**Auth:** Required
+There is **no dedicated `activeFamily` query** (rejected by canonical reconcile #877 — petapp-be issue #819 closed). The active family is the user's **primary family**, fetched directly via `me { primaryFamily }` (backed by the `GetUserPrimaryFamily` RPC — one round-trip, no client-side filtering needed). The pet list is a **separate** query `petsByFamily(familyId)` — `Family.pets` is intentionally not a nested field (avoids an unbatched N+1).
 
-**Operation:**
+So the My Pets screen issues **two queries**:
+
+**Query 1 — primary family header + parents (`me.primaryFamily`):**
 ```graphql
-query ActiveFamily {
-  activeFamily {
-    id
-    name
-    tag
-    city
-    cityCode
-    country
-    countryCode
-    avatarUrl
-    petAvatars
-    petCount
-    randomCount
-    social {
-      followersCount
-    }
-    viewerRole
-    pets {
+query MyPetsHeader {
+  me {
+    primaryFamily {
       id
       name
+      tag
       avatarUrl
-      breed {
-        nameVi
-        nameEn
+      petAvatars            # ordered public pet avatars (up to 5)
+      petCount
+      viewerRole            # FamilyRole: OWNER | ADMIN | MEMBER
+      location {            # replaces flat city/cityCode/country/countryCode
+        city
+        cityCode
+        country
+        countryCode
       }
-      isPublic
-      sex
-      ageMonths
-      postCount
-      healthStatus
-    }
-    parents {
-      id
-      displayName
-      username
-      avatarUrl
-      role
-      status
+      social {
+        followersCount
+      }
+      members {             # replaces `parents[]` — for the Parents bottom sheet
+        userId
+        displayName
+        username
+        avatarUrl
+        role                # FamilyRole
+        status              # MemberStatus: JOINED | INVITED
+      }
     }
   }
 }
 ```
 
-**Variables:**
-```json
-{}
+**Query 2 — pets of the active family (`petsByFamily`):**
+```graphql
+query MyPetsList($familyId: ID!) {        # familyId = me.primaryFamily.id from query 1
+  petsByFamily(familyId: $familyId) {
+    id
+    name
+    avatarUrl
+    breed { nameVi nameEn }
+    isPublic
+    sex                      # PetSex: MALE | FEMALE | UNKNOWN
+    ageMonths                # Int — client formats "3 years" / "5 months" per locale
+  }
+}
 ```
 
-**Response `200 OK`:**
+**Variables:** query 1 `{}`; query 2 `{ "familyId": "<me.primaryFamily.id>" }`
+
+**Response `200 OK` (query 1):**
 ```json
 {
   "data": {
-    "activeFamily": {
-      "id": "fam_xyz",
-      "name": "Minh's Family",
-      "tag": "minhfamily",
-      "city": "Hồ Chí Minh",
-      "cityCode": "HCM",
-      "country": "Việt Nam",
-      "countryCode": "VN",
-      "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
-      "petAvatars": ["..."],
-      "petCount": 3,
-      "randomCount": 10,
-      "social": {
-        "followersCount": 287
-      },
-      "viewerRole": "OWNER",
-      "pets": [
-        {
-          "id": "pet_111",
-          "name": "Bụi",
-          "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg",
-          "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" },
-          "isPublic": true,
-          "sex": "MALE",
-          "ageMonths": 36,
-          "postCount": 47,
-          "healthStatus": "NORMAL"
-        },
-        {
-          "id": "pet_222",
-          "name": "Măng",
-          "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg",
-          "breed": { "nameVi": "Ngựa buckskin", "nameEn": "Buckskin Pony" },
-          "sex": "FEMALE",
-          "ageMonths": 60,
-          "postCount": 24,
-          "healthStatus": "CONCERN"
-        }
-      ],
-      "parents": [
-        { "id": "user_001", "displayName": "Minh Dang", "username": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
-        { "id": "user_002", "displayName": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "MEMBER", "status": "JOINED" },
-        { "id": "user_003", "displayName": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "MEMBER", "status": "INVITED" }
-      ]
+    "me": {
+      "primaryFamily": {
+        "id": "fam_xyz",
+        "name": "Minh's Family",
+        "tag": "minhfamily",
+        "avatarUrl": "https://cdn.petapp.com/families/fam_xyz/avatar.jpg",
+        "petAvatars": ["..."],
+        "petCount": 3,
+        "viewerRole": "OWNER",
+        "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
+        "social": { "followersCount": 287 },
+        "members": [
+          { "userId": "user_001", "displayName": "Minh Dang", "username": "minhdang", "avatarUrl": "...", "role": "OWNER", "status": "JOINED" },
+          { "userId": "user_002", "displayName": "Cecilia Tran", "username": "ceciliatran", "avatarUrl": "...", "role": "MEMBER", "status": "JOINED" },
+          { "userId": "user_003", "displayName": "Thao Nguyen", "username": "thaonguyen", "avatarUrl": "...", "role": "MEMBER", "status": "INVITED" }
+        ]
+      }
     }
+  }
+}
+```
+
+**Response `200 OK` (query 2):**
+```json
+{
+  "data": {
+    "petsByFamily": [
+      { "id": "pet_111", "name": "Bụi", "avatarUrl": "...", "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" }, "isPublic": true, "sex": "MALE", "ageMonths": 36 },
+      { "id": "pet_222", "name": "Măng", "avatarUrl": "...", "breed": { "nameVi": "Ngựa buckskin", "nameEn": "Buckskin Pony" }, "isPublic": false, "sex": "FEMALE", "ageMonths": 60 }
+    ]
   }
 }
 ```
 
 **Notes:**
-- `viewerRole`: `OWNER` | `MEMBER` — controls visibility of Edit button and management actions in Parents popup
-- `parents` included here to avoid a separate API call when opening the bottom sheet
+- `me.primaryFamily` is `null` if the user has no primary family → render empty state (replaces the `ACTIVE_FAMILY_NOT_SET` error).
+- `viewerRole` (`OWNER` | `ADMIN` | `MEMBER`) controls the Edit button + Parents-popup management actions.
+- `members` is included in query 1 to avoid a separate call when opening the Parents bottom sheet.
+- `petsByFamily` enforces privacy: members see all pets; non-members see only `isPublic: true`.
+- Dropped vs the old `activeFamily` shape (counter-canonical): `gender`→`sex`, server-side `ageDisplay`→client-formatted `ageMonths`, `parents`→`members`, `randomCount` (random-media tag is a separate deferred feature — see AZ), and per-pet `postCount`/`healthStatus` (not yet implemented; `healthStatus` would aggregate from the health/AI service — file a separate Pet issue if the screen needs it).
 
 **Errors:**
 
 | Code | Scenario |
 |------|----------|
 | `UNAUTHENTICATED` | Caller is not logged in |
-| `ACTIVE_FAMILY_NOT_SET` | User has no active family set |
 
 ---
 
@@ -439,11 +428,11 @@ query FamilyRandomMedia($familyId: ID!, $first: Int! = 20, $after: String) {
 ```
 User taps My Pets tab
   └─> [not logged in] → redirect to Login
-  └─> [logged in, no active family] → empty state: "No active family"
+  └─> [logged in, me.primaryFamily == null] → empty state: "No active family"
         └─> Tap "Set active family" → Profile Settings
-  └─> [logged in, has active family]
-        └─> ActiveFamily query (AY)
-              └─> Render family card + pet rows + parents (loaded)
+  └─> [logged in, me.primaryFamily != null]
+        └─> Query 1: me { primaryFamily } (AY) → then Query 2: petsByFamily(familyId) (AY)
+              └─> Render family card + pet rows + parents/members (loaded)
                     └─> FamilyRandomMedia query (AZ)
                           └─> Render random pets grid
 ```
