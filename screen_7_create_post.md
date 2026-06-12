@@ -535,7 +535,6 @@ mutation CreatePost($input: CreatePostInput!) {
     media {
       order
       sourceType
-      mediaId
       embedUrl
       embedProvider
       mediaTag {
@@ -543,6 +542,9 @@ mutation CreatePost($input: CreatePostInput!) {
         petId
         species
         breed
+      }
+      media {
+        id
       }
     }
     createdAt

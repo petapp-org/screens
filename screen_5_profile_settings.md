@@ -324,7 +324,14 @@ query MyLovedPosts($after: String) {
         pets { id name avatarUrl }
         body
         location { city cityCode country countryCode }
-        media { id url mimeType width height durationSeconds }
+        media {
+          order
+          sourceType
+          embedUrl
+          embedProvider
+          mediaTag { type petId species breed }
+          media { id type thumbnailUrl variants { size key contentType } hlsUrl blurhash signedUrl expiresAt }
+        }
         loveCount
         commentsCount
         isLoved
@@ -361,7 +368,16 @@ query MyLovedPosts($after: String) {
             "pets": [ { "id": "pet_111", "name": "Bụi", "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg" } ],
             "body": "Bụi nằm chờ mama nấu cơm 🌕",
             "location": { "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" },
-            "media": [ { "id": "media_001", "url": "https://cdn.petapp.com/media/001.jpg", "mimeType": "image/jpeg", "width": 1080, "height": 1080, "durationSeconds": null } ],
+            "media": [
+              {
+                "order": 1,
+                "sourceType": "UPLOADED",
+                "embedUrl": null,
+                "embedProvider": null,
+                "mediaTag": { "type": "PET", "petId": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" },
+                "media": { "id": "media_001", "type": "IMAGE", "thumbnailUrl": null, "variants": [{ "size": "1080x1080", "key": "media/001_1080.jpg", "contentType": "image/jpeg" }], "hlsUrl": null, "blurhash": "L6PZfSi_.AyE_3t7t7R**0o#DgR4", "signedUrl": "https://cdn.petapp.com/media/001.jpg?token=abc", "expiresAt": "2026-06-13T08:00:00Z" }
+              }
+            ],
             "loveCount": 24,
             "commentsCount": 3,
             "isLoved": true,
