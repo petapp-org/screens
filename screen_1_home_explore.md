@@ -78,7 +78,7 @@ Each post card displays:
 | `avatarUrl` | Display avatar: always use family avatar |
 | `familyName` | Name of the family that created the post |
 | `authorName` | Display name of the user who created the post. Shown top-right: `"authorName · time"` |
-| `pets` | List of **named pets** linked across all media in this post (only media with `mediaTag.type = "pet"`). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatarUrl }`. Can be empty. |
+| `pets` | List of **named pets** linked across all media in this post (only media with `mediaTag.type = PET`). Used to render subtitle e.g. `"Pudding · Mochi"`. Each item: `{ id, name, avatarUrl }`. Can be empty. |
 | `body` | Post text / description |
 | `location` | Optional. `{ "city": "Hồ Chí Minh", "cityCode": "HCM", "country": "Việt Nam", "countryCode": "VN" }`. Shown bottom-right below author/time line: `"HCM - VN"`. Omitted if `null`. |
 | `media` | List of media items (see Media Object below). **Minimum 1, maximum 10.** |
@@ -86,49 +86,59 @@ Each post card displays:
 | `commentsCount` | Total number of comments |
 | `createdAt` | ISO 8601 timestamp |
 | `isLoved` | Boolean — whether the current user has loved this post (false if not logged in) |
-| `visibility` | `public` \| `followers` \| `private` — see visibility rules below |
+| `visibility` | `PUBLIC` \| `FOLLOWERS` \| `PRIVATE` — see visibility rules below |
 
-**Media Object:**
+**PostMedia Object (`Post.media: [PostMedia!]`):**
 
 ```json
 {
-  "id": "string",
-  "type": "uploaded" | "embedded",
-  "url": "string",
-  "thumbnailUrl": "string | null",
-  "mimeType": "string | null",
-  "width": "int | null",
-  "height": "int | null",
-  "durationSeconds": "float | null",
-  "provider": "youtube | vimeo | null",
+  "order": "int",
+  "sourceType": "UPLOADED | EMBEDDED",
+  "embedUrl": "string | null",
+  "embedProvider": "YOUTUBE | VIMEO | null",
   "mediaTag": {
-    "type": "pet" | "random",
-    "id": "string | null",
+    "type": "PET | RANDOM",
+    "petId": "string | null",
     "species": "string | null",
     "breed": "string | null"
+  },
+  "media": {
+    "id": "string",
+    "type": "IMAGE | VIDEO | DOCUMENT",
+    "thumbnailUrl": "string | null",
+    "variants": [],
+    "hlsUrl": "string | null",
+    "blurhash": "string | null",
+    "signedUrl": "string",
+    "expiresAt": "string | null",
+    "url": "⏳ GAP petapp-be#906 (Media chưa expose url/mimeType/width/height/durationSeconds — dùng signedUrl/variants tạm thời)",
+    "mimeType": "⏳ GAP petapp-be#906",
+    "width": "⏳ GAP petapp-be#906",
+    "height": "⏳ GAP petapp-be#906",
+    "durationSeconds": "⏳ GAP petapp-be#906"
   }
 }
 ```
 
 **`mediaTag` types:**
-| Type | Meaning | `id` | `species` | `breed` |
-|------|---------|------|-----------|---------|
-| `pet` | AI matched to a named pet in the family | `petId` — matches an entry in `post.pets` | species of the matched pet | breed of the matched pet |
-| `random` | AI detected no named pet match, or media is `embedded` | `null` | species string if AI detected an animal (e.g. `"cat"`), or `null` | breed string if AI identified a specific breed, or `null` |
+| Type | Meaning | `petId` | `species` | `breed` |
+|------|---------|---------|-----------|---------|
+| `PET` | AI matched to a named pet in the family | `petId` — matches an entry in `post.pets` | species of the matched pet | breed of the matched pet |
+| `RANDOM` | AI detected no named pet match, or media is `EMBEDDED` | `null` | species string if AI detected an animal (e.g. `"cat"`), or `null` | breed string if AI identified a specific breed, or `null` |
 
 **Rendering rules:**
-- `uploaded` → display the file stored on platform (image or video player)
-- `embedded` → display embed player (YouTube/Vimeo); use `thumbnailUrl` as poster image; `url` is the external video URL
+- `UPLOADED` → display the file stored on platform (image or video player); use `media.signedUrl` as the playable/displayable URL
+- `EMBEDDED` → display embed player (YouTube/Vimeo); use `media.thumbnailUrl` as poster image; `embedUrl` is the external video URL
 - Multiple media items → swipeable carousel with `N/Total` indicator (e.g. `1/3`) in the top-right corner of the media area
 
 **Pet badge (bottom-left of media):**
-- `mediaTag.type = "pet"` → show floating badge: `[pet avatar]  pet name`; look up display info using `mediaTag.id` against `post.pets` (where `pets[].id = mediaTag.id`); tappable → Pet Posts screen
-- `mediaTag.type = "random"` → **no badge shown** (regardless of whether `breed`/`species` is populated; breed/species shown in Random Pets section context only)
+- `mediaTag.type = PET` → show floating badge: `[pet avatar]  pet name`; look up display info using `mediaTag.petId` against `post.pets` (where `pets[].id = mediaTag.petId`); tappable → Pet Posts screen
+- `mediaTag.type = RANDOM` → **no badge shown** (regardless of whether `breed`/`species` is populated; breed/species shown in Random Pets section context only)
 - Each media item in the carousel evaluates independently
 
 **Private pet enforcement (server-side):**
-- If `pet.isPublic = false` AND viewer is not a family member → server returns `mediaTag` as `{ type: "random", species: ..., breed: ... }` instead of `{ type: "pet", id: ..., ... }`
-- Client applies existing rules: `type = "random"` → no badge; no special client logic needed
+- If `pet.isPublic = false` AND viewer is not a family member → server returns `mediaTag` as `{ type: RANDOM, species: ..., breed: ... }` instead of `{ type: PET, petId: ..., ... }`
+- Client applies existing rules: `type = RANDOM` → no badge; no special client logic needed
 
 **Post Card Footer:**
 
@@ -268,20 +278,25 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
           countryCode
         }
         media {
-          id
-          type
-          url
-          thumbnailUrl
-          mimeType
-          width
-          height
-          durationSeconds
-          provider
+          order
+          sourceType
+          embedUrl
+          embedProvider
           mediaTag {
             type
-            id
+            petId
             species
             breed
+          }
+          media {
+            id
+            type
+            thumbnailUrl
+            variants { size key contentType }
+            hlsUrl
+            blurhash
+            signedUrl
+            expiresAt
           }
         }
         loveCount
@@ -345,53 +360,69 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
             },
             "media": [
               {
-                "id": "media_001",
-                "type": "UPLOADED",
-                "url": "https://cdn.petapp.com/media/001.jpg",
-                "thumbnailUrl": null,
-                "mimeType": "image/jpeg",
-                "width": 1080,
-                "height": 1080,
-                "durationSeconds": null,
-                "provider": null,
+                "order": 1,
+                "sourceType": "UPLOADED",
+                "embedUrl": null,
+                "embedProvider": null,
                 "mediaTag": {
                   "type": "PET",
-                  "id": "pet_111",
+                  "petId": "pet_111",
                   "species": "Cat",
                   "breed": "Orange Tabby Cat"
+                },
+                "media": {
+                  "id": "media_001",
+                  "type": "IMAGE",
+                  "thumbnailUrl": null,
+                  "variants": [{ "size": "1080x1080", "key": "media/001_1080.jpg", "contentType": "image/jpeg" }],
+                  "hlsUrl": null,
+                  "blurhash": "L6PZfSi_.AyE_3t7t7R**0o#DgR4",
+                  "signedUrl": "https://cdn.petapp.com/media/001.jpg?token=abc",
+                  "expiresAt": "2026-06-13T06:00:00Z"
                 }
               },
               {
-                "id": "media_002",
-                "type": "EMBEDDED",
-                "url": "https://www.youtube.com/watch?v=abc123",
-                "thumbnailUrl": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
-                "mimeType": null,
-                "width": null,
-                "height": null,
-                "durationSeconds": 62.0,
-                "provider": "YOUTUBE",
+                "order": 2,
+                "sourceType": "EMBEDDED",
+                "embedUrl": "https://www.youtube.com/watch?v=abc123",
+                "embedProvider": "YOUTUBE",
                 "mediaTag": {
                   "type": "RANDOM",
-                  "id": null,
+                  "petId": null,
                   "species": null,
                   "breed": null
+                },
+                "media": {
+                  "id": "media_002",
+                  "type": "VIDEO",
+                  "thumbnailUrl": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
+                  "variants": [],
+                  "hlsUrl": null,
+                  "blurhash": null,
+                  "signedUrl": "https://www.youtube.com/watch?v=abc123",
+                  "expiresAt": null
                 }
               },
               {
-                "id": "media_003",
-                "type": "UPLOADED",
-                "url": "https://cdn.petapp.com/media/003.jpg",
-                "thumbnailUrl": null,
-                "mimeType": "image/jpeg",
-                "width": 1080,
-                "height": 1080,
-                "durationSeconds": null,
-                "provider": null,
+                "order": 3,
+                "sourceType": "UPLOADED",
+                "embedUrl": null,
+                "embedProvider": null,
                 "mediaTag": {
                   "type": "RANDOM",
-                  "id": null,
+                  "petId": null,
+                  "species": "Cat",
                   "breed": "British Shorthair"
+                },
+                "media": {
+                  "id": "media_003",
+                  "type": "IMAGE",
+                  "thumbnailUrl": null,
+                  "variants": [{ "size": "1080x1080", "key": "media/003_1080.jpg", "contentType": "image/jpeg" }],
+                  "hlsUrl": null,
+                  "blurhash": "L5H2EC=PM+yV0g-mq.wG9c010J}I",
+                  "signedUrl": "https://cdn.petapp.com/media/003.jpg?token=def",
+                  "expiresAt": "2026-06-13T06:00:00Z"
                 }
               }
             ],
@@ -833,20 +864,25 @@ mutation UpdatePost($postId: ID!, $input: UpdatePostInput!) {
       countryCode
     }
     media {
-      id
-      type
-      url
-      thumbnailUrl
-      mimeType
-      width
-      height
-      durationSeconds
-      provider
+      order
+      sourceType
+      embedUrl
+      embedProvider
       mediaTag {
         type
-        id
+        petId
         species
         breed
+      }
+      media {
+        id
+        type
+        thumbnailUrl
+        variants { size key contentType }
+        hlsUrl
+        blurhash
+        signedUrl
+        expiresAt
       }
     }
     loveCount
@@ -1148,10 +1184,10 @@ User taps "..." on a post
 | Post `pets` list is empty | Use `family.avatarUrl` for post avatar; no subtitle shown |
 | Post `pets` list has 1+ items | Still use `family.avatarUrl` for post avatar; subtitle = pet names joined by ` · ` |
 | Post has multiple media (>1) | Show carousel with `N/Total` badge in top-right corner; swipeable |
-| `mediaTag.type = "pet"` | Show floating badge bottom-left: look up pet name + avatar in `post.pets` by `mediaTag.id`; tap → Pet Posts screen |
-| `mediaTag.type = "random"` | No badge shown on that media frame, regardless of whether `breed` is populated |
+| `mediaTag.type = PET` | Show floating badge bottom-left: look up pet name + avatar in `post.pets` by `mediaTag.petId`; tap → Pet Posts screen |
+| `mediaTag.type = RANDOM` | No badge shown on that media frame, regardless of whether `breed` is populated |
 | Different media frames link to different pets | Each frame shows its own pet badge independently |
-| Post media type is `embedded` | Show video embed player (YouTube iframe / native player); `thumbnailUrl` as poster |
+| Post media `sourceType = EMBEDDED` | Show video embed player (YouTube iframe / native player); `media.thumbnailUrl` as poster |
 | Suggested widget — 0 families returned | Widget is hidden entirely; not shown at all |
 | Family type is `CHARITY` | Show both **Follow** and **Donate** buttons |
 | Family type is `NORMAL` | Show **Follow** button only |
