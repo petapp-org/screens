@@ -70,9 +70,9 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 | `createdAt` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"5m"`, `"3h"`, `"2d"`, `"28 May"` |
 | `replyCount` | Total number of replies to this comment |
 | `isOwn` | Boolean — whether the current viewer authored this comment |
-| `isDeletable` | Boolean — server-computed; `true` only when `isOwn=true` AND `replyCount=0` AND comment was created within the last 10 minutes |
+| `isDeletable` | Boolean — server-enforced (computed per-viewer by `app-community`, **not** the client); `true` only when `isOwn=true` AND `replyCount=0` AND comment was created within the last 10 minutes. The same rule gates the `DeleteComment` mutation, so `isDeletable=true` guarantees the delete will succeed |
 
-> ⚠️ replyCount / isDeletable / replies / replyToUser: backend đang implement theo decision depth-2 + @mention (petapp-be #880, epic #948). isOwn đã có (PR #879). `isDeletable` is **server-enforced** in `DeleteComment` (not client-computed).
+> ✅ replyCount / isDeletable / replies / replyToUser: shipped theo decision depth-2 + @mention (petapp-be #880, epic #948 — sub-issues #949/#950/#951/#952 đã merge). isOwn đã có (PR #879). `isDeletable` is **server-enforced** (computed per-viewer trong `app-community`, cùng rule gating `DeleteComment`), không phải client-computed.
 
 **Comment actions:**
 - **Reply** button (always visible) → sets reply context in fixed input bar (requires login to submit)
