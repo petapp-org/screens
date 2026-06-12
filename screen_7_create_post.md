@@ -106,22 +106,24 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 > **Photos only.** Uploaded **videos are not AI-scanned** — they are tagged manually (§4, manual mode). Embedded media is auto-`random`. `IdentifyPetFromMedia (AT)` is never called for videos or embeds.
 
-**Purpose:** detect if a pet is present in the media, identify its species and breed, then attempt to match with named pets in the current family.
+**Purpose:** detect if a pet is present in the media, identify its species and breed, then attempt to match with named pets in the current family. **Matching is client-side**: the mutation returns raw AI output (`speciesId`, `breedId`, confidence scores, `rawLabel`); the client so sánh kết quả với danh sách pets của user để tự xác định khớp.
 
 ```
 User taps [AI Scan] on a media item
   └─> IdentifyPetFromMedia mutation (AT)  { mediaId }
         └─> (loading state on thumbnail)
-              ├─ Pet detected + match found in family
-              │     └─> tag: { type=pet, petId=pet_xxx, species="cat", breed="British Shorthair" }
-              │           Badge shows: [pet avatar]  pet name  ✓
-              ├─ Pet detected + no match + breed known
-              │     └─> tag: { type=random, petId=null, species="cat", breed="British Shorthair" }
-              │           Badge shows: "British Shorthair"  (with edit pencil icon)
-              ├─ Pet detected + no match + breed unknown
+              ├─ speciesConfidence high + breedConfidence high
+              │     → client matches speciesId/breedId against user's pets
+              │     ├─ match found in family
+              │     │     └─> tag: { type=pet, petId=pet_xxx, species="cat", breed="British Shorthair" }
+              │     │           Badge shows: [pet avatar]  pet name  ✓
+              │     └─ no family pet match
+              │           └─> tag: { type=random, petId=null, species="cat", breed="British Shorthair" }
+              │                 Badge shows: "British Shorthair"  (with edit pencil icon)
+              ├─ speciesConfidence high + breedConfidence low (breedId empty)
               │     └─> tag: { type=random, petId=null, species="cat", breed=null }
               │           Badge shows: "cat"  (with edit pencil icon)
-              └─ No animal detected
+              └─ speciesConfidence low (no animal detected)
                     └─> tag: { type=random, petId=null, species=null, breed=null }
                           Badge shows: "Random"  (with edit pencil icon)
 ```
@@ -252,15 +254,11 @@ Scan an **already-uploaded** media item for pet detection. The media is first up
 ```graphql
 mutation IdentifyPetFromMedia($mediaId: ID!) {
   identifyPetFromMedia(mediaId: $mediaId) {
-    detected
-    species
-    breed
-    color
-    matchedPet {
-      id
-      name
-      avatarUrl
-    }
+    speciesId
+    speciesConfidence
+    breedId
+    breedConfidence
+    rawLabel
   }
 }
 ```
@@ -274,59 +272,65 @@ mutation IdentifyPetFromMedia($mediaId: ID!) {
 
 **Response `200 OK`:**
 
-Pet detected + matched to family pet:
+Pet detected — high confidence (client so sánh `speciesId`/`breedId` với pets của user để xác định khớp; contract chỉ trả raw AI output):
 ```json
 {
   "data": {
     "identifyPetFromMedia": {
-      "detected": true,
-      "species": "Cat",
-      "breed": "Orange Tabby Cat",
-      "color": "orange",
-      "matchedPet": {
-        "id": "pet_111",
-        "name": "Pudding",
-        "avatarUrl": "https://cdn.petapp.com/pets/pet_111/avatar.jpg"
-      }
+      "speciesId": "species_cat",
+      "speciesConfidence": 0.97,
+      "breedId": "breed_orange_tabby",
+      "breedConfidence": 0.88,
+      "rawLabel": "orange tabby cat"
     }
   }
 }
 ```
 
-Pet detected + no family match:
+Pet detected — breed not recognised (low breedConfidence, breedId empty):
 ```json
 {
   "data": {
     "identifyPetFromMedia": {
-      "detected": true,
-      "species": "Cat",
-      "breed": "British Shorthair",
-      "color": "grey",
-      "matchedPet": null
+      "speciesId": "species_cat",
+      "speciesConfidence": 0.91,
+      "breedId": "",
+      "breedConfidence": 0.21,
+      "rawLabel": "grey cat"
     }
   }
 }
 ```
 
-No pet detected:
+No animal detected (all confidences near zero):
 ```json
 {
   "data": {
     "identifyPetFromMedia": {
-      "detected": false,
-      "species": null,
-      "breed": null,
-      "color": null,
-      "matchedPet": null
+      "speciesId": "",
+      "speciesConfidence": 0.04,
+      "breedId": "",
+      "breedConfidence": 0.0,
+      "rawLabel": "indoor scene"
     }
   }
 }
 ```
+
+**Field docs:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `speciesId` | `String!` | ID of the detected species (e.g. `"species_cat"`); empty string when no animal detected |
+| `speciesConfidence` | `Float!` | AI confidence score for the species classification (0–1) |
+| `breedId` | `String!` | ID of the detected breed (e.g. `"breed_orange_tabby"`); empty string when breed is unknown |
+| `breedConfidence` | `Float!` | AI confidence score for the breed classification (0–1) |
+| `rawLabel` | `String!` | Raw label from the AI model (for debugging / display fallback) |
 
 **Notes:**
-- `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `mediaTag`.
+- **Client-side matching:** so sánh `speciesId`/`breedId` trả về với danh sách pets của user để tìm khớp (e.g. một pet có cùng speciesId và breedId). Contract chỉ trả raw AI output — không có `matchedPet` hay logic matching phía server.
 - Resulting `mediaTag` written to the post uses `{ type, petId, species, breed }` (canonical MediaTag structure (#940/ADR-0027)).
-- In Random Pets context (`[+]` from Screen 8), call without a `familyId` context — `matchedPet` is always `null`.
+- In Random Pets context (`[+]` from Screen 8), call without a `familyId` context — matching against family pets is skipped; client treats all results as unmatched.
 
 **Errors:**
 
@@ -356,7 +360,6 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
       nameVi
       nameEn
     }
-    isPublic
     sex
     ageMonths
     avatarUrl
@@ -367,18 +370,20 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
 > Tuổi trả về dạng `ageMonths` (Int) — client tự format hiển thị theo locale + `birthDatePrecision`, server không format chuỗi.
 
 **Variables:**
+
+`CreatePetInput` fields (ADR-0024): `name`, `speciesId` (ID!), `sex` (PetSex!), `breedId` (String, optional), `microchipNumber` (String, optional), `birthDate` (String, optional), `birthDatePrecision` (BirthDatePrecision, default UNSPECIFIED), `weightKg` (String, optional), `primaryMediaId` (String, optional — ID từ `signUploadBatch`).
+
 ```json
 {
   "familyId": "fam_xyz",
   "input": {
     "name": "Snowball",
-    "species": "Cat",
-    "breed": "British Shorthair",
-    "isPublic": true,
+    "speciesId": "species_cat",
+    "breedId": "breed_british_shorthair",
     "sex": "FEMALE",
     "birthDate": "2024-01-15",
-    "weightKg": 3.2,
-    "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
+    "weightKg": "3.2",
+    "primaryMediaId": "media_tmp_pet_avatar_001"
   }
 }
 ```
@@ -392,10 +397,9 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
       "name": "Snowball",
       "species": { "name": "Cat", "iconEmoji": "🐱" },
       "breed": { "nameVi": "Mèo lông ngắn Anh", "nameEn": "British Shorthair" },
-      "isPublic": true,
       "sex": "FEMALE",
       "ageMonths": 12,
-      "avatarUrl": "https://cdn.petapp.com/media/tmp_pet_avatar.jpg"
+      "avatarUrl": "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
     }
   }
 }
@@ -407,8 +411,8 @@ mutation CreatePet($familyId: ID!, $input: CreatePetInput!) {
 |--------|------|----------|
 | `403` | `NOT_FAMILY_MEMBER` | Caller is not a member of the given family |
 | `404` | `FAMILY_NOT_FOUND` | Family does not exist |
-| `422` | `INVALID_SPECIES` | Species value not found in DB |
-| `422` | `INVALID_BREED` | Breed does not belong to the given species |
+| `422` | `INVALID_SPECIES` | `speciesId` not found in DB |
+| `422` | `INVALID_BREED` | `breedId` does not belong to the given species |
 | `422` | `NAME_REQUIRED` | Pet name is missing |
 
 ---
@@ -427,6 +431,9 @@ mutation SaveDraft($input: CreatePostInput!) {
 ```
 
 **Variables:**
+
+`PostLocationInput` chỉ nhận `cityCode` (String!, bắt buộc), `lat` (Float, optional), `lng` (Float, optional). Display names (`city`, `country`, `countryCode`) được resolve server-side từ `cityCode`.
+
 ```json
 {
   "input": {
@@ -434,10 +441,7 @@ mutation SaveDraft($input: CreatePostInput!) {
     "body": "Pudding nằm chờ mama nấu cơm 🌕",
     "visibility": "PUBLIC",
     "location": {
-      "city": "Hồ Chí Minh",
-      "cityCode": "HCM",
-      "country": "Việt Nam",
-      "countryCode": "VN"
+      "cityCode": "HCM"
     },
     "media": [
       {
@@ -551,6 +555,9 @@ mutation CreatePost($input: CreatePostInput!) {
 ```
 
 **Variables:**
+
+`PostLocationInput` chỉ nhận `cityCode` (String!, bắt buộc), `lat` (Float, optional), `lng` (Float, optional). Display names (`city`, `country`, `countryCode`) được resolve server-side từ `cityCode`.
+
 ```json
 {
   "input": {
@@ -558,10 +565,7 @@ mutation CreatePost($input: CreatePostInput!) {
     "body": "Pudding nằm chờ mama nấu cơm 🌕",
     "visibility": "PUBLIC",
     "location": {
-      "city": "Hồ Chí Minh",
-      "cityCode": "HCM",
-      "country": "Việt Nam",
-      "countryCode": "VN"
+      "cityCode": "HCM"
     },
     "media": [
       {
@@ -646,7 +650,8 @@ Fetch all breed options for a given species, for the Create Pet form.
 query Breeds($speciesId: ID!) {
   breeds(speciesId: $speciesId) {
     id
-    name
+    nameVi
+    nameEn
   }
 }
 ```
@@ -658,8 +663,8 @@ query Breeds($speciesId: ID!) {
 {
   "data": {
     "breeds": [
-      { "id": "breed_british_shorthair", "name": "British Shorthair" },
-      { "id": "breed_orange_tabby", "name": "Orange Tabby Cat" }
+      { "id": "breed_british_shorthair", "nameVi": "Mèo Anh lông ngắn", "nameEn": "British Shorthair" },
+      { "id": "breed_orange_tabby", "nameVi": "Mèo lông ngắn cam", "nameEn": "Orange Tabby Cat" }
     ]
   }
 }
@@ -669,6 +674,7 @@ query Breeds($speciesId: ID!) {
 - Called after user selects a species to populate the breed dropdown
 - Breed list is filtered to the selected species
 - If user changes species, breed selection is reset
+- `nameVi` / `nameEn` — hiển thị theo locale của user; `BreedGQL` không có field `name` (đã tách thành `nameVi`/`nameEn`)
 
 ---
 
