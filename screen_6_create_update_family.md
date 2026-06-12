@@ -38,7 +38,7 @@ Requires login. Only the family owner can edit.
   │     └── [Invite Another Parent row] — tap → opens invite search modal
   │
   ├── PRIVACY section  [current value]  [expand/collapse ▾]
-  │     └── Toggle: Public (`isPublic: true`) | Private (`isPublic: false`)
+  │     └── Dropdown: Public | Followers only | Family only
   │           Description text below selected option
   │
   └── (spacer for fixed button)
@@ -166,17 +166,18 @@ Bottom sheet or full-screen modal.
 
 ### 7. Privacy Section
 
-Toggle / dropdown with 2 contract-backed options. Determines whether the family page is public or private.
+Dropdown with 3 options. Determines the **default privacy** applied to new posts created under this family. Each post retains its own privacy setting and can be changed individually after creation.
 
-| Option | `isPublic` value | Description shown in UI |
-|--------|-----------------|--------------------------|
-| Public | `true` | Anyone can view your family page |
-| Private | `false` | Only family members can view your family page |
+| Option | Value | Description shown in UI |
+|--------|-------|--------------------------|
+| Public | `PUBLIC` | Anyone can view your posts |
+| Followers only | `FOLLOWERS` | Only your followers can view your posts |
+| Family only | `PRIVATE` | Only family members can view your posts |
 
-- Default on Create: `true` (public)
+- Default on Create: `PUBLIC`
 - Selecting an option updates the displayed description text below
 
-> ⏳ GAP petapp-be#812 — family privacy 3 tier (defaultPrivacy) chưa có trong contract; hiện chỉ `isPublic` 2 trạng thái. "Followers only" tier sẽ được thêm khi petapp-be#812 ship.
+> ⏳ GAP petapp-be#812 — `defaultPrivacy` chưa có trong contract (cả input lẫn type Family). KHÔNG gửi field này trong createFamily/updateFamily hiện tại; UI có thể render dropdown nhưng giá trị chỉ lưu client-side cho tới khi backend ship #812.
 
 ---
 
@@ -582,7 +583,7 @@ mutation RemoveFamilyMember($familyId: ID!, $userId: ID!) {
 ```
 User taps "Create Family Page" in Profile Settings
   └─> Navigate to Create Family screen
-        └─> Fill in name, tag (real-time check), bio, isPublic
+        └─> Fill in name, tag (real-time check), bio, defaultPrivacy (client-side until #812)
               └─> Optionally upload avatar via signUploadBatch → avatarMediaId
                     └─> Optionally invite parents → SearchUsers query (AP) → InviteFamilyMember mutation (AQ)
                           └─> Tap "Create Family"
@@ -626,4 +627,4 @@ Owner taps Edit in Family Posts screen
 | Invite search — user already in family or invited | Excluded from results (server filters) |
 | Remove owner row | Not possible; Remove button not shown for owner row |
 | Cancel all invites then submit | Allowed — family created with owner only |
-| Privacy (`isPublic`) change on Update | Affects the family page visibility immediately; existing posts keep their own privacy |
+| Privacy (`defaultPrivacy`) change on Update | Only affects new posts from that point forward; existing posts keep their own privacy. Note: `isPublic` controls family page visibility (separate concept) |
