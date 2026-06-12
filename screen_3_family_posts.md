@@ -581,17 +581,17 @@ query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
 
 ### U. Query: `RandomPetPosts`
 
-> ⚠️ **GAP petapp-be#886:** `randomPetPosts` is a feed scoped by `familyId` (only random-pet posts within one family). Backend `exploreFeed` is global cross-family and takes no `familyId`, so mapping to it would lose the family scope entirely — kept as-is, pending backend `randomFeed(familyId)`.
+> ✅ **SHIPPED petapp-be#969:** backend field is **`randomFeed(familyId: ID!, first, after): PostConnection!`** — a feed scoped by `familyId` (only random-pet posts within one family). Distinct from `exploreFeed` (global cross-family, no `familyId`). The GraphQL operation label stays `RandomPetPosts`; the selected field is now `randomFeed`.
 
 Fetch posts with random (unmatched) animal detections for a specific family.  
 **Auth:** Optional — same privacy enforcement as above.
 
-> When backend ships this (GAP petapp-be#886), the list **must be born Relay** (ADR-0023): `posts` is a `PostConnection`, args `first`/`after`. The `family` header (incl. `randomCount`) travels as a sibling field outside the connection.
+> Born Relay (ADR-0023): `posts` is a `PostConnection`, args `first`/`after`. The `family` header (incl. `randomCount`) travels as a sibling field outside the connection.
 
 **Operation:**
 ```graphql
 query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
-  randomPetPosts(familyId: $familyId, first: $first, after: $after) {
+  randomFeed(familyId: $familyId, first: $first, after: $after) {
     family {
       id
       name
@@ -620,7 +620,7 @@ query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
 ```json
 {
   "data": {
-    "randomPetPosts": {
+    "randomFeed": {
       "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "randomCount": 10 },
       "posts": {
         "edges": [
