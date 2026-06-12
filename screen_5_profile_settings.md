@@ -153,9 +153,9 @@ DANGER ZONE
 - `UpdateMyProfile mutation (AK)` `{ displayName, avatarUrl }`
 
 **Phone & Email:**
-- Shows current phone number (masked, e.g. `+84 *** *** 567`)
+- Shows current phone number (client masks for display, e.g. `+84 *** *** 567`)
 - Shows linked email (from OAuth)
-- API: `MyContactInfo query (AJ)`
+- API: `me query (AJ)` — `me { phone email }` returns the caller's own full phone + email; the masked phone display is applied client-side in this row
 
 **Push Notifications:**
 - Toggle stored locally + synced to server
@@ -462,14 +462,15 @@ query MyFollowing($first: Int! = 20, $after: String) {
 
 ---
 
-### AJ. Query: `MyContactInfo`
-Fetch the current user's phone number and linked email address.  
+### AJ. Query: `me` (contact fields)
+Fetch the current user's phone number and linked email address via the existing `me` query.  
+There is **no dedicated `myContactInfo` query** — `me` already returns the caller's own contact info (see note below).  
 **Auth:** Required
 
 **Operation:**
 ```graphql
 query MyContactInfo {
-  myContactInfo {
+  me {
     phone
     email
   }
@@ -485,13 +486,15 @@ query MyContactInfo {
 ```json
 {
   "data": {
-    "myContactInfo": {
+    "me": {
       "phone": "+84901234567",
       "email": "minh@example.com"
     }
   }
 }
 ```
+
+> **Note — masking is client-side here.** `me.phone` returns the caller's **full** number because the requester is the owner (the server only masks `User.phone` when a *different* user reads it, e.g. via `user(id:)`). For the Settings "Phone & Email" row, the client applies the masked display (`+84 *** *** 567`) itself. A separate `myContactInfo` query was considered and rejected as redundant with `me` (petapp-be PR #871 / issue #791 closed) — it would duplicate the same data behind a second source of truth.
 
 **Errors:**
 
