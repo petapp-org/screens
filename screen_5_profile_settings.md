@@ -149,7 +149,7 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `username` (shown greyed out with note "Username cannot be changed")
-- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → use `list[0].publicUrl`; no AI scan
+- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → cần hosted URL để truyền vào `updateMyProfile(avatarUrl: String)` — ⏳ GAP petapp-be#906: `SignUploadBatchResultItem` chưa trả `publicUrl`, flow bị chặn cho tới khi #906 ship (hoặc mutation đổi sang nhận `mediaId`); no AI scan
 - `UpdateMyProfile mutation (AK)` `{ displayName, avatarUrl }`
 
 **Phone & Email:**
