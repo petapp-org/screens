@@ -26,7 +26,7 @@ Navigated to from: Explore feed (tap post body/media), inline comment panel ("Vi
   └── Comments section
         ├── Comment 1
         │     ├── [Reply button]  [Delete button — own comment only]
-        │     └── Replies (nested, collapsible — see below)
+        │     └── Replies (depth-2 flat list, collapsible — see below)
         ├── Comment 2
         │     └── ...
         └── [Load more comments]
@@ -70,9 +70,9 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 | `createdAt` | Time string following the same display rules as post cards (see `screen_1_home_explore.md` → Post Card → Time display rules). E.g. `"5m"`, `"3h"`, `"2d"`, `"28 May"` |
 | `replyCount` | Total number of replies to this comment |
 | `isOwn` | Boolean — whether the current viewer authored this comment |
-| `isDeletable` | Boolean — server-computed; `true` only when `isOwn=true` AND `replyCount=0` AND comment was created within the last 10 minutes |
+| `isDeletable` | Boolean — server-enforced (computed per-viewer by `app-community`, **not** the client); `true` only when `isOwn=true` AND `replyCount=0` AND comment was created within the last 10 minutes. The same rule gates the `DeleteComment` mutation, so `isDeletable=true` guarantees the delete will succeed |
 
-> ⚠️ replyCount / isDeletable: backend chưa hỗ trợ (mô hình nested replies đang escalate ở petapp-be#880). isOwn đã có (PR #879).
+> ✅ replyCount / isDeletable / replies / replyToUser: shipped theo decision depth-2 + @mention (petapp-be #880, epic #948 — sub-issues #949/#950/#951/#952 đã merge). isOwn đã có (PR #879). `isDeletable` is **server-enforced** (computed per-viewer trong `app-community`, cùng rule gating `DeleteComment`), không phải client-computed.
 
 **Comment actions:**
 - **Reply** button (always visible) → sets reply context in fixed input bar (requires login to submit)
@@ -84,24 +84,29 @@ Identical to the canonical post card defined in `screen_1_home_explore.md` → *
 
 ---
 
-### 3. Nested Replies
+### 3. Replies (depth-2, Facebook-style)
 
-Replies are nested under their parent comment. Multi-level nesting is supported (reply to a reply, and so on).
+Threading is **2 levels deep** (top-level comment → replies), **not** infinitely recursive. This matches the Facebook model and is the backend-supported shape (petapp-be #880 / epic #948).
+
+- A top-level comment (depth 0) can have a flat list of replies (depth 1).
+- Replying to a reply does **not** create a third level — the new reply is appended to the **same** flat reply list of the top-level comment, with an automatic **`@mention`** of the user being replied to (`replyToUser`) prepended so the "who replied to whom" context is preserved.
+- So every reply lives under exactly one top-level comment; there are no nested "View replies" links inside replies.
 
 **Initial state:**
-- If `replyCount > 0`: show a collapsed "View N replies ▾" link under the comment
-- Tapping expands and loads the first 5 replies
+- If `replyCount > 0`: show a collapsed "View N replies ▾" link under the top-level comment
+- Tapping expands and loads the first 5 replies (via `CommentReplies` query — see O)
 
-**Loaded reply:**
+**Loaded reply (depth 1):**
 - Same display fields as a top-level comment (`author`, `body`, `createdAt`, `isOwn`, `isDeletable`)
+- When the reply targets another reply, it renders a leading `@username` (`replyToUser`) — tappable to scroll to that user's reply
 - Has its own **Reply** and **Delete** buttons (same rules — `isDeletable` applies identically)
-- If a reply itself has replies, show "View N replies ▾" beneath it (same expand behaviour, recursively)
+- A reply does **not** show its own "View N replies" link (no depth-3)
 
 **"Load more replies":**
-- If a comment has > 5 replies, show "Load N more replies" after the first 5
+- If a top-level comment has > 5 replies, show "Load N more replies" after the first 5 (cursor `after`)
 
 **Collapsing:**
-- Tapping "View N replies ▾" again collapses the reply thread
+- Tapping "View N replies ▾" again collapses the reply list
 
 ---
 
@@ -259,7 +264,7 @@ query Post($id: ID!) {
 
 ### N. Mutation: `CreateComment` (reply form)
 
-Reply to a comment (or to a reply — any depth). Uses the unified `createComment` mutation with `parentId` set to the target comment's id.
+Reply to a top-level comment or to a reply (depth-2 model). Uses the unified `createComment` mutation. When replying to a **top-level comment**, set `parentId` to that comment's id. When replying to a **reply**, set `parentId` to the **top-level comment** that owns the thread and `replyToUserId` to the replied-to user — the backend keeps the reply at depth 2 and prepends an `@mention` (no depth-3 is created).
 
 > **Triggers notification:** fires a `NEW_REPLY` notification to the author of the comment/reply being replied to (see screen_22 — Notifications screen). Not fired when replying to your own comment.
 
@@ -267,14 +272,18 @@ Reply to a comment (or to a reply — any depth). Uses the unified `createCommen
 
 **Operation:**
 ```graphql
-mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null) {
-  createComment(postId: $postId, body: $body, parentId: $parentId) {
+mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null, $replyToUserId: ID = null) {
+  createComment(postId: $postId, body: $body, parentId: $parentId, replyToUserId: $replyToUserId) {
     id
     parentId
     author {
       id
       displayName
       avatarUrl
+    }
+    replyToUser {
+      id
+      displayName
     }
     body
     createdAt
@@ -492,9 +501,9 @@ User taps post in Explore feed
 ```
 User taps "View N replies ▾"
   └─> CommentReplies query (O) { commentId, first: 5 }
-        └─> Render first 5 replies under comment
+        └─> Render first 5 replies under the top-level comment (flat, depth-2)
               ├─ hasNextPage=true → show "Load N more replies"
-              └─ Each reply with replyCount > 0 → shows "View N replies ▾" (recursive)
+              └─ Replies have NO own "View replies" link (no depth-3); cross-reply context shown via @mention
 ```
 
 ### Submit Comment
