@@ -325,6 +325,10 @@ mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null, $repl
         "displayName": "Luna",
         "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
       },
+      "replyToUser": {
+        "id": "user_001",
+        "displayName": "Minh Tuan"
+      },
       "body": "Đồng ý nè 😄",
       "createdAt": "2026-06-06T09:00:00Z",
       "replyCount": 0,
@@ -348,43 +352,59 @@ mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null, $repl
 
 Fetch replies for a comment (triggered when user expands "View N replies").
 
+> **Shape note:** there is no root `commentReplies` query in the contract. Replies are accessed via the sub-field `Comment.replies(first, after): CommentConnection!` (shipped). The total reply count is `Comment.replyCount` (already fetched as part of `PostComments (K)`). The operation below fetches the parent post's comments and expands replies for the target comment in one query, or a client may re-fetch the specific comment thread after load; either approach uses the same sub-field path.
+
 **Auth:** Optional
 
 **Operation:**
 ```graphql
-query CommentReplies($commentId: ID!, $first: Int! = 5, $after: String) {
-  commentReplies(commentId: $commentId, first: $first, after: $after) {
-    repliesCount
-    replies {
+query CommentReplies($postId: ID!, $commentId: ID!, $first: Int! = 5, $after: String) {
+  post(id: $postId) {
+    comments(first: 1, after: null) {
       edges {
-        cursor
         node {
           id
-          parentId
-          author {
-            id
-            displayName
-            avatarUrl
-          }
-          body
-          createdAt
           replyCount
-          isOwn
-          isDeletable
+          replies(first: $first, after: $after) {
+            edges {
+              cursor
+              node {
+                id
+                parentId
+                author {
+                  id
+                  displayName
+                  avatarUrl
+                }
+                replyToUser {
+                  id
+                  displayName
+                }
+                body
+                createdAt
+                replyCount
+                isOwn
+                isDeletable
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
         }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
       }
     }
   }
 }
 ```
 
+> **Implementation note:** in practice the client already has the parent comment node in cache (from `PostComments K`). A focused fetch can target the specific comment's `replies(first, after)` sub-field directly. The `replyCount` used for the "View N replies" label comes from the parent `Comment.replyCount` already in the list. No root `commentReplies` field is needed.
+
 **Variables:**
 ```json
 {
+  "postId": "post_001",
   "commentId": "comment_001",
   "first": 5,
   "after": null
@@ -395,44 +415,55 @@ query CommentReplies($commentId: ID!, $first: Int! = 5, $after: String) {
 ```json
 {
   "data": {
-    "commentReplies": {
-      "repliesCount": 8,
-      "replies": {
+    "post": {
+      "comments": {
         "edges": [
           {
-            "cursor": "eyJpZCI6InJlcGx5XzAwMSJ9",
             "node": {
-              "id": "reply_001",
-              "parentId": "comment_001",
-              "author": {
-                "id": "user_003",
-                "displayName": "Luna",
-                "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
-              },
-              "body": "Đồng ý nè 😄",
-              "createdAt": "2026-06-06T09:00:00Z",
-              "replyCount": 2,
-              "isOwn": false,
-              "isDeletable": false
+              "id": "comment_001",
+              "replyCount": 8,
+              "replies": {
+                "edges": [
+                  {
+                    "cursor": "eyJpZCI6InJlcGx5XzAwMSJ9",
+                    "node": {
+                      "id": "reply_001",
+                      "parentId": "comment_001",
+                      "author": {
+                        "id": "user_003",
+                        "displayName": "Luna",
+                        "avatarUrl": "https://cdn.petapp.com/users/user_003/avatar.jpg"
+                      },
+                      "replyToUser": null,
+                      "body": "Đồng ý nè 😄",
+                      "createdAt": "2026-06-06T09:00:00Z",
+                      "replyCount": 0,
+                      "isOwn": false,
+                      "isDeletable": false
+                    }
+                  }
+                ],
+                "pageInfo": {
+                  "hasNextPage": true,
+                  "endCursor": "eyJpZCI6InJlcGx5XzAwMSJ9"
+                }
+              }
             }
           }
-        ],
-        "pageInfo": {
-          "hasNextPage": true,
-          "endCursor": "eyJpZCI6InJlcGx5XzAwMSJ9"
-        }
+        ]
       }
     }
   }
 }
 ```
 
-> **Note:** `repliesCount` (total reply count for the parent comment) is a sibling field on `commentReplies`, not inside the connection — per ADR-0023 `totalCount` does not live in the Relay envelope.
+> **Note:** total reply count for the parent comment is `Comment.replyCount` — a field on the comment node, not inside the connection. This follows ADR-0023 (no `totalCount` inside the Relay envelope).
 
 **Errors:**
 
 | Status | Code | Scenario |
 |--------|------|----------|
+| `200` | `POST_NOT_FOUND` | Post does not exist |
 | `200` | `COMMENT_NOT_FOUND` | Parent comment does not exist |
 
 ---
@@ -510,7 +541,7 @@ User taps post in Explore feed
 
 ```
 User taps "View N replies ▾"
-  └─> CommentReplies query (O) { commentId, first: 5 }
+  └─> CommentReplies query (O) — fetches Comment.replies(first: 5) sub-field { commentId, first: 5 }
         └─> Render first 5 replies under the top-level comment (flat, depth-2)
               ├─ hasNextPage=true → show "Load N more replies"
               └─ Replies have NO own "View replies" link (no depth-3); cross-reply context shown via @mention
