@@ -411,7 +411,9 @@ input SignUploadBatchItemInput {
 
 `purpose` enum: `AVATAR` | `POST_PHOTO` | `POST_VIDEO` | `COVER_PHOTO` | `PRODUCT` | `HEALTH_DOC` | `KYC_DOC` | `LOST_PET`
 
-**Client flow:** call this → `PUT` the file bytes to `presignedUrl` (from `list[0]`) → use `mediaId` (from `list[0]`) as `avatarMediaId` / `primaryMediaId` in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass `mediaId` to `IdentifyPetFromMedia (AT)` to detect/match a pet.
+**Client flow:** call this → `PUT` the file bytes to `presignedUrl` (from `list[0]`) → **`POST /uploads/{mediaId}/complete`** (REST, bff-app — bước confirm BẮT BUỘC, xem note dưới) → use `mediaId` (from `list[0]`) as `avatarMediaId` / `primaryMediaId` in the next mutation (`UpdateMyProfile`, family/pet update, or `CreatePost`). For **post media only**, pass `mediaId` to `IdentifyPetFromMedia (AT)` to detect/match a pet.
+
+> ⚠️ **Bước confirm upload (petapp-be#288, shipped):** vStorage (VNG) KHÔNG có webhook push, nên sau khi `PUT` thành công client **phải** gọi REST `POST /uploads/{mediaId}/complete` (bff-app proxy → app-media). Server HEAD-verify object (tồn tại + size khớp `fileSizeBytes` đã đăng ký) rồi set `MediaStatus: PENDING → UPLOADED`; worker transcode xong set `READY`. Idempotent — gọi lại khi đã `UPLOADED`/`READY` vẫn trả OK; object chưa có → `404`, giữ `PENDING`, client retry `PUT`. **Bỏ qua bước này thì media kẹt `PENDING` vĩnh viễn** (chỉ MinIO local có webhook thay thế). Endpoint này là REST nên không xuất hiện trong GraphQL contract. Mọi flow upload ở các screen khác (`screen_5` avatar, `screen_6` family avatar, `screen_7` post media, `screen_9` pet avatar/lost-pet photos, `screen_26` rescue photos) đều reference flow này.
 
 **Response `200 OK`:**
 ```json
