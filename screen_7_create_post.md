@@ -113,16 +113,16 @@ User taps [AI Scan] on a media item
   └─> IdentifyPetFromMedia mutation (AT)  { mediaId }
         └─> (loading state on thumbnail)
               ├─ Pet detected + match found in family
-              │     └─> tag: { type=pet, id=pet_xxx, species="cat", breed="British Shorthair" }
+              │     └─> tag: { type=pet, petId=pet_xxx, species="cat", breed="British Shorthair" }
               │           Badge shows: [pet avatar]  pet name  ✓
               ├─ Pet detected + no match + breed known
-              │     └─> tag: { type=random, id=null, species="cat", breed="British Shorthair" }
+              │     └─> tag: { type=random, petId=null, species="cat", breed="British Shorthair" }
               │           Badge shows: "British Shorthair"  (with edit pencil icon)
               ├─ Pet detected + no match + breed unknown
-              │     └─> tag: { type=random, id=null, species="cat", breed=null }
+              │     └─> tag: { type=random, petId=null, species="cat", breed=null }
               │           Badge shows: "cat"  (with edit pencil icon)
               └─ No animal detected
-                    └─> tag: { type=random, id=null, species=null, breed=null }
+                    └─> tag: { type=random, petId=null, species=null, breed=null }
                           Badge shows: "Random"  (with edit pencil icon)
 ```
 
@@ -325,7 +325,7 @@ No pet detected:
 
 **Notes:**
 - `color` is returned by the AI for use in the Create Pet form (pre-fill). It is **not stored** in `mediaTag`.
-- Resulting `mediaTag` written to the post uses `{ type, id, species, breed }` (Screen 1 canonical structure).
+- Resulting `mediaTag` written to the post uses `{ type, petId, species, breed }` (canonical MediaTag structure (#940/ADR-0027)).
 - In Random Pets context (`[+]` from Screen 8), call without a `familyId` context — `matchedPet` is always `null`.
 
 **Errors:**
@@ -441,12 +441,12 @@ mutation SaveDraft($input: CreatePostInput!) {
     },
     "media": [
       {
-        "url": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
-        "type": "UPLOADED",
         "order": 1,
+        "sourceType": "UPLOADED",
+        "mediaId": "media_001",
         "mediaTag": {
           "type": "PET",
-          "id": "pet_111",
+          "petId": "pet_111",
           "species": "Cat",
           "breed": "Orange Tabby Cat"
         }
@@ -533,12 +533,14 @@ mutation CreatePost($input: CreatePostInput!) {
       countryCode
     }
     media {
-      url
-      type
       order
+      sourceType
+      mediaId
+      embedUrl
+      embedProvider
       mediaTag {
         type
-        id
+        petId
         species
         breed
       }
@@ -563,23 +565,24 @@ mutation CreatePost($input: CreatePostInput!) {
     },
     "media": [
       {
-        "url": "https://cdn.petapp.com/media/tmp_upload_001.jpg",
-        "type": "UPLOADED",
         "order": 1,
+        "sourceType": "UPLOADED",
+        "mediaId": "media_001",
         "mediaTag": {
           "type": "PET",
-          "id": "pet_111",
+          "petId": "pet_111",
           "species": "Cat",
           "breed": "Orange Tabby Cat"
         }
       },
       {
-        "url": "https://www.youtube.com/watch?v=abc123",
-        "type": "EMBEDDED",
         "order": 2,
+        "sourceType": "EMBEDDED",
+        "embedUrl": "https://www.youtube.com/watch?v=abc123",
+        "embedProvider": "YOUTUBE",
         "mediaTag": {
           "type": "RANDOM",
-          "id": null,
+          "petId": null,
           "species": null,
           "breed": null
         }
@@ -590,6 +593,8 @@ mutation CreatePost($input: CreatePostInput!) {
 ```
 
 **Response `201 Created`:** Full `Post` object (canonical shape from Screen 1).
+
+> **Read shape** (`Post.media: [PostMedia!]`) được hoàn tất & expose ở backend qua #778 (read-side ADR-0027).
 
 **Errors:**
 
