@@ -61,7 +61,8 @@ The unread state is fetched separately (not bundled in the feed response) — th
 | Rescue | `RESCUE` | Posts from families with `familyType = CHARITY` | No |
 
 **Inputs:**
-- `filter`: `ExploreFilter` — `ALL` | `FOLLOW` | `RESCUE` (tab mapping above; `sort` defaults to `LATEST`)
+- `sort`: `ExploreSort` — `LATEST` (default) | `TOP`; current tabs always use `LATEST`
+- `filter`: `ExploreFilter` — `ALL` | `FOLLOW` | `RESCUE` (tab mapping above)
 - `after`: opaque pagination cursor — `pageInfo.endCursor` of the previous page (absent on first load)
 - `first`: page size, default `20`
 
@@ -218,9 +219,8 @@ Injected **after the 1st post** in the feed. Persists in position on scroll; ref
 - If user is not logged in: dismissal is session-only (localStorage / in-memory)
 
 **Inputs (API):**
-- `limit`: `5` (fixed)
-- `excludeIds`: list of family IDs to exclude (previously dismissed)
-- `seed` or `sessionId`: for randomisation so that refresh returns a new set
+- `first`: page size, fixed at `5` for the widget (server may return fewer)
+- `after`: pagination cursor (omit on first load); server already excludes dismissed families (via `DismissFamilySuggestion C`) and already-followed families for authenticated callers — client does not need to pass `excludeIds`
 
 ---
 
@@ -239,8 +239,8 @@ Fetches the paginated post feed for the Explore screen.
 
 **Operation:**
 ```graphql
-query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String) {
-  exploreFeed(filter: $filter, first: $first, after: $after) {
+query ExploreFeed($sort: ExploreSort! = LATEST, $filter: ExploreFilter! = ALL, $first: Int! = 20, $after: String) {
+  exploreFeed(sort: $sort, filter: $filter, first: $first, after: $after) {
     edges {
       node {
         id
@@ -301,7 +301,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 
 **Variables:**
 ```json
-{ "filter": "ALL", "first": 10, "after": null }
+{ "sort": "LATEST", "filter": "ALL", "first": 10, "after": null }
 ```
 
 **Response `200 OK`:**
@@ -440,6 +440,7 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 
 - On web: hovering the time text shows a tooltip with the full datetime (e.g. `"06/06/2026 13:00"`)
   - Bottom-right: location as `cityCode - countryCode` (omit if `location` is null)
+- `sort`: `ExploreSort` — `LATEST` (newest first, default) | `TOP` (highest engagement first)
 - `filter: FOLLOW` requires authentication → returns GraphQL error with code `UNAUTHORIZED` if no valid token
 - `filter: RESCUE` returns posts from families where `family.familyType = CHARITY`
 - `isLoved` is always `false` when unauthenticated
@@ -457,60 +458,81 @@ query ExploreFeed($filter: ExploreFilter = ALL, $first: Int = 20, $after: String
 
 ### B. Query: `SuggestedFamilies`
 
-Returns families to show in the Suggested Families widget.
+Returns families to show in the Suggested Families widget. Shipped petapp-be#947.
 
-**Auth:** Optional. When present, excludes already-followed families and server-side dismissed families.
+**Auth:** Optional. When authenticated, the server automatically excludes families the caller already follows and any families the caller has dismissed via `DismissFamilySuggestion (C)` — no need to pass `excludeIds` client-side.
 
 **Operation:**
 ```graphql
-query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
-  suggestedFamilies(limit: $limit, excludeIds: $excludeIds, seed: $seed) {
-    id
-    name
-    avatarUrl
-    social {
-      followersCount
-      isFollowedByMe
+query SuggestedFamilies($first: Int! = 20, $after: String) {
+  suggestedFamilies(first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        name
+        avatarUrl
+        social {
+          followersCount
+          isFollowedByMe
+        }
+        shortDescription
+        familyType
+      }
     }
-    shortDescription
-    familyType
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "limit": 5, "excludeIds": [], "seed": "session_abc" }
+{ "first": 5, "after": null }
 ```
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
-    "suggestedFamilies": [
-      {
-        "id": "fam_cat_house",
-        "name": "My's Cat House",
-        "avatarUrl": "https://cdn.petapp.com/families/fam_cat_house/avatar.jpg",
-        "social": {
-          "followersCount": 3600,
-          "isFollowedByMe": false
+    "suggestedFamilies": {
+      "edges": [
+        {
+          "cursor": "eyJpZCI6ImZhbV9jYXRfaG91c2UifQ==",
+          "node": {
+            "id": "fam_cat_house",
+            "name": "My's Cat House",
+            "avatarUrl": "https://cdn.petapp.com/families/fam_cat_house/avatar.jpg",
+            "social": {
+              "followersCount": 3600,
+              "isFollowedByMe": false
+            },
+            "shortDescription": "Rescue & rehome cats in HCM City",
+            "familyType": "CHARITY"
+          }
         },
-        "shortDescription": "Rescue & rehome cats in HCM City",
-        "familyType": "CHARITY"
-      },
-      {
-        "id": "fam_normal_001",
-        "name": "Mochi's Family",
-        "avatarUrl": "https://cdn.petapp.com/families/fam_normal_001/avatar.jpg",
-        "social": {
-          "followersCount": 420,
-          "isFollowedByMe": false
-        },
-        "shortDescription": null,
-        "familyType": "NORMAL"
+        {
+          "cursor": "eyJpZCI6ImZhbV9ub3JtYWxfMDAxIn0=",
+          "node": {
+            "id": "fam_normal_001",
+            "name": "Mochi's Family",
+            "avatarUrl": "https://cdn.petapp.com/families/fam_normal_001/avatar.jpg",
+            "social": {
+              "followersCount": 420,
+              "isFollowedByMe": false
+            },
+            "shortDescription": null,
+            "familyType": "NORMAL"
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": "eyJpZCI6ImZhbV9ub3JtYWxfMDAxIn0="
       }
-    ]
+    }
   }
 }
 ```
@@ -518,6 +540,8 @@ query SuggestedFamilies($limit: Int, $excludeIds: [ID!], $seed: String) {
 **Note:** `shortDescription` is always present in the response but is `null` for `NORMAL` families. The client should only render the description line when `familyType = CHARITY` and `shortDescription` is non-null.
 
 `shortDescription` is a free-text field that the charity family admin fills in manually (via their family profile settings). It is not computed or auto-generated.
+
+> `shortDescription` on Family: ⏳ GAP petapp-be#773 — field not yet in the schema; selection will be dropped at codegen until the backend ships it. Keep the documentation here for UX reference.
 
 ---
 
@@ -759,6 +783,8 @@ mutation UnlovePost($postId: ID!) {
 ---
 
 ### H. Mutation: `HidePost`
+
+> ⏳ GAP petapp-be#961 — `hidePost` chưa có ở backend. Shape below is born-canonical (ready for codegen once the backend ships). Client should not call this mutation until the GAP is resolved.
 
 Hide a specific post from the user's feed.
 
@@ -1029,27 +1055,37 @@ Submit a new comment from the inline panel.
 
 > **Triggers notification:** fires a `NEW_COMMENT` notification to the post author (see screen_22 — Notifications screen). Not fired when the author comments on their own post.
 
+> **Canonical operation:** identical to `CreateComment (N)` in `screen_2_post_detail.md` — same mutation, same return fields. Screen 1 uses it for inline panel top-level comments (`parentId: null`, `replyToUserId: null`).
+
 **Auth:** Required → returns GraphQL error with code `UNAUTHORIZED` if not logged in
 
 **Operation:**
 ```graphql
-mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null) {
-  createComment(postId: $postId, body: $body, parentId: $parentId) {
+mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null, $replyToUserId: ID = null) {
+  createComment(postId: $postId, body: $body, parentId: $parentId, replyToUserId: $replyToUserId) {
     id
+    parentId
     author {
       id
       displayName
       avatarUrl
     }
+    replyToUser {
+      id
+      displayName
+    }
     body
     createdAt
+    replyCount
+    isOwn
+    isDeletable
   }
 }
 ```
 
 **Variables:**
 ```json
-{ "postId": "post_abc123", "body": "Cute quá trời 😍", "parentId": null }
+{ "postId": "post_abc123", "body": "Cute quá trời 😍", "parentId": null, "replyToUserId": null }
 ```
 
 **Response `200 OK`:**
@@ -1058,13 +1094,18 @@ mutation CreateComment($postId: ID!, $body: String!, $parentId: ID = null) {
   "data": {
     "createComment": {
       "id": "comment_002",
+      "parentId": null,
       "author": {
         "id": "user_001",
         "displayName": "Mochi",
         "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
       },
+      "replyToUser": null,
       "body": "Cute quá trời 😍",
-      "createdAt": "2026-06-06T08:00:00Z"
+      "createdAt": "2026-06-06T08:00:00Z",
+      "replyCount": 0,
+      "isOwn": true,
+      "isDeletable": true
     }
   }
 }
@@ -1090,7 +1131,7 @@ User opens app
         └─ [authenticated]   → returns posts with isLoved populated
              └─> Render first 10 posts
                    └─> After post #1, inject Suggested Families widget
-                         └─> SuggestedFamilies query (B) { limit: 5 }
+                         └─> SuggestedFamilies query (B) { first: 5 }
 ```
 
 ### Infinite Scroll
@@ -1112,7 +1153,7 @@ User taps × on a family card
         └─> If 0 families remain → widget hides until next reload
 
 User pulls to refresh / navigates away and back
-  └─> SuggestedFamilies query (B) { limit: 5 }  (server excludes dismissed + already-following)
+  └─> SuggestedFamilies query (B) { first: 5 }  (server excludes dismissed + already-following)
         └─> New 5 families shown
 ```
 

@@ -64,14 +64,15 @@ Accessible without login — unauthenticated users can view everything. Actions 
 | `avatarUrl` | Used as fallback / single avatar |
 | `petAvatars` | Ordered list of pet avatar URLs for the stacked display (up to 5) |
 | `petCount` | Number of actual pets in the family |
-| `randomCount` | Number of media items where `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Does NOT count media with no breed or species detected. Hidden from stats line when `0`. |
-| `randomPostCount` | Total posts linked to random pets in this family. Used in the Random Pets row. |
+| `randomCount` | ⏳ GAP petapp-be#773 — not yet in contract. Number of media items where `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)` — AI detected a breed or species but could not match to a named pet. Hidden from stats line when `0`. |
+| `randomPostCount` | ⏳ GAP petapp-be#773 — not yet in contract. Total posts linked to random pets in this family. Used in the Random Pets row. |
 | `social.followersCount` | Total followers |
 | `familyType` | `NORMAL` \| `CHARITY` |
 | `social.isFollowedByMe` | Boolean (false when unauthenticated) |
 | `bio` | Free-text description |
-| `shortDescription` | Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
-| `donorCount` | Number of people who have donated. Only meaningful when `familyType = CHARITY`; `null` for standard families. |
+| `shortDescription` | ⏳ GAP petapp-be#773 — not yet in contract. Short tagline for charity families (e.g. `"Home-based cat rescue"`). `null` for standard families. |
+| `donorCount` | ⏳ GAP petapp-be#773 — not yet in contract. Number of people who have donated. Only meaningful when `familyType = CHARITY`; `null` for standard families. |
+| `parentCount` | ⏳ GAP petapp-be#773 — not yet in contract. Number of parents linked to this family. |
 
 > followersCount trả số thô; client tự format "3.6k" theo locale (bỏ followerCountDisplay — i18n client-side).
 
@@ -142,7 +143,7 @@ Each pet row:
 | `avatarUrl` | Pet avatar |
 | `name` | Pet name |
 | `breed` | `BreedGQL` — use `breed.nameVi` (Vietnamese) or `breed.nameEn` for display (may be truncated with `...` if long); `null` if unknown |
-| `sex` | `male` \| `female` \| `unknown` |
+| `sex` | `MALE` \| `FEMALE` \| `UNKNOWN` (enum `PetSex`) |
 | `ageMonths` | Tổng số tháng tuổi (Int). Client render "3 tuổi"/"3 years" theo locale + birthDatePrecision. |
 | `postCount` | Total posts linked to this pet |
 
@@ -261,17 +262,22 @@ query Family($id: ID!) {
     avatarUrl
     petAvatars
     petCount
-    randomCount
-    randomPostCount
+    # ⏳ GAP petapp-be#773 — randomCount not yet in contract; remove from codegen until shipped
+    # randomCount
+    # ⏳ GAP petapp-be#773 — randomPostCount not yet in contract
+    # randomPostCount
     social {
       followersCount
       isFollowedByMe
     }
     familyType
-    shortDescription
-    donorCount
+    # ⏳ GAP petapp-be#773 — shortDescription not yet in contract
+    # shortDescription
+    # ⏳ GAP petapp-be#773 — donorCount not yet in contract
+    # donorCount
     bio
-    parentCount
+    # ⏳ GAP petapp-be#773 — parentCount not yet in contract
+    # parentCount
     pets {
       id
       name
@@ -313,17 +319,12 @@ query Family($id: ID!) {
         "https://cdn.petapp.com/pets/pet_222/avatar.jpg"
       ],
       "petCount": 2,
-      "randomCount": 10,
-      "randomPostCount": 23,
       "social": {
         "followersCount": 287,
         "isFollowedByMe": false
       },
       "familyType": "CHARITY",
-      "shortDescription": "Home-based cat rescue",
-      "donorCount": 184,
       "bio": "Hi, I'm My 🐱 I take in stray and abandoned cats from the streets of HCMC.",
-      "parentCount": 1,
       "pets": [
         {
           "id": "pet_111",
@@ -449,50 +450,69 @@ query FamilyFeed($familyId: ID!, $first: Int = 20, $after: String) {
 
 ### S. Query: `FamilyParents`
 
+> ⏳ GAP petapp-be#775 — `familyParents` query does not exist in the contract yet. Shape below is born-Relay (ADR-0023) and ready for codegen once the backend ships. Client should not call this query until the GAP is resolved.
+
 Fetch the list of users linked to this family (loaded when user taps the Parents row to open the bottom sheet).
 
 **Auth:** Not required.
 
-**Operation:**
+**Proposed operation (born-Relay, ADR-0023):**
 ```graphql
-query FamilyParents($familyId: ID!) {
-  familyParents(familyId: $familyId) {
-    parents {
-      id
-      displayName
-      username
-      avatarUrl
+query FamilyParents($familyId: ID!, $first: Int! = 20, $after: String) {
+  familyParents(familyId: $familyId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        displayName
+        username
+        avatarUrl
+      }
     }
-    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
   }
 }
 ```
 
+> The total parent count (shown as a badge on the Parents row) is `Family.parentCount` — a sibling field on the family object (⏳ GAP petapp-be#773), not inside the connection. Per ADR-0023, counts do not live inside the Relay envelope.
+
 **Variables:**
 ```json
-{ "familyId": "fam_xyz" }
+{ "familyId": "fam_xyz", "first": 20, "after": null }
 ```
 
-**Response `200 OK`:**
+**Proposed response shape:**
 ```json
 {
   "data": {
     "familyParents": {
-      "parents": [
+      "edges": [
         {
-          "id": "user_001",
-          "displayName": "Minh Dang",
-          "username": "minhdang",
-          "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+          "cursor": "eyJpZCI6InVzZXJfMDAxIn0=",
+          "node": {
+            "id": "user_001",
+            "displayName": "Minh Dang",
+            "username": "minhdang",
+            "avatarUrl": "https://cdn.petapp.com/users/user_001/avatar.jpg"
+          }
         },
         {
-          "id": "user_002",
-          "displayName": "Cecilia Tran",
-          "username": "ceciliatran",
-          "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+          "cursor": "eyJpZCI6InVzZXJfMDAyIn0=",
+          "node": {
+            "id": "user_002",
+            "displayName": "Cecilia Tran",
+            "username": "ceciliatran",
+            "avatarUrl": "https://cdn.petapp.com/users/user_002/avatar.jpg"
+          }
         }
       ],
-      "totalCount": 2
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": "eyJpZCI6InVzZXJfMDAyIn0="
+      }
     }
   }
 }
@@ -508,41 +528,39 @@ query FamilyParents($familyId: ID!) {
 
 ### T. Query: `PetPosts`
 
-> ⚠️ Backend has no petFeed yet (GAP petapp-be#884) — kept as-is, pending backend.
+> ✅ **SHIPPED petapp-be#967:** backend field is **`petFeed(petId: ID!, first, after): PostConnection!`** — returns a `PostConnection` directly (no wrapper). Pet header data (name, breed, avatar) is fetched separately from Pet query (screen_9) or is already available from the previous screen.
 
 Fetch posts for a specific named pet.  
 **Auth:** Optional — bearer token enables `followers` + `private` posts for eligible viewers.
 
-> When backend ships this (GAP petapp-be#884), the list **must be born Relay** (ADR-0023): `posts` is a `PostConnection` (`edges { cursor node } pageInfo { hasNextPage endCursor }`), args `first`/`after`. The `pet` header travels as a sibling field outside the connection.
-
 **Operation:**
 ```graphql
 query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
-  petPosts(petId: $petId, first: $first, after: $after) {
-    pet {
-      id
-      name
-      breed {
-        nameVi
-        nameEn
-      }
-      species {
-        name
-        iconEmoji
-      }
-      avatarUrl
-    }
-    posts {
-      edges {
-        cursor
-        node {
-          ...PostCard
+  petFeed(petId: $petId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        family { id name avatarUrl familyType }
+        author { id displayName avatarUrl }
+        pets { id name avatarUrl }
+        body
+        location { city cityCode country countryCode }
+        media {
+          id type url thumbnailUrl mimeType
+          width height durationSeconds provider
+          mediaTag { type id species breed }
         }
+        loveCount
+        commentsCount
+        isLoved
+        visibility
+        createdAt
       }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }
@@ -554,21 +572,30 @@ query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
 ```json
 {
   "data": {
-    "petPosts": {
-      "pet": { "id": "pet_111", "name": "Bụi", "species": { "name": "Cat", "iconEmoji": "🐱" }, "breed": { "nameVi": "Mèo vằn cam", "nameEn": "Orange Tabby Cat" }, "avatarUrl": "..." },
-      "posts": {
-        "edges": [
-          { "cursor": "eyJpZCI6InBvc3RfYWJjIn0=", "node": { "id": "post_abc", "body": "Bụi nằm chờ mama 🌕", "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }], "loveCount": 42, "commentsCount": 5, "visibility": "PUBLIC", "createdAt": "2026-06-06T08:00:00Z" } }
-        ],
-        "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfYWJjIn0=" }
-      }
+    "petFeed": {
+      "edges": [
+        {
+          "cursor": "eyJpZCI6InBvc3RfYWJjIn0=",
+          "node": {
+            "id": "post_abc",
+            "body": "Bụi nằm chờ mama 🌕",
+            "media": [{ "mediaTag": { "type": "PET", "id": "pet_111", "species": "Cat", "breed": "Orange Tabby Cat" } }],
+            "loveCount": 42,
+            "commentsCount": 5,
+            "visibility": "PUBLIC",
+            "createdAt": "2026-06-06T08:00:00Z"
+          }
+        }
+      ],
+      "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfYWJjIn0=" }
     }
   }
 }
 ```
 
 **Notes:**
-- `posts[]` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
+- `edges[].node` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
+- Pet header data (name, breed, species, avatarUrl) is fetched via the Pet query (screen_9) or is already available from the previous screen's data — it is not bundled into `petFeed`.
 - Server enforces privacy: unauthenticated → `public` only; authenticated → `public` + `followers` (if following family) + `private` (if family member).
 
 **Errors:**
@@ -581,34 +608,39 @@ query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
 
 ### U. Query: `RandomPetPosts`
 
-> ✅ **SHIPPED petapp-be#969:** backend field is **`randomFeed(familyId: ID!, first, after): PostConnection!`** — a feed scoped by `familyId` (only random-pet posts within one family). Distinct from `exploreFeed` (global cross-family, no `familyId`). The GraphQL operation label stays `RandomPetPosts`; the selected field is now `randomFeed`.
+> ✅ **SHIPPED petapp-be#969:** backend field is **`randomFeed(familyId: ID!, first, after): PostConnection!`** — returns a `PostConnection` directly (no wrapper). Family header data (name, avatar, randomCount) is fetched separately from the Family query (Q) or is already available from the previous screen. The GraphQL operation label stays `RandomPetPosts`; the selected field is `randomFeed`.
 
 Fetch posts with random (unmatched) animal detections for a specific family.  
 **Auth:** Optional — same privacy enforcement as above.
-
-> Born Relay (ADR-0023): `posts` is a `PostConnection`, args `first`/`after`. The `family` header (incl. `randomCount`) travels as a sibling field outside the connection.
 
 **Operation:**
 ```graphql
 query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
   randomFeed(familyId: $familyId, first: $first, after: $after) {
-    family {
-      id
-      name
-      avatarUrl
-      randomCount
-    }
-    posts {
-      edges {
-        cursor
-        node {
-          ...PostCard
+    edges {
+      cursor
+      node {
+        id
+        family { id name avatarUrl familyType }
+        author { id displayName avatarUrl }
+        pets { id name avatarUrl }
+        body
+        location { city cityCode country countryCode }
+        media {
+          id type url thumbnailUrl mimeType
+          width height durationSeconds provider
+          mediaTag { type id species breed }
         }
+        loveCount
+        commentsCount
+        isLoved
+        visibility
+        createdAt
       }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }
@@ -621,20 +653,29 @@ query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
 {
   "data": {
     "randomFeed": {
-      "family": { "id": "fam_xyz", "name": "Minh's Family", "avatarUrl": "...", "randomCount": 10 },
-      "posts": {
-        "edges": [
-          { "cursor": "eyJpZCI6InBvc3RfZGVmIn0=", "node": { "id": "post_def", "body": "Mèo lạ ghé thăm nhà 🐱", "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }], "loveCount": 18, "commentsCount": 2, "visibility": "PUBLIC", "createdAt": "2026-06-05T10:00:00Z" } }
-        ],
-        "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfZGVmIn0=" }
-      }
+      "edges": [
+        {
+          "cursor": "eyJpZCI6InBvc3RfZGVmIn0=",
+          "node": {
+            "id": "post_def",
+            "body": "Mèo lạ ghé thăm nhà 🐱",
+            "media": [{ "mediaTag": { "type": "RANDOM", "id": null, "species": "Cat", "breed": "British Shorthair" } }],
+            "loveCount": 18,
+            "commentsCount": 2,
+            "visibility": "PUBLIC",
+            "createdAt": "2026-06-05T10:00:00Z"
+          }
+        }
+      ],
+      "pageInfo": { "hasNextPage": true, "endCursor": "eyJpZCI6InBvc3RfZGVmIn0=" }
     }
   }
 }
 ```
 
 **Notes:**
-- `posts[]` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
+- `edges[].node` follows the canonical Post shape from screen_1 Query A (ExploreFeed).
+- Family header data (name, avatar, randomCount) is fetched via Family query (Q) or is already available from the previous screen — it is not bundled into `randomFeed`.
 - Server filters: only posts where at least one media has `mediaTag.type = "random" AND (breed IS NOT NULL OR species IS NOT NULL)`.
 - `mediaTag.type = "random"` → no pet badge shown on any media frame (client applies existing rules).
 
