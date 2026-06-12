@@ -93,7 +93,7 @@ User taps Random Pets row in Family Posts
 
 ```
 User taps "View All →" in Random Pets section (My Pets screen)
-  └─> RandomPetPosts query (U) { familyId: activeFamily.id, first: 10 }
+  └─> RandomPetPosts query (U) { familyId: me.primaryFamily.id, first: 10 }
         └─> 200 → render family info card + posts list
 ```
 

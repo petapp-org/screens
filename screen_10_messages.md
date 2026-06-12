@@ -10,6 +10,7 @@ Auth required. Accessible from the **Messages icon** (`✉`) in the Explore head
 The Messages icon shows a **red dot** (no number) whenever there is any **unread chat** — driven by `UnreadMessageCount (BL)`. (The separate **Notifications icon** `🔔` carries its own red dot from `UnreadNotificationCount (BU)`.) Inside the screen there is **no red dot**; unread threads are shown in **bold** instead.
 
 > **Terminology — "active family":** A user can belong to multiple families but operates as exactly **one active family at a time** (set/switched via `MarkFamilyPrimary (AG)` in **Profile Settings, screen_5** → Family Pages). The active family is the pivot for the Chats inbox: it determines which family-received threads are visible and which messages count as unread. See **Access & Active-Family Rules** below.
+> Trên contract, "active family" = **`me.primaryFamily`** — KHÔNG có query/field `activeFamily` riêng (bị bác ở reconcile petapp-be#877; issue #819 closed). Mọi chỗ spec này nói "active family" đều resolve từ `me { primaryFamily }`.
 
 ---
 
@@ -67,7 +68,7 @@ Threads received by the user's **non-active** families are **not shown** at all.
 | **To active family** (family sender) | sender family avatar | `{senderFamily} · {member} → {myActiveFamily}` | `Family_Y · userC → Pudding's Family` |
 | **I sent to a family** | receiver family avatar | `you → {receiverFamily}` | `you → Family Z` |
 
-- `{myActiveFamily}` = the user's current active family name (constant across all type-2 rows; client fills it from the active-family context). Truncate with `…` if long.
+- `{myActiveFamily}` = the user's current active family name (constant across all type-2 rows; client fills it from `me.primaryFamily.name` — see Terminology). Truncate with `…` if long.
 - **Reading the type:** no arrow → **DM**; `… → {my active family}` → **received by my active family**; `you → …` → **I sent it**.
 
 **Other row elements:**
@@ -238,7 +239,7 @@ query MessageThreads {
 - `type = FAMILY_RECEIVED`, `lastMessage.senderType = USER` → title `{lastMessage.senderName} → {myActiveFamily}`, avatar = `counterpart.avatarUrl`.
 - `type = FAMILY_RECEIVED`, `lastMessage.senderType = FAMILY` → title `{lastMessage.senderFamilyName} · {lastMessage.senderName} → {myActiveFamily}`, avatar = `counterpart.avatarUrl`.
 - `type = FAMILY_SENT` → title `you → {counterpart.name}`, avatar = `counterpart.avatarUrl`.
-- `{myActiveFamily}` is supplied by the client from the active-family context (not in this response — it is the same family for every `FAMILY_RECEIVED` row).
+- `{myActiveFamily}` is supplied by the client from `me.primaryFamily.name` (not in this response — it is the same family for every `FAMILY_RECEIVED` row).
 - `counterpart.familyType = CHARITY` → show CHARITY badge next to the family name.
 - `unreadCount > 0` → row bold.
 
