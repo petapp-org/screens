@@ -149,7 +149,7 @@ DANGER ZONE
 **Edit Profile:**
 - Editable: avatar, name
 - Read-only: `username` (shown greyed out with note "Username cannot be changed")
-- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → dùng `list[0].mediaId` truyền vào `avatarMediaId` của `updateMyProfile` (petapp-be#979 / issue #976 / epic #906; publicUrl bị bác — không ship); no AI scan
+- Changing the avatar: upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → dùng `list[0].mediaId` truyền vào `avatarMediaId` của `updateMyProfile` (petapp-be#979 / issue #976; #906 shipped — mediaId flow canonical); no AI scan
 - `UpdateMyProfile mutation (AK)` `{ displayName, avatarMediaId }` (petapp-be#979 / issue #976)
 
 **Phone & Email:**
@@ -535,7 +535,7 @@ mutation UpdateMyProfile($displayName: String, $avatarMediaId: String) {
     avatarUrl
   }
 }
-# ⚠️ Updated petapp-be#979 (issue #976, epic #906): input dùng avatarMediaId (mediaId), không avatarUrl/publicUrl.
+# avatarMediaId là canonical input (petapp-be#979 / #906 shipped). avatarUrl param còn tồn tại nhưng @deprecated — bị gỡ ở R+1.
 # avatarUrl trong selection set là output field (signed URL đọc) — giữ nguyên.
 ```
 

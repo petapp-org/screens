@@ -112,11 +112,10 @@ Each post card displays:
     "blurhash": "string | null",
     "signedUrl": "string",
     "expiresAt": "string | null",
-    "url": "⏳ GAP petapp-be#906 (Media chưa expose url/mimeType/width/height/durationSeconds — dùng signedUrl/variants tạm thời)",
-    "mimeType": "⏳ GAP petapp-be#906",
-    "width": "⏳ GAP petapp-be#906",
-    "height": "⏳ GAP petapp-be#906",
-    "durationSeconds": "⏳ GAP petapp-be#906"
+    "mimeType": "image/jpeg",
+    "width": 1080,
+    "height": 1350,
+    "durationSeconds": null
   }
 }
 ```
@@ -128,7 +127,8 @@ Each post card displays:
 | `RANDOM` | AI detected no named pet match, or media is `EMBEDDED` | `null` | species string if AI detected an animal (e.g. `"cat"`), or `null` | breed string if AI identified a specific breed, or `null` |
 
 **Rendering rules:**
-- `UPLOADED` → display the file stored on platform (image or video player); use `media.signedUrl` as the playable/displayable URL
+- `UPLOADED` + `media.type = IMAGE` → use `media.signedUrl` as the displayable URL
+- `UPLOADED` + `media.type = VIDEO` → play via **`media.hlsUrl`** (HLS playlist), **not** `signedUrl` — video `signedUrl` trỏ source object private và trả 403 (petapp-be#917 / PR #975). Dùng `media.thumbnailUrl` làm poster trong khi HLS load.
 - `EMBEDDED` → display embed player (YouTube/Vimeo); use `media.thumbnailUrl` as poster image; `embedUrl` is the external video URL
 - Multiple media items → swipeable carousel with `N/Total` indicator (e.g. `1/3`) in the top-right corner of the media area
 
@@ -392,16 +392,7 @@ query ExploreFeed($sort: ExploreSort! = LATEST, $filter: ExploreFilter! = ALL, $
                   "species": null,
                   "breed": null
                 },
-                "media": {
-                  "id": "media_002",
-                  "type": "VIDEO",
-                  "thumbnailUrl": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
-                  "variants": [],
-                  "hlsUrl": null,
-                  "blurhash": null,
-                  "signedUrl": "https://www.youtube.com/watch?v=abc123",
-                  "expiresAt": null
-                }
+                "media": null
               },
               {
                 "order": 3,

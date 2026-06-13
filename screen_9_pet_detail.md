@@ -231,7 +231,7 @@ Opened from `[...]` → "Edit Pet". Owner only.
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| Avatar | No | Replace pet avatar — upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → send `list[0].mediaId` as `primaryMediaId` in the input (use `publicUrl` only for local preview); no AI scan |
+| Avatar | No | Replace pet avatar — upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` (screen_4) → send `list[0].mediaId` as `primaryMediaId` in the input (use local file/blob for preview before upload completes); no AI scan |
 | Name | Yes | Pet display name |
 | Public | Yes | Toggle `isPublic` on/off; default `true`; when off → pet hidden from Family Posts, not searchable, non-member post card badge treated as random |
 | Species | Yes | Pick from species list → send `speciesId`. ⏳ Read-only-if-AI-scan lock pending petapp-be #970 |
@@ -289,7 +289,7 @@ DESCRIPTION *
 
 > **Submit** is enabled only when **all required fields** are set: a pet, ≥ 1 photo, a map location, a last-seen time, and a non-empty description.
 
-**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (screen_4) → cần hosted URL cho `photos` — ⏳ GAP petapp-be#906: `SignUploadBatchResultItem` chưa trả `publicUrl`; no AI scan (missing photos are never scanned).
+**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (screen_4) → dùng `list[0].mediaId` cho `MissingReportInput.photos` (xem GAP note dưới — `reportMissing` chưa có ở contract; born-canonical nên dùng mediaId, không dùng URL); no AI scan (missing photos are never scanned).
 
 **On submit → `ReportMissing mutation (BE)`:**
 - `pet.missingStatus` set with the full shape: `lastSeenLocation` (+ `lat`/`lng`), `lastSeenAt`, `description`, ordered `photos` (cover first), `reportedBy` (the caller), `reportedAt`.
@@ -624,7 +624,7 @@ mutation UpdatePet($petId: ID!, $input: UpdatePetInput!) {
 ```
 
 **Notes:**
-- **Input uses IDs, not display strings** (matches backend `UpdatePetInput`, petapp-be #972): send `speciesId`/`breedId` (from petpedia/breed catalog, picked via the species/breed pickers) and `primaryMediaId` (the `mediaId` returned by `SignUploadBatch`, **not** the CDN `publicUrl`). Read-side response keeps nested `species`/`breed` objects + `avatarUrl`.
+- **Input uses IDs, not display strings** (matches backend `UpdatePetInput`, petapp-be #972): send `speciesId`/`breedId` (from petpedia/breed catalog, picked via the species/breed pickers) and `primaryMediaId` (the `mediaId` returned by `SignUploadBatch`, not the CDN URL). Read-side response keeps nested `species`/`breed` objects + `avatarUrl`.
 - All input fields optional/partial — omit = no change. `sex` editable now (petapp-be #972).
 - ⏳ **Pending (petapp-be #970)** — not yet enforced by backend: `forceBreedUpdate` flag + breed AI-lock (`breedSource = "AI"` → read-only until override) + breed-change triggering Food/Behavior/Med/Vax re-generation. These require a `breedSource` field that doesn't exist yet. Until shipped, breed is freely editable and the client should not send `forceBreedUpdate`.
 
@@ -725,12 +725,12 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
   },
   "lastSeenAt": "ISO 8601 datetime (not in the future)",
   "description": "string (required, non-empty)",
-  "photos": ["string url, 1–10, ordered — photos[0] = cover"]
+  "photos": ["mediaId, 1–10, ordered — photos[0] = cover (born-canonical mediaId, không dùng URL — nhất quán với #906/#977)"]
 }
 ```
 
 - `lat`/`lng` come from the map pin; `city`/`cityCode`/`country`/`countryCode` are reverse-geocoded (client may send what it resolved, server may re-validate). The server derives **`cityShortName`** (curated short label) — the client need not send it; it is returned on read for display on Lost Pets rows / detail.
-- `photos` are pre-uploaded hosted URLs from `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` — ⏳ GAP petapp-be#906: chưa có `publicUrl` trên `SignUploadBatchResultItem`; **at least 1 required**; order is preserved; index 0 is the cover.
+- `photos` — **at least 1 required**; order is preserved; index 0 is the cover. Upload via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` → dùng `mediaId` từ kết quả (petapp-be#906 shipped — không có `publicUrl` trên `SignUploadBatchResultItem`, by design).
 - `description` is **required** and must be non-empty.
 
 **Variables:**

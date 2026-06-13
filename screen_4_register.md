@@ -97,7 +97,7 @@ Shown once after a new account is created via any method.
 - Show a persistent helper text below the field: *"⚠️ Your username cannot be changed after you create your account."*
 
 **Submit:**
-- If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` → use `list[0].mediaId` as `avatarMediaId` in the next mutation (no AI scan — avatars are never scanned; see ⏳ GAP petapp-be#906)
+- If an avatar was picked: upload it first via `SignUploadBatch (BV)` `{ items: [{ purpose: "AVATAR", ... }] }` → use `list[0].mediaId` as `avatarMediaId` in the next mutation (no AI scan — avatars are never scanned)
 - `UpdateMyProfile mutation (AE)` `{ displayName, username, avatarMediaId }` — truyền `list[0].mediaId` vào `avatarMediaId` (petapp-be#976 / petapp-be#979; xem AE)
 - On success → navigate to the **post-login target** (return target if redirected here, else Explore)
 
@@ -301,7 +301,7 @@ mutation UpdateMyProfile($displayName: String, $username: String, $avatarMediaId
     avatarUrl
   }
 }
-# ⚠️ Updated petapp-be#979 (issue #976, epic #906): input dùng avatarMediaId (mediaId), không avatarUrl/publicUrl.
+# avatarMediaId là canonical input (petapp-be#979 / #906 shipped). avatarUrl param còn tồn tại nhưng @deprecated — bị gỡ ở R+1.
 # avatarUrl trong selection set là output field (signed URL đọc) — giữ nguyên.
 ```
 
@@ -392,7 +392,7 @@ mutation SignUploadBatch($items: [SignUploadBatchItemInput!]!) {
 }
 ```
 
-> ⚠️ Updated petapp-be#906/#976: `publicUrl` không tồn tại trên `SignUploadBatchResultItem` và đã bị bác (petapp-be#906 closed). Avatar/profile/pet/family upload dùng `mediaId` → truyền làm `avatarMediaId` / `primaryMediaId` trong mutation tiếp theo. publicUrl deprecated/not shipped.
+> ✅ petapp-be#906 shipped: `SignUploadBatchResultItem` trả `mediaId` (không có `publicUrl` — by design). Avatar/profile/pet upload dùng `mediaId` → truyền làm `avatarMediaId` (updateMyProfile), `primaryMediaId` (createPet/updatePet), hoặc `photoMediaId` (createLostPetReport) trong mutation tiếp theo. Các param `avatarUrl` / `photoUrl` / `imageUrl` vẫn còn trên schema nhưng `@deprecated` — gỡ ở R+1.
 
 **`SignUploadBatchItemInput`:**
 ```graphql
