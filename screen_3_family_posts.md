@@ -533,7 +533,7 @@ query FamilyParents($familyId: ID!, $first: Int! = 20, $after: String) {
 > ✅ **SHIPPED petapp-be#967:** backend field is **`petFeed(petId: ID!, first, after): PostConnection!`** — returns a `PostConnection` directly (no wrapper). Pet header data (name, breed, avatar) is fetched separately from Pet query (screen_9) or is already available from the previous screen.
 
 Fetch posts for a specific named pet.  
-**Auth:** Optional — bearer token enables `followers` + `private` posts for eligible viewers.
+**Auth:** Optional — bearer token enables `followers` + `family_only` posts for eligible viewers.
 
 **Operation:**
 ```graphql

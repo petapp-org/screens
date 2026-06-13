@@ -1227,7 +1227,7 @@ User taps "..." on a post
 | User already follows a suggested family | Should not appear in suggestions (server filters when authenticated) |
 | Unauthenticated user on Latest feed | Only `public` posts returned by server |
 | Post with `visibility=followers` | Only visible to family members + followers of that family |
-| Post with `visibility=private` | Only visible to family members of the authoring family |
+| Post with `visibility=family_only` | Only visible to family members of the authoring family |
 | Messages / Notifications button — not logged in | No red dot; tapping redirects to Login |
 | Messages red dot source | Unread chats (`UnreadMessageCount BL`); dot only, no number |
 | Notifications red dot source | Unread activity (`UnreadNotificationCount BU`); dot only, no number |

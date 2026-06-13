@@ -268,7 +268,7 @@ query Post($id: ID!) {
 | Status | Code | Scenario |
 |--------|------|----------|
 | `200` | `POST_NOT_FOUND` | Post does not exist or has been deleted |
-| `200` | `FORBIDDEN` | Post exists but viewer does not have permission (e.g. `visibility=PRIVATE`, not a family member) |
+| `200` | `FORBIDDEN` | Post exists but viewer does not have permission (e.g. `visibility=FAMILY_ONLY`, not a family member) |
 
 ---
 
@@ -578,7 +578,7 @@ User taps Delete on own comment  (button only visible when isDeletable = true)
 |------|--------------------|
 | Unauthenticated user | Can view post and all comments; tap input / Reply → redirect to Login |
 | Post not found (deleted) | Show "Post not found" error state with Back button |
-| Post `visibility=private`, viewer not a family member | Show `403` error state |
+| Post `visibility=family_only`, viewer not a family member | Show `403` error state |
 | Post `visibility=followers`, viewer not following | Show `403` error state |
 | Delete attempted after 10 min window or comment has replies | `403` returned; hide Delete button; show toast |
 | Comment deleted successfully | Removed from list; parent `replyCount` decremented if reply |
