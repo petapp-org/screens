@@ -289,7 +289,7 @@ DESCRIPTION *
 
 > **Submit** is enabled only when **all required fields** are set: a pet, ≥ 1 photo, a map location, a last-seen time, and a non-empty description.
 
-**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (screen_4) → dùng `list[0].mediaId` làm `photoMediaId` (canonical — petapp-be#906 shipped / #977); no AI scan (missing photos are never scanned).
+**Upload:** each photo uploaded via `SignUploadBatch (BV)` `{ items: [{ purpose: "LOST_PET", ... }] }` (screen_4) → dùng `list[0].mediaId` cho `MissingReportInput.photos` (xem GAP note dưới — `reportMissing` chưa có ở contract; born-canonical nên dùng mediaId, không dùng URL); no AI scan (missing photos are never scanned).
 
 **On submit → `ReportMissing mutation (BE)`:**
 - `pet.missingStatus` set with the full shape: `lastSeenLocation` (+ `lat`/`lng`), `lastSeenAt`, `description`, ordered `photos` (cover first), `reportedBy` (the caller), `reportedAt`.
@@ -725,7 +725,7 @@ mutation ReportMissing($petId: ID!, $input: MissingReportInput!) {
   },
   "lastSeenAt": "ISO 8601 datetime (not in the future)",
   "description": "string (required, non-empty)",
-  "photos": ["string url, 1–10, ordered — photos[0] = cover"]
+  "photos": ["mediaId, 1–10, ordered — photos[0] = cover (born-canonical mediaId, không dùng URL — nhất quán với #906/#977)"]
 }
 ```
 
