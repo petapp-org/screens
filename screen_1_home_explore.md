@@ -112,11 +112,10 @@ Each post card displays:
     "blurhash": "string | null",
     "signedUrl": "string",
     "expiresAt": "string | null",
-    "url": "⏳ GAP petapp-be#906 (Media chưa expose url/mimeType/width/height/durationSeconds — dùng signedUrl/variants tạm thời)",
-    "mimeType": "⏳ GAP petapp-be#906",
-    "width": "⏳ GAP petapp-be#906",
-    "height": "⏳ GAP petapp-be#906",
-    "durationSeconds": "⏳ GAP petapp-be#906"
+    "mimeType": "image/jpeg",
+    "width": 1080,
+    "height": 1350,
+    "durationSeconds": null
   }
 }
 ```

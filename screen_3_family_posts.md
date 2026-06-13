@@ -553,7 +553,7 @@ query PetPosts($petId: ID!, $first: Int! = 20, $after: String) {
           mediaTag { type petId species breed }
           media {
             id type thumbnailUrl signedUrl hlsUrl variants blurhash
-            # ⏳ GAP #906: url mimeType width height durationSeconds — not yet in contract
+            mimeType width height durationSeconds
           }
         }
         loveCount
@@ -625,7 +625,7 @@ query RandomPetPosts($familyId: ID!, $first: Int! = 20, $after: String) {
           mediaTag { type petId species breed }
           media {
             id type thumbnailUrl signedUrl hlsUrl variants blurhash
-            # ⏳ GAP #906: url mimeType width height durationSeconds — not yet in contract
+            mimeType width height durationSeconds
           }
         }
         loveCount
