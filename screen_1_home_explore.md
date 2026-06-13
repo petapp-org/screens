@@ -392,16 +392,7 @@ query ExploreFeed($sort: ExploreSort! = LATEST, $filter: ExploreFilter! = ALL, $
                   "species": null,
                   "breed": null
                 },
-                "media": {
-                  "id": "media_002",
-                  "type": "VIDEO",
-                  "thumbnailUrl": "https://img.youtube.com/vi/abc123/hqdefault.jpg",
-                  "variants": [],
-                  "hlsUrl": null,
-                  "blurhash": null,
-                  "signedUrl": "https://www.youtube.com/watch?v=abc123",
-                  "expiresAt": null
-                }
+                "media": null
               },
               {
                 "order": 3,
