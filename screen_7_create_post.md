@@ -520,7 +520,7 @@ mutation DeleteDraft($draftId: ID!) {
 Publish the post.  
 **Auth:** Required
 
-> **Triggers notification:** fires a `FAMILY_NEW_POST` notification to the family's **followers** (see screen_22 — Notifications screen), respecting post privacy (a `private` post notifies only family members; `followers`/`public` notify followers).
+> **Triggers notification:** fires a `FAMILY_NEW_POST` notification to the family's **followers** (see screen_22 — Notifications screen), respecting post privacy (a `family_only` post notifies only family members; `followers`/`public` notify followers).
 >
 > **AI side-effects:** the post's media is scanned server-side; this may later raise a `HEALTH_SIGNAL` notification to the pet owner if a health concern is detected (see screen_9).
 
