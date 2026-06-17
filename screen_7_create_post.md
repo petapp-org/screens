@@ -26,12 +26,15 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
   │     └── Family avatar + family name + [switch family — if user is in multiple]
   │
   ├── Media section
+  │     ├── Header: "Media"  +  "✨ N AI scans left"  (right-aligned, §3a)
   │     ├── [Add Media button] — opens picker (upload or embed URL)
+  │     ├── Post-level pet picker "🐾 Who's in this post?" (§4a)
+  │     │     └── shown while any frame is untagged; one tap tags the whole post
   │     ├── Media grid (thumbnails, reorderable by drag)
   │     │     Each thumbnail:
   │     │       - Remove (×) button
-  │     │       - Tag badge (bottom): pet name | breed | "Random"
-  │     │       - [AI Scan button] — per uploaded media
+  │     │       - Tag badge (bottom-left): pet name | breed | "Random"  (+ ✎ edit)
+  │     │       - [✨ Scan · N] button (bottom-right) — uploaded PHOTOS only; opt-in, quota-gated (§3a)
   │     └── Counter: "N / 10 media"
   │
   ├── Caption field
@@ -87,12 +90,40 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 - "Upload from device" → image/video file picker (multiple selection allowed, up to remaining slots)
 - "Embed URL" → text input for YouTube/Vimeo URL (only 1 embedded URL allowed per post; button hidden once one is added)
 
+**Media grid layout** — quota counter sits in the section header; each photo carries its own scan button:
+
+```
+┌─ Media ──────────────────────────────  ✨ 2 AI scans left ─┐
+│                                                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │            ×│  │            ×│  │            ×│     │
+│  │              │  │              │  │   ▶   0:42  │     │
+│  │   [ photo ]  │  │   [ photo ]  │  │  [ video ]   │     │
+│  │              │  │              │  │              │     │
+│  │ 🐾 Pudding   │  │ "Random"   ✎ │  │ "Random"   ✎ │     │
+│  │ [✨ Scan·2]  │  │ [✨ Scan·2]  │  │  (tag tay)   │     │
+│  └──────────────┘  └──────────────┘  └──────────────┘     │
+│   scanned→tagged    not scanned yet    video: no scan     │
+│                                              3 / 10 media  │
+└────────────────────────────────────────────────────────────┘
+```
+
 **Uploaded photo thumbnail:**
-- Image preview · `×` remove (top-right) · Tag badge (bottom-left) · **AI Scan button** (bottom-right)
+- Image preview · `×` remove (top-right) · Tag badge (bottom-left) · **AI Scan button** (bottom-right).
+- **AI Scan button states:**
+
+| State | Button | Condition |
+|-------|--------|-----------|
+| Available | `[✨ Scan · 2]` | `remaining > 0`, photo not yet scanned (shows count left) |
+| In progress | `[⏳ Scanning…]` | tap fired → `IdentifyPetFromMedia` running (thumbnail dimmed) |
+| Done | *(button hidden / replaced by tag badge + ✎)* | scan returned → tag pre-filled, user can edit via §4 |
+| No quota | `[✨ Scan · 0]` **disabled / greyed** | `remaining = 0` → only manual tagging left |
+
+- Tapping `[✨ Scan]` spends **1 quota** (§3a). Re-scanning a photo (after a Done state) spends another quota.
 
 **Uploaded video thumbnail:**
-- Video thumbnail with a **duration overlay** (e.g. `0:42`) + play icon · `×` remove · Tag badge (bottom-left)
-- **No AI Scan button** — tapping the tag badge opens the manual tag sheet directly (§4)
+- Video thumbnail with a **duration overlay** (e.g. `0:42`) + play icon · `×` remove · Tag badge (bottom-left).
+- **No AI Scan button** — tapping the tag badge opens the manual tag sheet directly (§4).
 
 **Embedded media:**
 - Shows video thumbnail (fetched from YouTube/Vimeo API)
@@ -164,11 +195,26 @@ With AI scan now opt-in (§3a), **most media are tagged manually**. There are tw
 
 #### 4a. Quick post-level pet picker (map the whole post to a pet)
 
-Shown above the media grid whenever the post has ≥ 1 untagged frame:
+Shown directly above the media grid whenever the post has ≥ 1 untagged frame:
 
 ```
-🐾 Who's in this post?
-   ( ◯ Pudding )  ( ◯ Mochi )  ( + New pet )    ← chips from active family's pets
+┌─ 🐾 Who's in this post? ────────────────────────────────┐
+│                                                         │
+│   ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌───────────┐  │
+│   │ ● 🐱    │  │ ○ 🐶    │  │ ○ 🐰    │  │     +     │  │
+│   │ Pudding │  │  Mochi  │  │  Kiki   │  │  New pet  │  │
+│   └─────────┘  └─────────┘  └─────────┘  └───────────┘  │
+│     ▲ pre-selected (primary pet)                        │
+│                                                         │
+│   Tags all untagged photos as this pet · no AI needed   │
+└─────────────────────────────────────────────────────────┘
+```
+
+- Chips = the **active family's pets** (avatar + name); single-select. `●` = selected, `○` = unselected. The **primary pet** is pre-selected so a one-tap confirm tags the whole post.
+- After selecting, the picker collapses to a confirmation line and every untagged thumbnail's badge flips to `🐾 {pet name}`:
+
+```
+✓ This post is about Pudding   ( change ▾ )
 ```
 
 - **Single-select a pet** → applies `{ type=pet, petId, species, breed }` (species/breed pulled from the pet record) to **every untagged frame** in the post — one tap tags the whole post. (Frames already tagged individually via §4b are left untouched.)
