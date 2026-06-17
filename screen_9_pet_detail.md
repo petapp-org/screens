@@ -124,22 +124,33 @@ Shown only when `pet.missingStatus != null`.
 
 **Content:** HTML blob from latest post's health analysis.
 
-> **Triggers notification:** when the server-side AI analysis (run after a post is published, see screen_7 → `CreatePost`) detects a possible health concern, it fires a `HEALTH_SIGNAL` notification to the pet's family/owner (see screen_22 — Notifications screen). This is a server-side async event, not a client call.
+> **Trigger (on-demand, not auto).** Health analysis runs **only when a user spends an AI scan** on a photo in Create Post (screen_7 §3 → `requestHealthCheck (AZ)`), bundled with pet detection into one quota unit. It is **not** run automatically on publish. The mutation returns an async `{ jobId, status }`; when it completes and detects a possible health concern, the server fires a `HEALTH_SIGNAL` notification to the pet's family/owner (see screen_22). Results are exposed as structured observations via the contract query `healthObservations(petId, limit)`, not raised by a client call.
 
-**Status states:**
+**Pet-level status badge** — from `pet.healthStatus` (contract enum `PetHealthStatus`, **only 3 values**):
 
-| Status | Display | Color | Meaning |
-|--------|---------|-------|---------|
-| `CHECKING` | Spinner + *"Analyzing latest post…"* | Blue | AI processing in queue; no result yet |
-| `NO_DATA` | *"No health data detected"* | Grey | AI processed but could not extract health info from media |
-| `GOOD` | `GOOD` badge | Green | All health indicators look excellent |
-| `NORMAL` | `NORMAL` badge | Green (light) | Healthy baseline, nothing concerning |
-| `CONCERN` | `CONCERN` badge | Amber | Some indicators warrant attention |
-| `BAD` | `BAD` badge | Orange | Multiple concerning indicators; recommend vet visit |
-| `CRITICAL` | `CRITICAL` badge | Red | Urgent signs detected; see a vet immediately |
+| `pet.healthStatus` | Display | Color | Meaning |
+|--------------------|---------|-------|---------|
+| `HEALTHY` | `HEALTHY` badge | Green | No concerning observations |
+| `NEEDS_ATTENTION` | `NEEDS ATTENTION` badge | Amber/Red | One or more observations warrant attention; deep-link to details |
+| `UNKNOWN` | *"No health data yet"* | Grey | No scan has been run for this pet, or analysis produced nothing |
 
-When status is `CHECKING` or `NO_DATA`: show status message only, no HTML blob.  
-When status is a result state: render HTML blob below the status badge.
+> ⚠️ **Spec drift corrected:** earlier this screen listed 7 statuses (`GOOD/NORMAL/CONCERN/BAD/CRITICAL/CHECKING/NO_DATA`). The contract `PetHealthStatus` has only **`HEALTHY | NEEDS_ATTENTION | UNKNOWN`**. Granular severity lives **per observation**, not on the pet.
+
+**Per-observation severity** — from `HealthAiObservation.severity` (contract query `healthObservations(petId, limit)`, enum `HealthObservationSeverity`):
+
+| `severity` | Meaning |
+|------------|---------|
+| `NORMAL` | Indicator looks fine |
+| `INFO` | Informational, no action |
+| `WARNING` | Warrants attention |
+| `CRITICAL` | Urgent — see a vet |
+| `UNSPECIFIED` | Not classified |
+
+**In-progress / empty display states** (client-derived, not contract enums):
+- While a `requestHealthCheck` job is running → spinner *"Analyzing…"* (track via the job, screen_7 `AZ`).
+- `healthStatus = UNKNOWN` with no observations → *"No health data yet — run an AI scan on a photo to analyze."*
+
+> ⏳ **Rendering-model drift (flag, out of scope for this PR):** this screen still describes Health as a single **HTML blob**. The contract exposes **structured** `healthObservations` (`summary`, `severity`, `findings[]`, `recommendations[]`, `risk`, `disclaimer`, `observationType`) via the contract `healthObservations(petId, limit)` query, not an HTML field. Reconciling the Health tab to render structured observations is a separate screen_9 effort (petapp-be#877 reconcile).
 
 **Health content includes** (AI-generated, inside HTML blob):
 - Overall assessment summary
@@ -299,28 +310,26 @@ DESCRIPTION *
 
 ---
 
-## AI Processing Pipeline (background)
+## AI Processing Pipeline
 
-Triggered after a post is published that links to a pet (new or existing):
+**Health is on-demand, gated by the AI scan quota (changed — no longer auto-on-publish).** It runs only when a user spends a scan on a photo in Create Post (screen_7 §3a):
 
 ```
-Post published → mediaTag.type = pet → pet identified/created
-  │
-  ├─ Health analysis (per post)  [server-side async process — not a client API call]
-  │     └─> pet.healthStatus = "CHECKING" while in queue
-  │           └─> Complete → update pet health record + status
-  │           └─> No result → pet.healthStatus = "NO_DATA"
-  │
-  └─ Breed data (if breed not yet generated)  [server-side async process — not a client API call]
-        └─> All 3 tabs (Food, Behavior, Med/Vax) generated in parallel
-              └─> Stored as HTML blobs on breed record
-              └─> pet tab statuses update from "CHECKING" → populated
+User spends 1 AI scan on a photo (quota −1)        [screen_7 §3a]
+  ├─ identifyPetFromMedia (AT) → resolves frame to a pet (or random)
+  └─ if pet resolved → requestHealthCheck (AZ) { mediaId, petId }  → async job
+        └─> job runs → writes HealthAiObservation rows (severity, findings, …)
+              └─> pet.healthStatus rolls up to HEALTHY / NEEDS_ATTENTION
+              └─> if a concern → HEALTH_SIGNAL notification (screen_22)
+        └─> no pet resolved (random) → health step skipped (no petId)
 ```
+
+**Breed data (Food / Behavior / Med-Vac tabs)** is **separate from the scan quota** — generated server-side once per breed and shared across all pets of that breed (amortized, not per-user). Still a background process, triggered when a breed is first encountered; not billed against the user's AI scan quota.
 
 **Status during processing:**
-- `CHECKING` is set immediately when the pet is linked to a new post
-- Individual tabs update independently as each generation completes
-- Health tab can be `CHECKING` while Food tab is already populated (or vice versa)
+- **Health tab:** shows a *"Analyzing…"* spinner only while a `requestHealthCheck` job is running (started by a user AI scan, screen_7 §3a) — **not** set automatically when a post is published.
+- **Breed tabs (Food/Behavior/Med-Vac):** show a *generating* state while the per-breed background job runs (first time that breed is seen); update independently as each completes.
+- Tabs update independently — Health can still be analyzing while Food is already populated (or vice versa).
 
 ---
 
@@ -468,11 +477,11 @@ query Pet($petId: ID!) {
 }
 ```
 
-**Tab status values:** `CHECKING` | `NO_DATA` | `GOOD` | `NORMAL` | `CONCERN` | `BAD` | `CRITICAL`
+**Tab status values:** ⏳ this `tabs.*.status` + `html` blob shape is part of the **rendering-model drift** flagged in §4a (contract uses `pet.healthStatus` ∈ `HEALTHY|NEEDS_ATTENTION|UNKNOWN` + structured `healthObservations`, no `tabs`/`html` field). Reconcile separately (petapp-be#877). For Health, the corrected status model is §4a; the legacy 7-value list (`GOOD/NORMAL/CONCERN/BAD/CRITICAL/CHECKING/NO_DATA`) is **stale**. Breed tabs keep a `generating | empty | populated` state.
 
 **Notes:**
-- When `tabs.health.status = CHECKING` or `NO_DATA`: `html` is `null`
-- Same for Food/Behavior/Med/Vac tabs
+- When the Health analysis job is running, or there are no observations yet: no health content is shown (see §4a display states).
+- Breed tabs (Food/Behavior/Med/Vac): content is `null` while generating.
 - `viewerRole`: `PRIMARY` | `CO_OWNER` (OwnershipRole) — controls visibility of Edit / Delete / Mark as Found actions
 - `missingStatus` is `null` when the pet is not missing. When set: `photos` is an **ordered** list with `photos[0]` = cover; `reportedBy` is the family member who filed the report; `lastSeenAt` is when the pet was last seen (distinct from `reportedAt`). These power the Missing banner (Section 3) and the Lost Pet Detail screen (`screen_19`).
 
@@ -903,8 +912,8 @@ User taps [Delete Bụi]
 
 | Case | Expected Behaviour |
 |------|--------------------|
-| Pet has no posts yet | All tabs show `CHECKING` until first post is published and AI processes |
-| AI processed but no health extracted | `health.status = NO_DATA`; Health tab shows "No health data detected" |
+| No AI scan run for this pet yet | Health: `pet.healthStatus = UNKNOWN` → "No health data yet — run an AI scan on a photo". Breed tabs generate once the breed is known (independent of scans). |
+| Health scan ran but extracted nothing | `pet.healthStatus = UNKNOWN`, no `healthObservations`; Health tab shows the empty state |
 | Breed data already exists for this breed | Food/Behavior/Med/Vac generated from cache; no AI call needed |
 | Owner changes breed via Edit Pet | Queues re-generation of all 3 breed tabs; statuses reset to `CHECKING` |
 | Pet is `missing` | Missing banner shown; `MISSING` badge shown in pet switcher and My Pets row |
