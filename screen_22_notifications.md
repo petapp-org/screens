@@ -48,7 +48,7 @@ Flat list, newest first, infinite scroll. Each row has an icon/avatar, text, opt
 |------------------|---------|--------------------|------------|
 | `CARE_REMINDER` | Scheduled care reminder for the user's pet | "Time to care for `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
 | `VACCINE_DUE` | Upcoming or overdue vaccine for the user's pet | "Vaccine due for `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
-| `HEALTH_SIGNAL` | AI detects a possible health issue in the user's pet media | "AI Health Alert on `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
+| `HEALTH_SIGNAL` | AI detects a possible health issue in the user's pet media — fired from a user-initiated AI scan (`requestHealthCheck`, screen_7 §3a), **not** automatically on post publish | "AI Health Alert on `{pet}`" + detail snippet | Pet Detail (`screen_9`) |
 | `SYSTEM` | System-level announcements or alerts | `title` value | Varies by `data` payload |
 
 > **`UNSPECIFIED`** is a contract sentinel — treat as `SYSTEM` in the UI.

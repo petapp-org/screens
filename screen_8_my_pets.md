@@ -202,6 +202,7 @@ Each cell shows:
 **`[+]` button:**
 - Tap → **Create Post screen** (Screen 7)
 - In this context, AI scan **skips the family pet matching step** — result can only be `breed` or `random`, never `pet`. This means the scan API is called without `familyId` (or with a flag `skipPetMatch: true`)
+- AI scan here is the same **opt-in, quota-gated** action as elsewhere (screen_7 §3a): it consumes 1 scan quota and is disabled when `remaining = 0`. Since the result is never a `pet`, the bundled health step never runs from this context.
 
 ---
 

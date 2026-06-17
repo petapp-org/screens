@@ -72,9 +72,11 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 | Kind | AI Scan | How it's tagged |
 |------|---------|-----------------|
-| Uploaded **photo** | ✅ AI Scan button | AI scan sets the initial tag; user can override (§4) |
+| Uploaded **photo** | ✅ AI Scan button — **opt-in, quota-gated** (§3a) | Default **untagged → user tags manually** (§4). User may spend 1 AI scan to auto-fill the tag; can override after (§4) |
 | Uploaded **video** | ❌ none | **Manual tag only** — no AI scan on video (§4, manual mode) |
 | **Embedded** URL (YouTube/Vimeo) | ❌ none | Auto-tagged `Random` |
+
+> **AI scan is opt-in (changed — was always-available).** To protect AI capacity at scale, pet detection is no longer run automatically/freely on every photo. Each user has a limited **AI scan quota** (default **3** for a new account, admin-configurable — §3a). Photos are tagged **manually by default** (§4); the user explicitly spends quota per photo to get AI assistance. Videos/embeds never consume quota.
 
 **Uploaded video constraints** (validated on selection; over-limit → reject with a message):
 - Max **duration: 90 seconds**
@@ -106,9 +108,33 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 > **Photos only.** Uploaded **videos are not AI-scanned** — they are tagged manually (§4, manual mode). Embedded media is auto-`random`. `IdentifyPetFromMedia (AT)` is never called for videos or embeds.
 
-**Purpose:** detect if a pet is present in the media, identify its species and breed, then attempt to match with named pets in the current family. **Matching is client-side**: the mutation returns raw AI output (`speciesId`, `breedId`, confidence scores, `rawLabel`); the client so sánh kết quả với danh sách pets của user để tự xác định khớp.
+#### 3a. AI Scan Quota (opt-in gate) — ⏳ GAP, pending petapp-be issue
+
+> **Status:** the quota model below is **not yet in the contract**. `me { aiScan { … } }` and quota enforcement on the scan mutations do **not** exist in `schema.graphql` today — this section specifies the target. Tracked by **petapp-be#1142** (open before client build). Until shipped, the client may treat quota as unlimited or hide the scan affordance.
+
+- **Quota unit:** **1 scan = 1 photo.** Each tap on `[AI Scan]` for one photo consumes **1 quota** and runs **both** AI steps for that photo as a single billable action: **(1) pet detection** (`identifyPetFromMedia (AT)`) **+ (2) health analysis** (`requestHealthCheck (AZ)`, only when the photo resolves to a pet — needs a `petId`). The two steps together count as **one** quota unit.
+- **Default grant:** new accounts get **3** scans (admin-configurable default; admin can top-up per user — backend/admin concern).
+- **Display:** show remaining quota in two places, both loaded from `me.aiScan.remaining` (query **AY**):
+  - Media section header: `✨ {remaining} AI scans left`
+  - Each photo's scan button: `[✨ Scan · {remaining} left]`
+- **Decrement:** only on **successful** detection. On `AI_TIMEOUT (504)` → **refund / no decrement**, allow retry.
+- **Exhausted (`remaining = 0`):** scan button **disabled** on all photos; header shows *"No AI scans left"* (+ upgrade entry point, future). User falls back to manual tagging (§4).
+- **Random media (no pet match):** detection still runs (consumes the quota), but the health step is **skipped** — `requestHealthCheck` requires a `petId`, which a random/unmatched frame does not have.
+
+> **Other AI endpoints** (`generatePostCaption`, `requestMoodAnalysis`) are also AI-cost but are **out of scope** for this quota in v1. Flag for backend: they should be rate-limited or folded into a broader AI-quota scheme separately (petapp-be#1142).
+
+#### 3b. Scan behaviour
+
+**Purpose:** detect if a pet is present in the media, identify its species and breed, then attempt to match with named pets in the current family. **Matching is client-side**: the mutation returns raw AI output (`speciesId`, `breedId`, confidence scores, `rawLabel`, `color`); the client so sánh kết quả với danh sách pets của user để tự xác định khớp.
 
 ```
+User taps [✨ Scan · N left] on a photo   (only when remaining > 0)
+  └─> consumes 1 quota → IdentifyPetFromMedia (AT)  { mediaId }
+        │  (then, if result resolves to a pet: requestHealthCheck (AZ) { mediaId, petId }
+        │   fires async — same quota unit; health populates Pet Detail later, see screen_9)
+        ▼
+  (the detection branches below set the initial tag; user can still override via §4)
+
 User taps [AI Scan] on a media item
   └─> IdentifyPetFromMedia mutation (AT)  { mediaId }
         └─> (loading state on thumbnail)
@@ -132,7 +158,28 @@ User taps [AI Scan] on a media item
 
 ---
 
-### 4. Tag Edit Flow (manual override)
+### 4. Tagging media (manual is the default path)
+
+With AI scan now opt-in (§3a), **most media are tagged manually**. There are two manual entry points: a fast **post-level pet picker** (§4a, for the common "this post is about my pet" case) and the **per-frame tag sheet** (§4b, for overrides and mixed posts).
+
+#### 4a. Quick post-level pet picker (map the whole post to a pet)
+
+Shown above the media grid whenever the post has ≥ 1 untagged frame:
+
+```
+🐾 Who's in this post?
+   ( ◯ Pudding )  ( ◯ Mochi )  ( + New pet )    ← chips from active family's pets
+```
+
+- **Single-select a pet** → applies `{ type=pet, petId, species, breed }` (species/breed pulled from the pet record) to **every untagged frame** in the post — one tap tags the whole post. (Frames already tagged individually via §4b are left untouched.)
+- **Pre-selection:** the family's **primary pet** (or the most-recently-posted pet) is pre-highlighted to cut friction — user just confirms.
+- **`+ New pet`** → opens the Create Pet sub-form (§4b, manual mode — species/breed picked from DB option lists, no AI pre-fill).
+- This needs **no AI and no quota** — pets already in the family carry their own species/breed.
+- For a **multi-pet post** (different pet per frame), use §4b per-frame instead.
+
+> **Random animals** (e.g. a street cat that isn't a family pet): leave the frame as `random`. Without AI, a random tag has `species = breed = null`, so it will **not** surface in the Random Pets feed (`screen_14`, which needs a detected breed/species). If the user wants it to appear there, they can manually pick a species/breed in the §4b sheet.
+
+#### 4b. Per-frame tag sheet (override / mixed posts)
 
 Triggered by tapping the tag badge or edit (pencil) icon on any media item.
 
@@ -172,7 +219,7 @@ Actions available depend on the current tag state:
 | Name | Yes | Pet's display name |
 | Species | Yes | Pre-filled from scan; **select from DB option list** (not free text) |
 | Breed | No | Pre-filled from scan; **select from DB option list** filtered by selected species |
-| Color | No | Text input (⚠️ `color` không còn trong `IdentifyPetResult` — pre-fill màu tạm không khả dụng; xem note AT §§ Notes bên trên) |
+| Color | No | Text input — **pre-filled from scan** when available (`IdentifyPetResult.color`; see AT Notes). Empty when scanned media had no colour or for manual/video tagging |
 | Gender | Yes | `male` / `female` / `unknown` |
 | Birthday | No | Date picker |
 | Weight | No | Number + unit (kg) |
@@ -259,6 +306,8 @@ mutation IdentifyPetFromMedia($mediaId: ID!) {
     breedId
     breedConfidence
     rawLabel
+    color
+    colorConfidence
   }
 }
 ```
@@ -281,7 +330,9 @@ Pet detected — high confidence (client so sánh `speciesId`/`breedId` với pe
       "speciesConfidence": 0.97,
       "breedId": "breed_orange_tabby",
       "breedConfidence": 0.88,
-      "rawLabel": "orange tabby cat"
+      "rawLabel": "orange tabby cat",
+      "color": "orange",
+      "colorConfidence": 0.82
     }
   }
 }
@@ -296,7 +347,9 @@ Pet detected — breed not recognised (low breedConfidence, breedId empty):
       "speciesConfidence": 0.91,
       "breedId": "",
       "breedConfidence": 0.21,
-      "rawLabel": "grey cat"
+      "rawLabel": "grey cat",
+      "color": "grey",
+      "colorConfidence": 0.6
     }
   }
 }
@@ -311,7 +364,9 @@ No animal detected (all confidences near zero):
       "speciesConfidence": 0.04,
       "breedId": "",
       "breedConfidence": 0.0,
-      "rawLabel": "indoor scene"
+      "rawLabel": "indoor scene",
+      "color": null,
+      "colorConfidence": null
     }
   }
 }
@@ -326,10 +381,13 @@ No animal detected (all confidences near zero):
 | `breedId` | `String!` | ID of the detected breed (e.g. `"breed_orange_tabby"`); empty string when breed is unknown |
 | `breedConfidence` | `Float!` | AI confidence score for the breed classification (0–1) |
 | `rawLabel` | `String!` | Raw label from the AI model (for debugging / display fallback) |
+| `color` | `String` | Detected coat colour (e.g. `"orange"`); `null` when no animal detected / colour not determined |
+| `colorConfidence` | `Float` | AI confidence for the colour (0–1); `null` when `color` is `null` |
 
 **Notes:**
 - **Client-side matching:** so sánh `speciesId`/`breedId` trả về với danh sách pets của user để tìm khớp (e.g. một pet có cùng speciesId và breedId). Contract chỉ trả raw AI output — không có `matchedPet` hay logic matching phía server.
-- ⚠️ Rule cũ: AI trả `color` để pre-fill màu lông trong Create Pet form. Contract `IdentifyPetResult` hiện KHÔNG có `color` — pre-fill màu tạm không khả dụng (client có thể parse từ `rawLabel` làm fallback, e.g. "orange tabby cat"). Chưa có issue backend track việc thêm `color` — cần mở issue nếu muốn giữ rule này.
+- **Color pre-fill (available):** contract `IdentifyPetResult` **does** carry `color` + `colorConfidence` (verified against `schema.graphql`), so the Create Pet form can pre-fill the coat colour from the scan. *(Earlier spec drift claimed `color` was removed — that was wrong; corrected here.)*
+- **Quota (⏳ GAP):** this mutation is the billable detection step gated by the AI scan quota (§3a). Quota field/enforcement are **not yet in the contract** — pending petapp-be#1142. When `remaining = 0`, the client must not call this mutation (button disabled); the target backend behaviour is to reject with `QUOTA_EXCEEDED` as a safety net.
 - Resulting `mediaTag` written to the post uses `{ type, petId, species, breed }` (canonical MediaTag structure (#940/ADR-0027)).
 - In Random Pets context (`[+]` from Screen 8), call without a `familyId` context — matching against family pets is skipped; client treats all results as unmatched.
 
@@ -338,8 +396,9 @@ No animal detected (all confidences near zero):
 | Status | Code | Scenario |
 |--------|------|----------|
 | `400` | `INVALID_MEDIA_ID` | Media ID does not exist or is not a supported media format |
+| `403` | `QUOTA_EXCEEDED` | ⏳ GAP (pending petapp-be#1142) — user has no AI scan quota left (§3a) |
 | `404` | `FAMILY_NOT_FOUND` | Associated family does not exist |
-| `504` | `AI_TIMEOUT` | AI scan service did not respond in time — client should retry |
+| `504` | `AI_TIMEOUT` | AI scan service did not respond in time — client should retry (no quota decrement) |
 
 ---
 
@@ -522,7 +581,7 @@ Publish the post.
 
 > **Triggers notification:** fires a `FAMILY_NEW_POST` notification to the family's **followers** (see screen_22 — Notifications screen), respecting post privacy (a `family_only` post notifies only family members; `followers`/`public` notify followers).
 >
-> **AI side-effects:** the post's media is scanned server-side; this may later raise a `HEALTH_SIGNAL` notification to the pet owner if a health concern is detected (see screen_9).
+> **No automatic AI on publish (changed).** Publishing does **not** trigger any AI scan. Pet detection **and** health analysis run only when the user explicitly spends an AI scan on a photo in the editor (§3, `IdentifyPetFromMedia (AT)` + `requestHealthCheck (AZ)`). A `HEALTH_SIGNAL` notification (see screen_9 / screen_22) therefore originates from that opt-in scan, not from `CreatePost`.
 
 **Operation:**
 ```graphql
@@ -678,6 +737,60 @@ query Breeds($speciesId: ID!) {
 - Breed list is filtered to the selected species
 - If user changes species, breed selection is reset
 - `nameVi` / `nameEn` — hiển thị theo locale của user; `BreedGQL` không có field `name` (đã tách thành `nameVi`/`nameEn`)
+
+---
+
+### AY. Query: `MyAiScanQuota` — ⏳ GAP (pending petapp-be#1142)
+
+Load the user's remaining AI scan quota to drive the `✨ N scans left` UI (§3a) and to enable/disable the scan buttons.
+
+> **Status:** `me.aiScan` does **not** exist in the contract yet. Shape below is the target; open petapp-be#1142 to add it to `type User`. Until then the client hides the counter / treats quota as unlimited.
+
+**Operation (target):**
+```graphql
+query MyAiScanQuota {
+  me {
+    id
+    aiScan {
+      remaining   # Int!  — scans left
+      total       # Int!  — total granted (default 3 for new accounts)
+      resetAt     # String | null — null = one-time grant, no reset
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `remaining` | `Int!` | Scans left; `0` → scan buttons disabled |
+| `total` | `Int!` | Total granted; admin-configurable default (3) + top-up |
+| `resetAt` | `String` | ISO timestamp of next reset, or `null` for a non-resetting grant |
+
+---
+
+### AZ. Mutation: `requestHealthCheck` (exists in contract)
+
+Second step of an AI scan (§3a): run health analysis on a scanned photo that resolves to a pet. Already in the contract — `requestHealthCheck(mediaId: ID!, petId: ID!): RequestHealthCheckPayload!`. Returns an async job; results populate Pet Detail's Health tab and may raise `HEALTH_SIGNAL` (see screen_9 / screen_22).
+
+**Operation:**
+```graphql
+mutation RequestHealthCheck($mediaId: ID!, $petId: ID!) {
+  requestHealthCheck(mediaId: $mediaId, petId: $petId) {
+    jobId
+    status
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `jobId` | `ID!` | Async job handle for the health analysis |
+| `status` | `String!` | Initial job status (e.g. `QUEUED`) |
+
+**Notes:**
+- Requires a `petId` → only callable after detection (or manual tagging) resolves the frame to a pet. Random/unmatched frames have no `petId` and skip this step.
+- Bundled into the **same** quota unit as `IdentifyPetFromMedia (AT)` — see §3a. The quota decrement happens once, on the detection step.
+- ⏳ The quota bundling/coordination across the two mutations is **not** modelled in the contract yet (pending petapp-be#1142). Backend may introduce a combined `scanMedia` mutation so the two steps decrement quota atomically.
 
 ---
 
