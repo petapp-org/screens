@@ -110,7 +110,7 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 
 #### 3a. AI Scan Quota (opt-in gate) — ⏳ GAP, pending petapp-be issue
 
-> **Status:** the quota model below is **not yet in the contract**. `me { aiScan { … } }` and quota enforcement on the scan mutations do **not** exist in `schema.graphql` today — this section specifies the target. Tracked by **petapp-be#TBD** (open before client build). Until shipped, the client may treat quota as unlimited or hide the scan affordance.
+> **Status:** the quota model below is **not yet in the contract**. `me { aiScan { … } }` and quota enforcement on the scan mutations do **not** exist in `schema.graphql` today — this section specifies the target. Tracked by **petapp-be#1142** (open before client build). Until shipped, the client may treat quota as unlimited or hide the scan affordance.
 
 - **Quota unit:** **1 scan = 1 photo.** Each tap on `[AI Scan]` for one photo consumes **1 quota** and runs **both** AI steps for that photo as a single billable action: **(1) pet detection** (`identifyPetFromMedia (AT)`) **+ (2) health analysis** (`requestHealthCheck (AZ)`, only when the photo resolves to a pet — needs a `petId`). The two steps together count as **one** quota unit.
 - **Default grant:** new accounts get **3** scans (admin-configurable default; admin can top-up per user — backend/admin concern).
@@ -121,7 +121,7 @@ After publish → navigate to **My Pets** tab (active family). Post can only be 
 - **Exhausted (`remaining = 0`):** scan button **disabled** on all photos; header shows *"No AI scans left"* (+ upgrade entry point, future). User falls back to manual tagging (§4).
 - **Random media (no pet match):** detection still runs (consumes the quota), but the health step is **skipped** — `requestHealthCheck` requires a `petId`, which a random/unmatched frame does not have.
 
-> **Other AI endpoints** (`generatePostCaption`, `requestMoodAnalysis`) are also AI-cost but are **out of scope** for this quota in v1. Flag for backend: they should be rate-limited or folded into a broader AI-quota scheme separately (petapp-be#TBD).
+> **Other AI endpoints** (`generatePostCaption`, `requestMoodAnalysis`) are also AI-cost but are **out of scope** for this quota in v1. Flag for backend: they should be rate-limited or folded into a broader AI-quota scheme separately (petapp-be#1142).
 
 #### 3b. Scan behaviour
 
@@ -387,7 +387,7 @@ No animal detected (all confidences near zero):
 **Notes:**
 - **Client-side matching:** so sánh `speciesId`/`breedId` trả về với danh sách pets của user để tìm khớp (e.g. một pet có cùng speciesId và breedId). Contract chỉ trả raw AI output — không có `matchedPet` hay logic matching phía server.
 - **Color pre-fill (available):** contract `IdentifyPetResult` **does** carry `color` + `colorConfidence` (verified against `schema.graphql`), so the Create Pet form can pre-fill the coat colour from the scan. *(Earlier spec drift claimed `color` was removed — that was wrong; corrected here.)*
-- **Quota (⏳ GAP):** this mutation is the billable detection step gated by the AI scan quota (§3a). Quota field/enforcement are **not yet in the contract** — pending petapp-be#TBD. When `remaining = 0`, the client must not call this mutation (button disabled); the target backend behaviour is to reject with `QUOTA_EXCEEDED` as a safety net.
+- **Quota (⏳ GAP):** this mutation is the billable detection step gated by the AI scan quota (§3a). Quota field/enforcement are **not yet in the contract** — pending petapp-be#1142. When `remaining = 0`, the client must not call this mutation (button disabled); the target backend behaviour is to reject with `QUOTA_EXCEEDED` as a safety net.
 - Resulting `mediaTag` written to the post uses `{ type, petId, species, breed }` (canonical MediaTag structure (#940/ADR-0027)).
 - In Random Pets context (`[+]` from Screen 8), call without a `familyId` context — matching against family pets is skipped; client treats all results as unmatched.
 
@@ -396,7 +396,7 @@ No animal detected (all confidences near zero):
 | Status | Code | Scenario |
 |--------|------|----------|
 | `400` | `INVALID_MEDIA_ID` | Media ID does not exist or is not a supported media format |
-| `403` | `QUOTA_EXCEEDED` | ⏳ GAP (pending petapp-be#TBD) — user has no AI scan quota left (§3a) |
+| `403` | `QUOTA_EXCEEDED` | ⏳ GAP (pending petapp-be#1142) — user has no AI scan quota left (§3a) |
 | `404` | `FAMILY_NOT_FOUND` | Associated family does not exist |
 | `504` | `AI_TIMEOUT` | AI scan service did not respond in time — client should retry (no quota decrement) |
 
@@ -740,11 +740,11 @@ query Breeds($speciesId: ID!) {
 
 ---
 
-### AY. Query: `MyAiScanQuota` — ⏳ GAP (pending petapp-be#TBD)
+### AY. Query: `MyAiScanQuota` — ⏳ GAP (pending petapp-be#1142)
 
 Load the user's remaining AI scan quota to drive the `✨ N scans left` UI (§3a) and to enable/disable the scan buttons.
 
-> **Status:** `me.aiScan` does **not** exist in the contract yet. Shape below is the target; open petapp-be#TBD to add it to `type User`. Until then the client hides the counter / treats quota as unlimited.
+> **Status:** `me.aiScan` does **not** exist in the contract yet. Shape below is the target; open petapp-be#1142 to add it to `type User`. Until then the client hides the counter / treats quota as unlimited.
 
 **Operation (target):**
 ```graphql
@@ -790,7 +790,7 @@ mutation RequestHealthCheck($mediaId: ID!, $petId: ID!) {
 **Notes:**
 - Requires a `petId` → only callable after detection (or manual tagging) resolves the frame to a pet. Random/unmatched frames have no `petId` and skip this step.
 - Bundled into the **same** quota unit as `IdentifyPetFromMedia (AT)` — see §3a. The quota decrement happens once, on the detection step.
-- ⏳ The quota bundling/coordination across the two mutations is **not** modelled in the contract yet (pending petapp-be#TBD). Backend may introduce a combined `scanMedia` mutation so the two steps decrement quota atomically.
+- ⏳ The quota bundling/coordination across the two mutations is **not** modelled in the contract yet (pending petapp-be#1142). Backend may introduce a combined `scanMedia` mutation so the two steps decrement quota atomically.
 
 ---
 
